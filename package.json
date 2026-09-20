@@ -1,0 +1,17 @@
+{
+  "name": "phc-bhada-malaria-system",
+  "version": "1.0.0",
+  "description": "प्राथमिक आरोग्य केंद्र भादा - राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम मॅनेजमेंट सिस्टीम",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'Build complete'",
+    "lint": "node -c server.js && node -c data/store.js && node -c services/reports.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}

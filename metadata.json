@@ -1,0 +1,8 @@
+{
+  "name": "Remix Samples",
+  "description": "Imported from GitHub: phbhada-pixel/Samples",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
