@@ -792,16 +792,24 @@ app.post('/api/rpc', async (req, res) => {
           const rowDate = new Date(row[1]);
           if (rowDate >= startDate && rowDate <= endDate) {
             const count = parseInt(row[9]) || 0;
-            const designation = String(row[4] || '').trim();
             total += count;
-            if (
-              designation.includes('आरोग्य सेवक') ||
-              designation.includes('आरोग्य सेविका') ||
-              designation.includes('आशा')
-            ) {
-              active += count;
-            } else {
+
+            const upkendra = String(row[2] || '').toLowerCase();
+            const employeeName = String(row[3] || '').toLowerCase();
+            const desig = String(row[4] || '').toLowerCase();
+            const bsCode = String(row[5] || '').toLowerCase();
+
+            const isOpd = (
+              upkendra.includes('opd') || upkendra.includes('दवाखाना') || upkendra.includes('बाह्य') ||
+              employeeName.includes('opd') || employeeName.includes('ओपीडी') || employeeName.includes('बाह्य') || employeeName.includes('वैद्यकीय') ||
+              desig.includes('opd') || desig.includes('ओपीडी') || desig.includes('बाह्य') || desig.includes('वैद्यकीय') ||
+              bsCode.includes('opd')
+            );
+
+            if (isOpd) {
               passive += count;
+            } else {
+              active += count;
             }
           }
         }

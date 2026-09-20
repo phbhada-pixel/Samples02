@@ -245,27 +245,6 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     // Dynamic OPD BS from villagewise entries (villageDetails & bsDataEntry)
     const opdSummary = getOpdBsVillagewiseSummary(selectedMonthDisplay);
 
-    // घेतलेले रक्त नमुणे (Blood smears collected: मासिक व प्रगत)
-    let smearsM = monthObj.bloodSmears != null ? parseInt(monthObj.bloodSmears) : 0;
-    if (smearsM === 0 && opdSummary.monthlyTotal > 0) {
-      smearsM = opdSummary.monthlyTotal;
-    }
-    const priorSmears = priorMonths.reduce((sum, m) => sum + (parseInt(m.bloodSmears) || 0), 0);
-    const smearsProg = priorSmears + smearsM; // घेतलेले रक्त नमुणे प्रगत (स्वयं-गणना)
-
-    // तापाचे रुग्ण (Fever cases) = घेतलेले रक्त नमुणे (Blood Smears) = उपचारीत रुग्ण (Treated cases)
-    const feverM = smearsM;
-    const feverProg = smearsProg;
-
-    // उपचारीत रुग्ण (Treated cases) = घेतलेले रक्त नमुणे (Blood Smears)
-    const treatedM = smearsM;
-    const treatedProg = smearsProg;
-
-    // क्लोरोक्वीन गोळया खर्च (Chloroquine tablets consumed: मासिक व प्रगत)
-    const cqM = parseInt(monthObj.chloroquineSpent) || 0;
-    const priorCq = priorMonths.reduce((sum, m) => sum + (parseInt(m.chloroquineSpent) || 0), 0);
-    const cqProg = priorCq + cqM; // क्लोरोक्वीन खर्च प्रगत (स्वयं-गणना)
-
     // Filter BS Data for current month and YTD
     const monthBsRows = bsDataEntry.filter(r => {
       const d = new Date(r[1]);
@@ -288,31 +267,95 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
       return d >= yearStart && d <= endDate;
     });
 
-    // Helper to categorize employee designation
-    function getCategory(designation, dateObj) {
-      const desig = String(designation || '').trim();
-      if (desig.includes('आरोग्य सेवक')) {
-        const d = new Date(dateObj);
+    // Helper to check if an entry is OPD / Passive (अप्रत्यक्ष सर्वेक्षण: बाह्य रुग्ण विभाग)
+    function isOpd(employeeName, designation, upkendra, villageName, bsCode) {
+      const combined = `${employeeName || ''} ${designation || ''} ${upkendra || ''} ${villageName || ''} ${bsCode || ''}`.toLowerCase();
+      return (
+        combined.includes('बाह्य') ||
+        combined.includes('opd') ||
+        combined.includes('ओपीडी') ||
+        combined.includes('वैद्यकीय अधिकारी') ||
+        combined.includes('दवाखाना') ||
+        combined.includes('mo')
+      );
+    }
+
+    // Helper to categorize employee designation for monthly Active vs Passive
+    function getStaffCategory(employeeName, designation, upkendra, villageName, bsCode, dateVal) {
+      if (isOpd(employeeName, designation, upkendra, villageName, bsCode)) {
+        return 'PASSIVE';
+      }
+      const desig = `${designation || ''} ${employeeName || ''}`.toLowerCase();
+      const code = String(bsCode || '').toUpperCase();
+
+      if (desig.includes('आशा') || desig.includes('asha') || code.includes('V')) {
+        return 'ASHA';
+      }
+      if (
+        desig.includes('आरोग्य सेविका') ||
+        desig.includes('anm') ||
+        desig.includes('आरोग्य सहायिका') ||
+        desig.includes('सहायिका') ||
+        desig.includes('पर्यवेक्षक') ||
+        code.includes('A') ||
+        code.includes('B')
+      ) {
+        return 'ANM';
+      }
+      if (desig.includes('आरोग्य सेवक') || desig.includes('mpw') || code.includes('S')) {
+        const d = new Date(dateVal);
         if (d >= monthObj.f1Start && d <= monthObj.f1End) return 'MPW_FN1';
         return 'MPW_FN2';
       }
-      if (desig.includes('आरोग्य सेविका')) return 'ANM';
-      if (desig.includes('आशा')) return 'ASHA';
-      return 'PASSIVE';
+
+      // Default field active staff fallback: field workers are always active
+      const empClean = String(employeeName || '').trim();
+      if (empClean.startsWith('श्रीमती') || empClean.startsWith('कु.') || desig.includes('महिला') || desig.includes('स्त्री')) {
+        return 'ANM';
+      }
+      const d = new Date(dateVal);
+      if (d >= monthObj.f1Start && d <= monthObj.f1End) return 'MPW_FN1';
+      return 'MPW_FN2';
     }
 
     // Helper for YTD category
-    function getYtdCategory(designation, dateObj) {
-      const desig = String(designation || '').trim();
-      if (desig.includes('आरोग्य सेवक')) {
-        // Find which month this date falls into
-        const m = monthMaster.find(mo => dateObj >= mo.f1Start && dateObj <= mo.f2End);
-        if (m && dateObj >= m.f1Start && dateObj <= m.f1End) return 'MPW_FN1';
+    function getYtdStaffCategory(employeeName, designation, upkendra, villageName, bsCode, dateVal) {
+      if (isOpd(employeeName, designation, upkendra, villageName, bsCode)) {
+        return 'PASSIVE';
+      }
+      const desig = `${designation || ''} ${employeeName || ''}`.toLowerCase();
+      const code = String(bsCode || '').toUpperCase();
+
+      if (desig.includes('आशा') || desig.includes('asha') || code.includes('V')) {
+        return 'ASHA';
+      }
+      if (
+        desig.includes('आरोग्य सेविका') ||
+        desig.includes('anm') ||
+        desig.includes('आरोग्य सहायिका') ||
+        desig.includes('सहायिका') ||
+        desig.includes('पर्यवेक्षक') ||
+        code.includes('A') ||
+        code.includes('B')
+      ) {
+        return 'ANM';
+      }
+      if (desig.includes('आरोग्य सेवक') || desig.includes('mpw') || code.includes('S')) {
+        const d = new Date(dateVal);
+        const m = monthMaster.find(mo => d >= mo.f1Start && d <= mo.f2End);
+        if (m && d >= m.f1Start && d <= m.f1End) return 'MPW_FN1';
         return 'MPW_FN2';
       }
-      if (desig.includes('आरोग्य सेविका')) return 'ANM';
-      if (desig.includes('आशा')) return 'ASHA';
-      return 'PASSIVE';
+
+      // Default field active staff fallback
+      const empClean = String(employeeName || '').trim();
+      if (empClean.startsWith('श्रीमती') || empClean.startsWith('कु.') || desig.includes('महिला') || desig.includes('स्त्री')) {
+        return 'ANM';
+      }
+      const d = new Date(dateVal);
+      const m = monthMaster.find(mo => d >= mo.f1Start && d <= mo.f2End);
+      if (m && d >= m.f1Start && d <= m.f1End) return 'MPW_FN1';
+      return 'MPW_FN2';
     }
 
     // Accumulators for Active survey
@@ -324,27 +367,32 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
 
     // Calculate monthly gender counts from villageDetails
     monthVillageRows.forEach(v => {
-      const cat = getCategory(v[1], v[2]); // v[1] employeeName
-      // Check employee designation from masterData
+      const bsRow = bsDataEntry.find(r => r[0] === v[0]);
       const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(v[1])) || {};
-      const actualCat = getCategory(emp.designation || v[1], v[2]);
+      const employeeName = v[1] || (bsRow ? bsRow[3] : emp.employeeName);
+      const designation = (bsRow ? bsRow[4] : '') || emp.designation || '';
+      const bsCode = (bsRow ? bsRow[5] : '') || emp.bsCode || '';
+      const upkendra = v[7] || (bsRow ? bsRow[2] : '') || emp.upkendra || '';
+      const villageName = v[3] || '';
+
+      const cat = getStaffCategory(employeeName, designation, upkendra, villageName, bsCode, v[2]);
       const mCount = parseInt(v[5]) || 0;
       const fCount = parseInt(v[6]) || 0;
       const sCount = parseInt(v[4]) || (mCount + fCount);
 
-      if (actualCat === 'MPW_FN1') { mpwFn1M += mCount; mpwFn1F += fCount; mpwFn1Total += sCount; }
-      else if (actualCat === 'MPW_FN2') { mpwFn2M += mCount; mpwFn2F += fCount; mpwFn2Total += sCount; }
-      else if (actualCat === 'ANM') { anmM += mCount; anmF += fCount; anmTotal += sCount; }
-      else if (actualCat === 'ASHA') { ashaM += mCount; ashaF += fCount; ashaTotal += sCount; }
+      if (cat === 'MPW_FN1') { mpwFn1M += mCount; mpwFn1F += fCount; mpwFn1Total += sCount; }
+      else if (cat === 'MPW_FN2') { mpwFn2M += mCount; mpwFn2F += fCount; mpwFn2Total += sCount; }
+      else if (cat === 'ANM') { anmM += mCount; anmF += fCount; anmTotal += sCount; }
+      else if (cat === 'ASHA') { ashaM += mCount; ashaF += fCount; ashaTotal += sCount; }
       else { passiveM += mCount; passiveF += fCount; passiveTotal += sCount; }
     });
 
     // Also include any bsDataEntry rows that may not have village details
     monthBsRows.forEach(r => {
-      const cat = getCategory(r[4], r[1]);
-      const total = parseInt(r[9]) || 0;
       const hasVillage = monthVillageRows.some(v => v[0] === r[0]);
       if (!hasVillage) {
+        const cat = getStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
+        const total = parseInt(r[9]) || 0;
         const mPart = Math.floor(total * 0.52);
         const fPart = total - mPart;
         if (cat === 'MPW_FN1') { mpwFn1M += mPart; mpwFn1F += fPart; mpwFn1Total += total; }
@@ -360,8 +408,15 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     let ytdActiveM = 0, ytdActiveF = 0, ytdPassiveM = 0, ytdPassiveF = 0;
 
     ytdVillageRows.forEach(v => {
+      const bsRow = bsDataEntry.find(r => r[0] === v[0]);
       const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(v[1])) || {};
-      const cat = getYtdCategory(emp.designation || v[1], v[2]);
+      const employeeName = v[1] || (bsRow ? bsRow[3] : emp.employeeName);
+      const designation = (bsRow ? bsRow[4] : '') || emp.designation || '';
+      const bsCode = (bsRow ? bsRow[5] : '') || emp.bsCode || '';
+      const upkendra = v[7] || (bsRow ? bsRow[2] : '') || emp.upkendra || '';
+      const villageName = v[3] || '';
+
+      const cat = getYtdStaffCategory(employeeName, designation, upkendra, villageName, bsCode, v[2]);
       const mCount = parseInt(v[5]) || 0;
       const fCount = parseInt(v[6]) || 0;
       const sCount = parseInt(v[4]) || (mCount + fCount);
@@ -376,7 +431,7 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     ytdBsRows.forEach(r => {
       const hasVillage = ytdVillageRows.some(v => v[0] === r[0]);
       if (!hasVillage) {
-        const cat = getYtdCategory(r[4], r[1]);
+        const cat = getYtdStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
         const total = parseInt(r[9]) || 0;
         const mPart = Math.floor(total * 0.52);
         const fPart = total - mPart;
@@ -389,8 +444,8 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     });
 
     // Metric Variables according to user template:
-    const D3 = passiveTotal; // तापाचे रुग्ण / घेतलेले रक्त नमुने बाह्यरुग्ण मासिक
-    const D4 = ytdPassiveTotal; // तापाचे रुग्ण प्रगत
+    const D3 = passiveTotal; // तापाचे रुग्ण / घेतलेले रक्त नमुने बाह्यरुग्ण (अप्रत्यक्ष) मासिक
+    const D4 = ytdPassiveTotal; // तापाचे रुग्ण बाह्यरुग्ण (अप्रत्यक्ष) प्रगत
 
     // ३० प्रत्यक्ष सर्वेक्षण
     const D5 = mpwFn1M + mpwFn2M + anmM + ashaM; // प्रत्यक्ष स्त्री/पुरुष मासिक
@@ -401,7 +456,7 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     const D9 = ytdActiveF; // प्रत्यक्ष स्त्री प्रगत
     const D10 = D8 + D9; // प्रत्यक्ष एकूण प्रगत
 
-    // ३१ अप्रत्यक्ष सर्वेक्षण
+    // ३१ अप्रत्यक्ष सर्वेक्षण (फक्त बाह्य रुग्ण विभाग / OPD)
     const D11 = passiveM; // अप्रत्यक्ष पुरुष मासिक
     const D12 = passiveF; // अप्रत्यक्ष स्त्री मासिक
     const D13 = D11 + D12; // अप्रत्यक्ष एकूण मासिक
@@ -418,6 +473,29 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     const D20 = D8 + D14; // एकूण पुरुष प्रगत
     const D21 = D9 + D15; // एकूण स्त्री प्रगत
     const D22 = D10 + D16; // एकूण रक्त नमुने प्रगत
+
+    // बाह्यरुग्ण विभाग (OPD / अप्रत्यक्ष) रक्त नमुने, तापाचे रुग्ण व उपचारीत रुग्ण
+    // टीप: या तक्त्यात सर्व कर्मचाऱ्यांचे (D19) नव्हे तर फक्त बाह्यरुग्ण विभाग (OPD) रक्त नमुने येतात
+    let smearsM = passiveTotal;
+    if (smearsM === 0 && monthObj.bloodSmears != null && parseInt(monthObj.bloodSmears) > 0) {
+      smearsM = parseInt(monthObj.bloodSmears);
+    }
+    const priorSmears = priorMonths.reduce((sum, m) => sum + (parseInt(m.bloodSmears) || 0), 0);
+    const priorPassiveSmears = Math.max(0, ytdPassiveTotal - passiveTotal);
+    const smearsProg = Math.max(priorSmears, priorPassiveSmears) + smearsM; // घेतलेले रक्त नमुणे प्रगत (स्वयं-गणना)
+
+    // तापाचे रुग्ण (OPD Fever cases) = घेतलेले रक्त नमुणे (OPD Blood Smears) = उपचारीत रुग्ण (OPD Treated cases)
+    const feverM = smearsM;
+    const feverProg = smearsProg;
+
+    // उपचारीत रुग्ण (OPD Treated cases) = घेतलेले रक्त नमुणे (OPD Blood Smears)
+    const treatedM = smearsM;
+    const treatedProg = smearsProg;
+
+    // क्लोरोक्वीन गोळया खर्च (Chloroquine tablets consumed: मासिक व प्रगत)
+    const cqM = parseInt(monthObj.chloroquineSpent) || 0;
+    const priorCq = priorMonths.reduce((sum, m) => sum + (parseInt(m.chloroquineSpent) || 0), 0);
+    const cqProg = priorCq + cqM; // क्लोरोक्वीन खर्च प्रगत (स्वयं-गणना)
 
     // १०.२ सर्वेक्षण
     const D23 = mpwFn1Total; // आरोग्य सेवक पहिला मासिक
@@ -489,8 +567,15 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
       let d59 = 0, d60 = 0, d61 = 0; // ASHA
 
       vRows.forEach(v => {
+        const bsRow = bsDataEntry.find(r => r[0] === v[0]);
         const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(v[1])) || {};
-        const cat = getCategory(emp.designation || v[1], v[2]);
+        const employeeName = v[1] || (bsRow ? bsRow[3] : emp.employeeName);
+        const designation = (bsRow ? bsRow[4] : '') || emp.designation || '';
+        const bsCode = (bsRow ? bsRow[5] : '') || emp.bsCode || '';
+        const upkendra = v[7] || (bsRow ? bsRow[2] : '') || emp.upkendra || '';
+        const villageName = v[3] || '';
+
+        const cat = getStaffCategory(employeeName, designation, upkendra, villageName, bsCode, v[2]);
         const mCount = parseInt(v[5]) || 0;
         const fCount = parseInt(v[6]) || 0;
         const count = parseInt(v[4]) || (mCount + fCount);
@@ -1002,18 +1087,18 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
               <td>1</td>
               <td class="text-left"><b>प्राथमिक आरोग्य केंद्र भादा</b></td>
               <td>${D1}</td><td>${D2}</td>
-              <td>${D3}</td><td>${D4}</td>
-              <td>${D3}</td><td>${D4}</td>
-              <td>0</td><td>0</td>
-              <td>0</td><td>0</td>
+              <td>${feverM}</td><td>${feverProg}</td>
+              <td>${smearsM}</td><td>${smearsProg}</td>
+              <td>${treatedM}</td><td>${treatedProg}</td>
+              <td>${cqM}</td><td>${cqProg}</td>
             </tr>
             <tr style="background:#edf2f7; font-weight:bold;">
               <td colspan="2" class="text-right">एकूण:</td>
               <td>${D1}</td><td>${D2}</td>
-              <td>${D3}</td><td>${D4}</td>
-              <td>${D3}</td><td>${D4}</td>
-              <td>0</td><td>0</td>
-              <td>0</td><td>0</td>
+              <td>${feverM}</td><td>${feverProg}</td>
+              <td>${smearsM}</td><td>${smearsProg}</td>
+              <td>${treatedM}</td><td>${treatedProg}</td>
+              <td>${cqM}</td><td>${cqProg}</td>
             </tr>
           </tbody>
         </table>
