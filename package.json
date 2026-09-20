@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
-    "build": "echo 'Build complete'",
+    "build": "mkdir -p dist && cp index.html dist/index.html && cp Form.html dist/Form.html",
     "lint": "node -c server.js && node -c data/store.js && node -c services/reports.js",
     "start": "node server.js"
   },

@@ -2566,284 +2566,44 @@ export function importMasterDataFromCsv(csvText) {
 }
 
 
-export const monthMaster = [
-  {
-    name: "जानेवारी २०२६",
-    f1Start: new Date(2026, 0, 1),
-    f1End: new Date(2026, 0, 15),
-    f2Start: new Date(2026, 0, 16),
-    f2End: new Date(2026, 0, 31, 23, 59, 59),
-    newOpd: 420,
-    progNewOpd: 420,
-    mpwHomeVisits: 520,
-    progMpwHomeVisits: 520,
-    anmHomeVisits: 430,
-    progAnmHomeVisits: 430,
-    ashaHomeVisits: 1150,
-    progAshaHomeVisits: 1150,
-    feverCases: 145,
-    progFeverCases: 145,
-    bloodSmears: 145,
-    progBloodSmears: 145,
-    treatedCases: 145,
-    progTreatedCases: 145,
-    chloroquineSpent: 580,
-    progChloroquineSpent: 580
-  },
-  {
-    name: "फेब्रुवारी २०२६",
-    f1Start: new Date(2026, 1, 1),
-    f1End: new Date(2026, 1, 14),
-    f2Start: new Date(2026, 1, 15),
-    f2End: new Date(2026, 1, 28, 23, 59, 59),
-    newOpd: 390,
-    progNewOpd: 810,
-    mpwHomeVisits: 480,
-    progMpwHomeVisits: 1000,
-    anmHomeVisits: 410,
-    progAnmHomeVisits: 840,
-    ashaHomeVisits: 1100,
-    progAshaHomeVisits: 2250,
-    feverCases: 132,
-    progFeverCases: 277,
-    bloodSmears: 132,
-    progBloodSmears: 277,
-    treatedCases: 132,
-    progTreatedCases: 277,
-    chloroquineSpent: 528,
-    progChloroquineSpent: 1108
-  },
-  {
-    name: "मार्च २०२६",
-    f1Start: new Date(2026, 2, 1),
-    f1End: new Date(2026, 2, 15),
-    f2Start: new Date(2026, 2, 16),
-    f2End: new Date(2026, 2, 31, 23, 59, 59),
-    newOpd: 450,
-    progNewOpd: 1260,
-    mpwHomeVisits: 550,
-    progMpwHomeVisits: 1550,
-    anmHomeVisits: 460,
-    progAnmHomeVisits: 1300,
-    ashaHomeVisits: 1220,
-    progAshaHomeVisits: 3470,
-    feverCases: 158,
-    progFeverCases: 435,
-    bloodSmears: 158,
-    progBloodSmears: 435,
-    treatedCases: 158,
-    progTreatedCases: 435,
-    chloroquineSpent: 632,
-    progChloroquineSpent: 1740
-  },
-  {
-    name: "एप्रिल २०२६",
-    f1Start: new Date(2026, 3, 1),
-    f1End: new Date(2026, 3, 15),
-    f2Start: new Date(2026, 3, 16),
-    f2End: new Date(2026, 3, 30, 23, 59, 59),
-    newOpd: 430,
-    progNewOpd: 1690,
-    mpwHomeVisits: 510,
-    progMpwHomeVisits: 2060,
-    anmHomeVisits: 440,
-    progAnmHomeVisits: 1740,
-    ashaHomeVisits: 1180,
-    progAshaHomeVisits: 4650,
-    feverCases: 148,
-    progFeverCases: 583,
-    bloodSmears: 148,
-    progBloodSmears: 583,
-    treatedCases: 148,
-    progTreatedCases: 583,
-    chloroquineSpent: 592,
-    progChloroquineSpent: 2332
-  },
-  {
-    name: "मे २०२६",
-    f1Start: new Date(2026, 4, 1),
-    f1End: new Date(2026, 4, 15),
-    f2Start: new Date(2026, 4, 16),
-    f2End: new Date(2026, 4, 31, 23, 59, 59),
-    newOpd: 460,
-    progNewOpd: 2150,
-    mpwHomeVisits: 540,
-    progMpwHomeVisits: 2600,
-    anmHomeVisits: 450,
-    progAnmHomeVisits: 2190,
-    ashaHomeVisits: 1200,
-    progAshaHomeVisits: 5850,
-    feverCases: 162,
-    progFeverCases: 745,
-    bloodSmears: 162,
-    progBloodSmears: 745,
-    treatedCases: 162,
-    progTreatedCases: 745,
-    chloroquineSpent: 648,
-    progChloroquineSpent: 2980
-  },
-  {
-    name: "जून २०२६",
-    f1Start: new Date(2026, 5, 1),
-    f1End: new Date(2026, 5, 15),
-    f2Start: new Date(2026, 5, 16),
-    f2End: new Date(2026, 5, 30, 23, 59, 59),
-    newOpd: 480,
-    progNewOpd: 2630,
-    mpwHomeVisits: 570,
-    progMpwHomeVisits: 3170,
-    anmHomeVisits: 470,
-    progAnmHomeVisits: 2660,
-    ashaHomeVisits: 1260,
-    progAshaHomeVisits: 7110,
-    feverCases: 175,
-    progFeverCases: 920,
-    bloodSmears: 175,
-    progBloodSmears: 920,
-    treatedCases: 175,
-    progTreatedCases: 920,
-    chloroquineSpent: 700,
-    progChloroquineSpent: 3680
-  },
-  {
-    name: "जुलै २०२६",
-    f1Start: new Date(2026, 6, 1),
-    f1End: new Date(2026, 6, 15),
-    f2Start: new Date(2026, 6, 16),
-    f2End: new Date(2026, 6, 31, 23, 59, 59),
-    newOpd: 510,
-    progNewOpd: 3140,
-    mpwHomeVisits: 600,
-    progMpwHomeVisits: 3770,
-    anmHomeVisits: 490,
-    progAnmHomeVisits: 3150,
-    ashaHomeVisits: 1310,
-    progAshaHomeVisits: 8420,
-    feverCases: 188,
-    progFeverCases: 1108,
-    bloodSmears: 188,
-    progBloodSmears: 1108,
-    treatedCases: 188,
-    progTreatedCases: 1108,
-    chloroquineSpent: 752,
-    progChloroquineSpent: 4432
-  },
-  {
-    name: "ऑगस्ट २०२६",
-    f1Start: new Date(2026, 7, 1),
-    f1End: new Date(2026, 7, 15),
-    f2Start: new Date(2026, 7, 16),
-    f2End: new Date(2026, 7, 31, 23, 59, 59),
-    newOpd: 490,
-    progNewOpd: 3630,
-    mpwHomeVisits: 580,
-    progMpwHomeVisits: 4350,
-    anmHomeVisits: 480,
-    progAnmHomeVisits: 3630,
-    ashaHomeVisits: 1290,
-    progAshaHomeVisits: 9710,
-    feverCases: 180,
-    progFeverCases: 1288,
-    bloodSmears: 180,
-    progBloodSmears: 1288,
-    treatedCases: 180,
-    progTreatedCases: 1288,
-    chloroquineSpent: 720,
-    progChloroquineSpent: 5152
-  },
-  {
-    name: "सप्टेंबर २०२६",
-    f1Start: new Date(2026, 8, 1),
-    f1End: new Date(2026, 8, 15),
-    f2Start: new Date(2026, 8, 16),
-    f2End: new Date(2026, 8, 30, 23, 59, 59),
-    newOpd: 470,
-    progNewOpd: 4100,
-    mpwHomeVisits: 560,
-    progMpwHomeVisits: 4910,
-    anmHomeVisits: 460,
-    progAnmHomeVisits: 4090,
-    ashaHomeVisits: 1240,
-    progAshaHomeVisits: 10950,
-    feverCases: 172,
-    progFeverCases: 1460,
-    bloodSmears: 172,
-    progBloodSmears: 1460,
-    treatedCases: 172,
-    progTreatedCases: 1460,
-    chloroquineSpent: 688,
-    progChloroquineSpent: 5840
-  },
-  {
-    name: "ऑक्टोबर २०२६",
-    f1Start: new Date(2026, 9, 1),
-    f1End: new Date(2026, 9, 15),
-    f2Start: new Date(2026, 9, 16),
-    f2End: new Date(2026, 9, 31, 23, 59, 59),
-    newOpd: 440,
-    progNewOpd: 4540,
-    mpwHomeVisits: 530,
-    progMpwHomeVisits: 5440,
-    anmHomeVisits: 430,
-    progAnmHomeVisits: 4520,
-    ashaHomeVisits: 1190,
-    progAshaHomeVisits: 12140,
-    feverCases: 155,
-    progFeverCases: 1615,
-    bloodSmears: 155,
-    progBloodSmears: 1615,
-    treatedCases: 155,
-    progTreatedCases: 1615,
-    chloroquineSpent: 620,
-    progChloroquineSpent: 6460
-  },
-  {
-    name: "नोव्हेंबर २०२६",
-    f1Start: new Date(2026, 10, 1),
-    f1End: new Date(2026, 10, 15),
-    f2Start: new Date(2026, 10, 16),
-    f2End: new Date(2026, 10, 30, 23, 59, 59),
-    newOpd: 410,
-    progNewOpd: 4950,
-    mpwHomeVisits: 500,
-    progMpwHomeVisits: 5940,
-    anmHomeVisits: 420,
-    progAnmHomeVisits: 4940,
-    ashaHomeVisits: 1160,
-    progAshaHomeVisits: 13300,
-    feverCases: 140,
-    progFeverCases: 1755,
-    bloodSmears: 140,
-    progBloodSmears: 1755,
-    treatedCases: 140,
-    progTreatedCases: 1755,
-    chloroquineSpent: 560,
-    progChloroquineSpent: 7020
-  },
-  {
-    name: "डिसेंबर २०२६",
-    f1Start: new Date(2026, 11, 1),
-    f1End: new Date(2026, 11, 15),
-    f2Start: new Date(2026, 11, 16),
-    f2End: new Date(2026, 11, 31, 23, 59, 59),
-    newOpd: 400,
-    progNewOpd: 5350,
-    mpwHomeVisits: 490,
-    progMpwHomeVisits: 6430,
-    anmHomeVisits: 400,
-    progAnmHomeVisits: 5340,
-    ashaHomeVisits: 1120,
-    progAshaHomeVisits: 14420,
-    feverCases: 135,
-    progFeverCases: 1890,
-    bloodSmears: 135,
-    progBloodSmears: 1890,
-    treatedCases: 135,
-    progTreatedCases: 1890,
-    chloroquineSpent: 540,
-    progChloroquineSpent: 7560
-  }
+const MONTH_SPECS_2026 = [
+  { name: "जानेवारी २०२६", days: 31, f1EndDay: 15 },
+  { name: "फेब्रुवारी २०२६", days: 28, f1EndDay: 14 },
+  { name: "मार्च २०२६", days: 31, f1EndDay: 15 },
+  { name: "एप्रिल २०२६", days: 30, f1EndDay: 15 },
+  { name: "मे २०२६", days: 31, f1EndDay: 15 },
+  { name: "जून २०२६", days: 30, f1EndDay: 15 },
+  { name: "जुलै २०२६", days: 31, f1EndDay: 15 },
+  { name: "ऑगस्ट २०२६", days: 31, f1EndDay: 15 },
+  { name: "सप्टेंबर २०२६", days: 30, f1EndDay: 15 },
+  { name: "ऑक्टोबर २०२६", days: 31, f1EndDay: 15 },
+  { name: "नोव्हेंबर २०२६", days: 30, f1EndDay: 15 },
+  { name: "डिसेंबर २०२६", days: 31, f1EndDay: 15 }
 ];
+
+export const monthMaster = MONTH_SPECS_2026.map((m, idx) => ({
+  name: m.name,
+  f1Start: new Date(2026, idx, 1),
+  f1End: new Date(2026, idx, m.f1EndDay),
+  f2Start: new Date(2026, idx, m.f1EndDay + 1),
+  f2End: new Date(2026, idx, m.days, 23, 59, 59),
+  newOpd: 0,
+  progNewOpd: 0,
+  mpwHomeVisits: 0,
+  progMpwHomeVisits: 0,
+  anmHomeVisits: 0,
+  progAnmHomeVisits: 0,
+  ashaHomeVisits: 0,
+  progAshaHomeVisits: 0,
+  feverCases: 0,
+  progFeverCases: 0,
+  bloodSmears: 0,
+  progBloodSmears: 0,
+  treatedCases: 0,
+  progTreatedCases: 0,
+  chloroquineSpent: 0,
+  progChloroquineSpent: 0
+}));
 
 export function getOpdBsVillagewiseSummary(monthName) {
   const clean = s => String(s || '').trim();
@@ -2998,109 +2758,36 @@ export const bsDataEntry = [];
 // [uniqueId, employeeName, dateObj, villageName, sampleCount, maleCount, femaleCount, upkendra]
 export const villageDetails = [];
 
-// Function to populate initial comprehensive blood smear data across all 65 employees and 30 villages
+// Dummy data seeding removed - system starts with clean empty datasets and syncs with real-time data
 export function seedInitialMalariaData() {
-  if (bsDataEntry.length > 0) return; // already seeded
-
-  const monthsToSeed = [
-    { year: 2026, month: 0, days: [8, 22], prefix: "JAN" },
-    { year: 2026, month: 1, days: [7, 21], prefix: "FEB" },
-    { year: 2026, month: 2, days: [6, 20], prefix: "MAR" },
-    { year: 2026, month: 3, days: [8, 22], prefix: "APR" },
-    { year: 2026, month: 4, days: [7, 21], prefix: "MAY" },
-    { year: 2026, month: 5, days: [5, 19], prefix: "JUN" },
-    { year: 2026, month: 6, days: [8, 23], prefix: "JUL" },
-    { year: 2026, month: 7, days: [6, 20], prefix: "AUG" },
-    { year: 2026, month: 8, days: [4, 18], prefix: "SEP" }
-  ];
-
-  const empProgressiveMap = new Map();
-  let globalBundleId = 100;
-
-  monthsToSeed.forEach((mInfo, mIdx) => {
-    const pad = n => String(n).padStart(2, '0');
-    
-    // Iterate over employees to create active/passive slide entries
-    employeeMaster.forEach((emp, empIdx) => {
-      // Pick fortnight collection date
-      const fnDay = (empIdx % 2 === 0) ? mInfo.days[0] : mInfo.days[1];
-      const entryDate = new Date(mInfo.year, mInfo.month, fnDay, 10 + (empIdx % 6), (empIdx * 7) % 60);
-      const yyyymmdd = `${mInfo.year}${pad(mInfo.month + 1)}${pad(fnDay)}`;
-
-      // Calculate realistic smear sample counts based on role
-      let count = 0;
-      if (emp.category === 'ASHA') {
-        count = 2 + ((empIdx + mIdx) % 3); // 2 to 4 per fortnight
-      } else if (emp.category === 'ANM') {
-        count = 3 + ((empIdx + mIdx * 2) % 4); // 3 to 6
-      } else if (emp.category === 'MPW') {
-        count = 4 + ((empIdx + mIdx * 3) % 5); // 4 to 8
-      } else if (emp.category === 'MO') {
-        count = 15 + ((mIdx * 3) % 10); // 15 to 24 OPD slides
-      }
-
-      if (count <= 0) count = 2;
-
-      const currentParaynt = empProgressiveMap.get(emp.employeeName) || 0;
-      const pasun = currentParaynt + 1;
-      const paraynt = currentParaynt + count;
-      empProgressiveMap.set(emp.employeeName, paraynt);
-
-      globalBundleId++;
-      const bundleNumber = `B_${mInfo.year}_${pad(mInfo.month + 1)}_${String(globalBundleId).slice(-3)}`;
-      const uniqueId = `BS_${yyyymmdd}_${emp.bsCode || '54'}_${bsDataEntry.length + 1}`;
-
-      // 1. Push to BsDataEntry
-      bsDataEntry.push([
-        uniqueId,
-        entryDate,
-        emp.upkendra,
-        emp.employeeName,
-        emp.designation,
-        emp.bsCode,
-        bundleNumber,
-        pasun,
-        paraynt,
-        count
-      ]);
-
-      // 2. Distribute across assigned villages for VillageDetails
-      const villages = (Array.isArray(emp.villageList) && emp.villageList.length > 0)
-        ? emp.villageList
-        : [emp.upkendra];
-
-      let remainingCount = count;
-      const countPerVil = Math.max(1, Math.floor(count / villages.length));
-
-      villages.forEach((vilName, vIdx) => {
-        if (remainingCount <= 0) return;
-        const vilCount = (vIdx === villages.length - 1) ? remainingCount : Math.min(remainingCount, countPerVil);
-        remainingCount -= vilCount;
-
-        const male = Math.ceil(vilCount * 0.52);
-        const female = vilCount - male;
-
-        villageDetails.push([
-          uniqueId,
-          emp.employeeName,
-          entryDate,
-          vilName,
-          vilCount,
-          male,
-          female,
-          emp.upkendra
-        ]);
-      });
-    });
-  });
+  console.log('[Store] seedInitialMalariaData called: Real-time mode active. No dummy data seeded.');
+  return;
 }
 
-// Dummy data seeding removed - system starts with clean empty datasets
 export function clearAllTransactionData() {
   bsDataEntry.length = 0;
   villageDetails.length = 0;
+  transferHistory.length = 0;
+  monthMaster.forEach(m => {
+    m.newOpd = 0;
+    m.progNewOpd = 0;
+    m.mpwHomeVisits = 0;
+    m.progMpwHomeVisits = 0;
+    m.anmHomeVisits = 0;
+    m.progAnmHomeVisits = 0;
+    m.ashaHomeVisits = 0;
+    m.progAshaHomeVisits = 0;
+    m.feverCases = 0;
+    m.progFeverCases = 0;
+    m.bloodSmears = 0;
+    m.progBloodSmears = 0;
+    m.treatedCases = 0;
+    m.progTreatedCases = 0;
+    m.chloroquineSpent = 0;
+    m.progChloroquineSpent = 0;
+  });
   saveDbToDisk();
-  return { success: true, message: "सर्व नोंदी यशस्वीरित्या रिकाम्या करण्यात आल्या." };
+  return { success: true, message: "सर्व तात्पुरता/नमुना डेटा यशस्वीरित्या काढून टाकण्यात आला. प्रणाली रिअल-टाईम नोंदींसाठी सज्ज आहे." };
 }
 
 // ================= CSV BULK IMPORT HANDLERS =================
@@ -3543,12 +3230,12 @@ export const photosData = {
 export const generatedReports = new Map();
 
 export const googleSheetConfig = {
-  spreadsheetId: process.env.GOOGLE_SHEET_ID || "1QW9vQ943bT131102008741_b9e7cQ86z7pLzP9gX3e0r",
-  webhookUrl: process.env.GOOGLE_SHEET_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzx9eLKm6P2gQu2ub-vR_NdJaWAf3CKfweoThJd4polcFq2s03YIcZQqcdlhA-oqmxL/exec",
-  githubRepoUrl: process.env.GITHUB_REPO_URL || "https://github.com/phcbhada/nvbdcp-malaria-management-system",
+  spreadsheetId: process.env.GOOGLE_SHEET_ID || "1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM",
+  webhookUrl: process.env.GOOGLE_SHEET_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzJ0JAGctl88Fu_GY5kDOAcvWfiHyR3G_PDnvohCgDHcoQnNa9OlUSnSRgSE-mg-0q96w/exec",
+  githubRepoUrl: process.env.GITHUB_REPO_URL || "https://phbhada-pixel.github.io/Samples01/",
   autoSync: true,
   lastSyncTime: null,
-  syncStatus: "कनेक्टेड (Ready)"
+  syncStatus: "रिअल-टाईम सिंक सक्षम (Real-time Synced)"
 };
 
 export function formatBsEntry(row) {

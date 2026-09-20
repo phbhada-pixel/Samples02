@@ -211,6 +211,59 @@ function doPost(e) {
         break;
       }
 
+      case 'fetchAllData': {
+        var bsSheet = ss.getSheetByName("BsDataEntry");
+        var vilSheet = ss.getSheetByName("VillageDetails");
+        var mSheet = ss.getSheetByName("MonthMaster");
+
+        var bsData = [];
+        if (bsSheet && bsSheet.getLastRow() > 1) {
+          var bsValues = bsSheet.getDataRange().getValues();
+          for (var b = 1; b < bsValues.length; b++) {
+            var row = bsValues[b];
+            if (!row[0]) continue;
+            bsData.push({
+              id: String(row[0]),
+              date: row[1] instanceof Date ? row[1].toISOString() : String(row[1]),
+              upkendra: String(row[2] || ""),
+              name: String(row[3] || ""),
+              designation: String(row[4] || ""),
+              bsCode: String(row[5] || ""),
+              bundleNumber: String(row[6] || ""),
+              pasun: parseInt(row[7]) || 1,
+              paraynt: parseInt(row[8]) || 1,
+              total: parseInt(row[9]) || 1
+            });
+          }
+        }
+
+        var vilData = [];
+        if (vilSheet && vilSheet.getLastRow() > 1) {
+          var vilValues = vilSheet.getDataRange().getValues();
+          for (var v = 1; v < vilValues.length; v++) {
+            var vRow = vilValues[v];
+            if (!vRow[0]) continue;
+            vilData.push({
+              id: String(vRow[0]),
+              employeeName: String(vRow[1] || ""),
+              date: vRow[2] instanceof Date ? vRow[2].toISOString() : String(vRow[2]),
+              villageName: String(vRow[3] || ""),
+              sampleCount: parseInt(vRow[4]) || 1,
+              maleCount: parseInt(vRow[5]) || 0,
+              femaleCount: parseInt(vRow[6]) || 0,
+              upkendra: String(vRow[7] || "")
+            });
+          }
+        }
+
+        result.bsData = bsData;
+        result.villageDetails = vilData;
+        result.bsCount = bsData.length;
+        result.vilCount = vilData.length;
+        result.message = "Google Sheet मधून रिअल-टाईम डेटा यशस्वीरित्या प्राप्त झाला!";
+        break;
+      }
+
       case 'deleteEntry': {
         var delId = data.entryId;
         if (delId) {
@@ -281,3 +334,91 @@ function deleteRowByFirstColumnValue(sheet, value) {
     }
   }
 }
+
+// Native Google Apps Script execution handler for Form.html
+function processForm(formData) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      ss = SpreadsheetApp.openById("1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM");
+    }
+    var formDataArray = Array.isArray(formData) ? formData : (formData ? [formData] : []);
+    if (!formDataArray.length) {
+      return { success: false, message: 'अवैध किंवा रिकामा फॉर्म डेटा.' };
+    }
+
+    var bsEntries = [];
+    var vilEntries = [];
+
+    formDataArray.forEach(function(entry) {
+      var dateStr = entry.bsSendDate || new Date().toISOString().split('T')[0];
+      var yyyymmdd = dateStr.replace(/-/g, '');
+      var uniqueId = 'BS_' + yyyymmdd + '_' + (entry.bsCode || '0') + '_' + new Date().getTime();
+      var pasun = parseInt(entry.pasun) || 0;
+      var paraynt = parseInt(entry.paraynt) || 0;
+      var total = (paraynt >= pasun) ? (paraynt - pasun + 1) : 0;
+
+      bsEntries.push([
+        uniqueId,
+        dateStr,
+        entry.upkendra || '',
+        entry.employeeName || '',
+        entry.designation || '',
+        entry.bsCode || '',
+        entry.bundleNumber || '',
+        pasun,
+        paraynt,
+        total,
+        new Date()
+      ]);
+
+      var vDetails = Array.isArray(entry.villageDetails) ? entry.villageDetails : [];
+      vDetails.forEach(function(v) {
+        vilEntries.push([
+          uniqueId,
+          entry.employeeName || '',
+          dateStr,
+          v.villageName || '',
+          parseInt(v.sampleCount) || 0,
+          parseInt(v.maleCount) || 0,
+          parseInt(v.femaleCount) || 0,
+          entry.upkendra || '',
+          new Date()
+        ]);
+      });
+    });
+
+    if (bsEntries.length > 0) {
+      var bsSheet = getOrCreateSheet(ss, "BsDataEntry", [
+        "BS ID", "दिनांक", "उपकेंद्र", "कर्मचारी नाव", "पद", "BS Code", "बंडल क्र.", "पासून", "पर्यंत", "एकूण नमुने", "नोंद वेळ (Timestamp)"
+      ]);
+      appendRowsInBatch(bsSheet, bsEntries);
+    }
+
+    if (vilEntries.length > 0) {
+      var vilSheet = getOrCreateSheet(ss, "VillageDetails", [
+        "BS ID", "कर्मचारी नाव", "दिनांक", "गाव", "एकूण नमुने", "पुरुष", "स्त्री", "उपकेंद्र", "नोंद वेळ (Timestamp)"
+      ]);
+      appendRowsInBatch(vilSheet, vilEntries);
+    }
+
+    return {
+      success: true,
+      message: '✅ डेटा थेट गुगल शीटमध्ये यशस्वीरित्या सुरक्षित सेव्ह झाला!'
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: 'गुगल शीटमध्ये जतन करताना एरर: ' + err.toString()
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function saveBsData(formData) {
+  return processForm(formData);
+}
+

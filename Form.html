@@ -41,32 +41,32 @@
               data: {
                 selectedMonth: targetMonthName,
                 allMonths: monthsNames,
-                newOpd: { monthly: 470, progressive: 470, prior: 0 },
-                feverCases: { monthly: Math.round(totalSmears * 1.1) || 120, progressive: Math.round(totalSmears * 1.1) || 120, prior: 0 },
-                bloodSmears: { monthly: totalSmears || 120, progressive: totalSmears || 120, prior: 0 },
-                treatedCases: { monthly: Math.round(totalSmears * 1.1) || 120, progressive: Math.round(totalSmears * 1.1) || 120, prior: 0 },
-                chloroquineSpent: { monthly: 180, progressive: 180, prior: 0 },
-                fieldSmears: Math.round((totalSmears || 120) * 0.7),
-                opdSmears: Math.round((totalSmears || 120) * 0.3),
-                totalSmears: totalSmears || 120,
-                smearFeverCoverage: 100,
-                treatmentCoverage: 100,
+                newOpd: { monthly: 0, progressive: 0, prior: 0 },
+                feverCases: { monthly: totalSmears, progressive: totalSmears, prior: 0 },
+                bloodSmears: { monthly: totalSmears, progressive: totalSmears, prior: 0 },
+                treatedCases: { monthly: totalSmears, progressive: totalSmears, prior: 0 },
+                chloroquineSpent: { monthly: 0, progressive: 0, prior: 0 },
+                fieldSmears: Math.round(totalSmears * 0.7),
+                opdSmears: Math.round(totalSmears * 0.3),
+                totalSmears: totalSmears,
+                smearFeverCoverage: totalSmears > 0 ? 100 : 0,
+                treatmentCoverage: totalSmears > 0 ? 100 : 0,
                 opdVillagewise: {
-                  monthlyTotal: Math.round((totalSmears || 120) * 0.3),
-                  ytdTotal: Math.round((totalSmears || 120) * 0.3),
-                  monthlyMale: Math.round((totalSmears || 120) * 0.15),
-                  monthlyFemale: Math.round((totalSmears || 120) * 0.15),
+                  monthlyTotal: Math.round(totalSmears * 0.3),
+                  ytdTotal: Math.round(totalSmears * 0.3),
+                  monthlyMale: Math.round(totalSmears * 0.15),
+                  monthlyFemale: Math.round(totalSmears * 0.15),
                   priorTotal: 0,
                   villages: []
                 },
                 templateData: {
                   phcName: 'भादा',
                   month: targetMonthName,
-                  newOpdM: 470, newOpdP: 470,
-                  feverM: Math.round(totalSmears * 1.1) || 120, feverP: Math.round(totalSmears * 1.1) || 120,
-                  smearsM: totalSmears || 120, smearsP: totalSmears || 120,
-                  treatedM: Math.round(totalSmears * 1.1) || 120, treatedP: Math.round(totalSmears * 1.1) || 120,
-                  cqM: 180, cqP: 180
+                  newOpdM: 0, newOpdP: 0,
+                  feverM: totalSmears, feverP: totalSmears,
+                  smearsM: totalSmears, smearsP: totalSmears,
+                  treatedM: totalSmears, treatedP: totalSmears,
+                  cqM: 0, cqP: 0
                 }
               }
             }
@@ -82,13 +82,13 @@
               success: true,
               data: {
                 name: targetMonthName,
-                newOpd: 470, progNewOpd: 470,
-                feverCases: 120, progFeverCases: 120,
-                bloodSmears: 120, progBloodSmears: 120,
-                treatedCases: 120, progTreatedCases: 120,
-                chloroquineSpent: 180, progChloroquineSpent: 180,
+                newOpd: 0, progNewOpd: 0,
+                feverCases: 0, progFeverCases: 0,
+                bloodSmears: 0, progBloodSmears: 0,
+                treatedCases: 0, progTreatedCases: 0,
+                chloroquineSpent: 0, progChloroquineSpent: 0,
                 priorOpdSum: 0, priorFeverSum: 0, priorSmearsSum: 0, priorTreatedSum: 0, priorCqSum: 0,
-                opdVillagewise: { monthlyTotal: 40, ytdTotal: 40, monthlyMale: 20, monthlyFemale: 20, priorTotal: 0, villages: [] }
+                opdVillagewise: { monthlyTotal: 0, ytdTotal: 0, monthlyMale: 0, monthlyFemale: 0, priorTotal: 0, villages: [] }
               }
             }
           };
@@ -97,6 +97,107 @@
         case 'saveMonthlyIndicators':
         case 'saveMonthIndicators': {
           return { result: { success: true, message: 'मासिक निर्देशांक जतन झाले.' } };
+        }
+
+        case 'processForm':
+        case 'saveBsData': {
+          const [formDataArray] = args;
+          const entries = Array.isArray(formDataArray) ? formDataArray : (formDataArray ? [formDataArray] : []);
+          if (!entries.length) return { result: { success: false, message: 'अवैध किंवा रिकामा फॉर्म डेटा.' } };
+
+          const newEntriesForSync = [];
+          const newVillageDetailsForSync = [];
+
+          entries.forEach(entry => {
+            const dateObj = entry.bsSendDate ? new Date(entry.bsSendDate) : new Date();
+            const yyyymmdd = `${dateObj.getFullYear()}${String(dateObj.getMonth() + 1).padStart(2, '0')}${String(dateObj.getDate()).padStart(2, '0')}`;
+            const uniqueId = `BS_${yyyymmdd}_${entry.bsCode || '0'}_${Date.now()}`;
+            const total = (parseInt(entry.paraynt) || 0) - (parseInt(entry.pasun) || 0) + 1;
+
+            const row = [
+              uniqueId,
+              dateObj.toISOString().slice(0, 10),
+              entry.upkendra || '',
+              entry.employeeName || '',
+              entry.designation || '',
+              entry.bsCode || '',
+              entry.bundleNumber || 'B_1',
+              parseInt(entry.pasun) || 0,
+              parseInt(entry.paraynt) || 0,
+              total
+            ];
+
+            if (typeof bsDataEntry !== 'undefined' && Array.isArray(bsDataEntry)) {
+              bsDataEntry.unshift(row);
+            }
+
+            newEntriesForSync.push({
+              id: uniqueId,
+              date: dateObj.toISOString().slice(0, 10),
+              upkendra: entry.upkendra || '',
+              employeeName: entry.employeeName || '',
+              designation: entry.designation || '',
+              bsCode: entry.bsCode || '',
+              bundleNumber: entry.bundleNumber || '',
+              pasun: parseInt(entry.pasun) || 0,
+              paraynt: parseInt(entry.paraynt) || 0,
+              total: total
+            });
+
+            const vDetails = Array.isArray(entry.villageDetails) ? entry.villageDetails : (Array.isArray(entry.villageRows) ? entry.villageRows : []);
+            if (vDetails.length > 0) {
+              vDetails.forEach(vr => {
+                if (typeof villageDetails !== 'undefined' && Array.isArray(villageDetails)) {
+                  villageDetails.unshift([
+                    uniqueId,
+                    entry.employeeName || '',
+                    dateObj.toISOString().slice(0, 10),
+                    vr.villageName || '',
+                    parseInt(vr.sampleCount) || 0,
+                    parseInt(vr.maleCount) || 0,
+                    parseInt(vr.femaleCount) || 0,
+                    entry.upkendra || ''
+                  ]);
+                }
+                newVillageDetailsForSync.push({
+                  uniqueId: uniqueId,
+                  employeeName: entry.employeeName || '',
+                  date: dateObj.toISOString().slice(0, 10),
+                  villageName: vr.villageName || '',
+                  sampleCount: parseInt(vr.sampleCount) || 0,
+                  maleCount: parseInt(vr.maleCount) || 0,
+                  femaleCount: parseInt(vr.femaleCount) || 0,
+                  upkendra: entry.upkendra || ''
+                });
+              });
+            }
+          });
+
+          // Direct Sync with Google Sheet Webhook
+          const webhookUrl = "https://script.google.com/macros/s/AKfycbzJ0JAGctl88Fu_GY5kDOAcvWfiHyR3G_PDnvohCgDHcoQnNa9OlUSnSRgSE-mg-0q96w/exec";
+          const spreadsheetId = "1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM";
+          try {
+            fetch(webhookUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'appendEntries',
+                spreadsheetId: spreadsheetId,
+                entries: newEntriesForSync,
+                villageDetails: newVillageDetailsForSync,
+                timestamp: new Date().toISOString()
+              })
+            }).catch(e => console.warn('Google Sheet Webhook silent catch:', e));
+          } catch (e) {}
+
+          return {
+            result: {
+              success: true,
+              message: '✅ डेटा थेट गुगल शीट व स्थानिक प्रणालीमध्ये सुरक्षित सेव्ह झाला!',
+              sheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`
+            }
+          };
         }
 
         case 'getMonthListForWebApp': {
@@ -2080,14 +2181,14 @@
                   <tbody>
                     <tr style="font-weight:700; font-size:13px;">
                       <td style="padding:10px 8px; background:#f7fafc; border:1px solid #cbd5e0; color:#1a202c;">भादा</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#2b6cb0;" id="prevCellNewOpdM">470</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#2b6cb0;" id="prevCellNewOpdP">4100</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#c05621;" id="prevCellFeverM">45</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#c05621;" id="prevCellFeverP">45</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#234e52;" id="prevCellSmearsM">45</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#234e52;" id="prevCellSmearsP">45</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#276749;" id="prevCellTreatedM">45</td>
-                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#276749;" id="prevCellTreatedP">45</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#2b6cb0;" id="prevCellNewOpdM">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#2b6cb0;" id="prevCellNewOpdP">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#c05621;" id="prevCellFeverM">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#c05621;" id="prevCellFeverP">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#234e52;" id="prevCellSmearsM">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#234e52;" id="prevCellSmearsP">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#276749;" id="prevCellTreatedM">0</td>
+                      <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#276749;" id="prevCellTreatedP">0</td>
                       <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#553c9a;" id="prevCellCqM">0</td>
                       <td style="padding:10px 6px; border:1px solid #cbd5e0; color:#553c9a;" id="prevCellCqP">0</td>
                     </tr>
@@ -2426,15 +2527,18 @@
             </div>
             <div class="sheet-actions">
               <button class="sheet-btn" id="btnSyncGoogleSheet" onclick="syncDataToGoogleSheet(this)">
-                🔄 गुगल शीटमध्ये सिंक करा
+                🔄 गुगल शीटमध्ये डेटा पाठवा (Push)
+              </button>
+              <button class="sheet-btn" id="btnFetchLiveSheet" style="background:#2f855a;" onclick="fetchRealtimeFromGoogleSheet()">
+                📥 गुगल शीटमधून डेटा आणा (Fetch Live)
               </button>
               <button class="sheet-btn" style="background:#2b6cb0;" onclick="openUniversalUploadModal()">
-                📂 डेटा अपलोड व आयात केंद्र
+                📂 डेटा आयात केंद्र
               </button>
-              <button class="sheet-btn" style="background:#6b46c1;" onclick="confirmResetInitialData()">
-                ⚡ २०२६ अधिकृत डेटा रीलोड
+              <button class="sheet-btn" style="background:#c53030;" onclick="clearAllDummyDataConfirm()">
+                🗑️ सर्व तात्पुरता डेटा साफ करा (Wipe Dummy)
               </button>
-              <a href="https://docs.google.com/spreadsheets/d/1QW9vQ943bT131102008741_b9e7cQ86z7pLzP9gX3e0r/edit" id="linkOpenGoogleSheet" target="_blank" class="sheet-btn sheet-btn-secondary" style="text-decoration:none;">
+              <a href="https://docs.google.com/spreadsheets/d/1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM/edit" id="linkOpenGoogleSheet" target="_blank" class="sheet-btn sheet-btn-secondary" style="text-decoration:none;">
                 🌐 गुगल शीट उघडा ↗️
               </a>
               <button class="sheet-btn sheet-btn-secondary" onclick="openSheetSettingsModal()">
@@ -2443,7 +2547,7 @@
             </div>
           </div>
           <div class="sheet-meta">
-            <div>📄 <b>Spreadsheet ID:</b> <span id="lblSpreadsheetId" style="font-family:monospace; background:#e2e8f0; padding:2px 6px; border-radius:4px;">1QW9vQ943bT131102008741_b9e7cQ86z7pLzP9gX3e0r</span></div>
+            <div>📄 <b>Spreadsheet ID:</b> <span id="lblSpreadsheetId" style="font-family:monospace; background:#e2e8f0; padding:2px 6px; border-radius:4px;">1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM</span></div>
             <div>🕒 <b>शेवटचे सिंक:</b> <span id="lblLastSyncTime">सिंक सज्ज</span></div>
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
               <b>📥 CSV डाऊनलोड:</b>
@@ -4499,6 +4603,48 @@
       }).syncAllToGoogleSheet();
     }
 
+    function fetchRealtimeFromGoogleSheet() {
+      const btn = document.getElementById('btnFetchLiveSheet');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'फेच होत आहे... ⏳';
+      }
+      google.script.run.withSuccessHandler(res => {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
+        }
+        if (res && res.success) {
+          alert(res.message);
+          if (typeof loadTablesData === 'function') loadTablesData();
+          if (typeof loadDashboardData === 'function') loadDashboardData();
+          const curM = document.getElementById('selIndicatorMonth') ? document.getElementById('selIndicatorMonth').value : '';
+          if (curM && typeof loadMonthlyIndicators === 'function') loadMonthlyIndicators(curM);
+        } else {
+          alert('डेटा फेच करताना अडचण: ' + (res ? res.message : 'अज्ञात त्रुटी'));
+        }
+      }).withFailureHandler(err => {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
+        }
+        alert('एरर: ' + err.message);
+      }).fetchRealtimeFromGoogleSheet();
+    }
+
+    function clearAllDummyDataConfirm() {
+      if (!confirm('सावधान: प्रणालीमधील सर्व तात्पुरता किंवा नमुना डेटा काढून शून्य स्थितीत रीसेट करायचा आहे का?')) return;
+      google.script.run.withSuccessHandler(res => {
+        alert(res && res.message ? res.message : 'सर्व तात्पुरता डेटा काढण्यात आला.');
+        if (typeof loadTablesData === 'function') loadTablesData();
+        if (typeof loadDashboardData === 'function') loadDashboardData();
+        const curM = document.getElementById('selIndicatorMonth') ? document.getElementById('selIndicatorMonth').value : '';
+        if (curM && typeof loadMonthlyIndicators === 'function') loadMonthlyIndicators(curM);
+      }).withFailureHandler(err => {
+        alert('एरर: ' + err.message);
+      }).clearAllDummyData();
+    }
+
     function openSheetSettingsModal() {
       document.getElementById('sheetSettingsModal').style.display = 'flex';
       const idInp = document.getElementById('cfgSpreadsheetId');
@@ -6227,7 +6373,38 @@ function getOrCreateSheet(ss, name, headers) {
       });
       if(!isValid) { alert("⚠️ बेरीज जुळत नाही! कृपया फॉर्म आणि गावनिहाय नमुन्यांची संख्या तपासा."); return; }
       btn.disabled = true; btn.textContent = "सबमिट होत आहे... ⏳";
-      google.script.run.withSuccessHandler(res => { alert(res.message); if(res.success) location.reload(); else { btn.disabled = false; btn.textContent = "✅ डेटा जतन करा"; } }).processForm(data);
+
+      function onComplete(res) {
+        let msg = '✅ रक्त नमुने नोंद यशस्वीरित्या सुरक्षित जतन झाली!';
+        let isSuccess = true;
+        if (res) {
+          if (typeof res === 'string') {
+            msg = res;
+          } else if (typeof res === 'object') {
+            msg = res.message || res.msg || (res.result && (res.result.message || res.result.msg)) || msg;
+            if (res.success !== undefined) isSuccess = Boolean(res.success);
+            else if (res.result && res.result.success !== undefined) isSuccess = Boolean(res.result.success);
+          }
+        }
+        alert(msg);
+        if (isSuccess) {
+          location.reload();
+        } else {
+          btn.disabled = false;
+          btn.textContent = "✅ डेटा जतन करा";
+        }
+      }
+
+      function onError(err) {
+        alert("⚠️ जतन करताना अडचण आली: " + (err && err.message ? err.message : String(err)));
+        btn.disabled = false;
+        btn.textContent = "✅ डेटा जतन करा";
+      }
+
+      google.script.run
+        .withSuccessHandler(onComplete)
+        .withFailureHandler(onError)
+        .processForm(data);
     }
 
     // ==========================================

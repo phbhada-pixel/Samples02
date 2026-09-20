@@ -640,6 +640,104 @@ app.post('/api/rpc', async (req, res) => {
         break;
       }
 
+      case 'fetchRealtimeFromGoogleSheet':
+      case 'fetchDataFromGoogleSheet': {
+        if (!googleSheetConfig.webhookUrl) {
+          result = { success: false, message: 'गुगल शीट वेबहूक URL कॉन्फिगर केलेले नाही.' };
+          break;
+        }
+
+        try {
+          console.log('[Server] Fetching live data from Google Sheet webhook...');
+          const fetchRes = await fetch(googleSheetConfig.webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'fetchAllData',
+              spreadsheetId: googleSheetConfig.spreadsheetId
+            })
+          });
+
+          if (!fetchRes.ok) {
+            throw new Error(`HTTP Error ${fetchRes.status}: ${fetchRes.statusText}`);
+          }
+
+          const fetchedData = await fetchRes.json();
+          let importedBs = 0;
+          let importedVil = 0;
+
+          if (Array.isArray(fetchedData.bsData) && fetchedData.bsData.length > 0) {
+            bsDataEntry.length = 0;
+            fetchedData.bsData.forEach(r => {
+              bsDataEntry.push([
+                r.id,
+                new Date(r.date || Date.now()),
+                r.upkendra || '',
+                r.name || '',
+                r.designation || '',
+                r.bsCode || '',
+                r.bundleNumber || '',
+                parseInt(r.pasun) || 1,
+                parseInt(r.paraynt) || 1,
+                parseInt(r.total) || 1
+              ]);
+              importedBs++;
+            });
+          }
+
+          if (Array.isArray(fetchedData.villageDetails) && fetchedData.villageDetails.length > 0) {
+            villageDetails.length = 0;
+            fetchedData.villageDetails.forEach(v => {
+              villageDetails.push([
+                v.id,
+                v.employeeName || '',
+                new Date(v.date || Date.now()),
+                v.villageName || '',
+                parseInt(v.sampleCount) || 1,
+                parseInt(v.maleCount) || 0,
+                parseInt(v.femaleCount) || 0,
+                v.upkendra || ''
+              ]);
+              importedVil++;
+            });
+          }
+
+          if (importedBs > 0 || importedVil > 0) {
+            saveDbToDisk();
+          }
+
+          googleSheetConfig.lastSyncTime = new Date().toISOString();
+          googleSheetConfig.syncStatus = 'रिअल-टाईम सिंक सक्रिय (Active)';
+
+          result = {
+            success: true,
+            importedBs,
+            importedVil,
+            totalRecords: bsDataEntry.length,
+            message: (importedBs > 0 || importedVil > 0)
+              ? `गुगल शीटमधून ${importedBs} रक्त नमुना नोंदी व ${importedVil} गाव नोंदी यशस्वीरित्या सिंक झाल्या!`
+              : `गुगल शीटशी संपर्क झाला, सध्या शीटमध्ये नवीन नोंदी उपलब्ध नाहीत.`
+          };
+        } catch (err) {
+          console.error('[Server] Error fetching from Google Sheet:', err);
+          result = {
+            success: false,
+            message: `गुगल शीटमधून थेट डेटा फेच करताना त्रुटी: ${err.message}`
+          };
+        }
+        break;
+      }
+
+      case 'clearAllDummyData':
+      case 'clearAllData': {
+        const clearRes = clearAllTransactionData();
+        result = {
+          success: true,
+          message: clearRes.message || 'सर्व तात्पुरता/नमुना डेटा यशस्वीरित्या काढून टाकण्यात आला.'
+        };
+        break;
+      }
+
       case 'deleteBsEntry': {
         const [entryId] = args;
         const index = bsDataEntry.findIndex(r => r[0] === entryId);
@@ -736,7 +834,7 @@ app.post('/api/rpc', async (req, res) => {
           monthObj = monthMaster.find(m => m.f1Start && m.f2End && today >= new Date(m.f1Start) && today <= new Date(m.f2End)) || monthMaster[8] || monthMaster[0];
         }
         if (!monthObj) {
-          monthObj = { name: "सप्टेंबर २०२६", newOpd: 470, feverCases: 120, bloodSmears: 120, treatedCases: 120, chloroquineSpent: 180, f1Start: new Date(2026, 8, 1), f2End: new Date(2026, 8, 30) };
+          monthObj = { name: "सप्टेंबर २०२६", newOpd: 0, feverCases: 0, bloodSmears: 0, treatedCases: 0, chloroquineSpent: 0, f1Start: new Date(2026, 8, 1), f2End: new Date(2026, 8, 30) };
         }
 
         const targetIdx = Math.max(0, monthMaster.indexOf(monthObj));
@@ -960,7 +1058,7 @@ app.post('/api/rpc', async (req, res) => {
         const priorTreatedSum = priorMonths.reduce((s, m) => s + (parseInt(m.treatedCases != null ? m.treatedCases : 0) || 0), 0);
         const priorCqSum = priorMonths.reduce((s, m) => s + (parseInt(m.chloroquineSpent) || 0), 0);
 
-        const newOpd = monthObj.newOpd != null ? parseInt(monthObj.newOpd) : 470;
+        const newOpd = monthObj.newOpd != null ? parseInt(monthObj.newOpd) : 0;
         const progNewOpd = monthObj.progNewOpd != null ? parseInt(monthObj.progNewOpd) : (priorOpdSum + newOpd);
 
         // Blood Smears automatically taken from OPD BS in villagewise
@@ -1303,13 +1401,10 @@ app.post('/api/rpc', async (req, res) => {
 
       case 'seedInitialData':
       case 'resetToDefaultData': {
-        bsDataEntry.length = 0;
-        villageDetails.length = 0;
-        seedInitialMalariaData();
-        saveDbToDisk();
+        const clearRes = clearAllTransactionData();
         result = {
           success: true,
-          message: `डेटाबेस मध्ये ६५ कर्मचारी व ३० गावांचा २०२६ चा अधिकृत रक्त नमुने डेटा यशस्वीरित्या भरला गेला! (BsData: ${bsDataEntry.length}, VillageDetails: ${villageDetails.length})`
+          message: "सर्व तात्पुरता/नमुना डेटा यशस्वीरित्या काढून टाकण्यात आला. प्रणाली रिअल-टाईम नोंदींसाठी सज्ज आहे."
         };
         break;
       }
