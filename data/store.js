@@ -3610,9 +3610,7 @@ export function loadDbFromDisk() {
 
 export function recalculateAllMonthProgressives() {
   let runOpd = 0;
-  let runFever = 0;
   let runSmears = 0;
-  let runTreated = 0;
   let runCq = 0;
   let runMpw = 0;
   let runAnm = 0;
@@ -3620,37 +3618,46 @@ export function recalculateAllMonthProgressives() {
 
   for (let i = 0; i < monthMaster.length; i++) {
     const m = monthMaster[i];
-    const mOpd = parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0;
-    const mFever = parseInt(m.feverCases) || 0;
+
+    // Auto-populate Blood Smears from OPD section (बाह्यरुग्ण विभाग रक्त नमुने) for this month
+    // "monthly report data entry madhye ghetlele raktnamuna he tya mahinyat bahyrugn vibhag rakt namune auto save vhave"
+    const opdSummary = getOpdBsVillagewiseSummary(m.name);
+    if (opdSummary && opdSummary.monthlyTotal > 0 && (!m.bloodSmears || m.bloodSmears === 0 || !m.bloodSmearsManual)) {
+      m.bloodSmears = opdSummary.monthlyTotal;
+    }
+
+    // "tasech 🩸 घेतलेले रक्त नमुणे (Blood Smears)=🌡️ तापाचे रुग्ण (Fever Cases)=💊 उपचारीत रुग्ण (Treated Cases)"
     const mSmears = parseInt(m.bloodSmears) || 0;
-    const mTreated = parseInt(m.treatedCases) || 0;
+    m.bloodSmears = mSmears;
+    m.feverCases = mSmears;
+    m.treatedCases = mSmears;
+
+    const mOpd = parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0;
     const mCq = parseInt(m.chloroquineSpent) || 0;
     const mMpw = parseInt(m.mpwHomeVisits) || 0;
     const mAnm = parseInt(m.anmHomeVisits) || 0;
     const mAsha = parseInt(m.ashaHomeVisits) || 0;
 
     m.priorOpdSum = runOpd;
-    m.priorFeverSum = runFever;
+    m.priorFeverSum = runSmears;
     m.priorSmearsSum = runSmears;
-    m.priorTreatedSum = runTreated;
+    m.priorTreatedSum = runSmears;
     m.priorCqSum = runCq;
     m.priorMpwSum = runMpw;
     m.priorAnmSum = runAnm;
     m.priorAshaSum = runAsha;
 
     runOpd += mOpd;
-    runFever += mFever;
     runSmears += mSmears;
-    runTreated += mTreated;
     runCq += mCq;
     runMpw += mMpw;
     runAnm += mAnm;
     runAsha += mAsha;
 
     m.progNewOpd = runOpd;
-    m.progFeverCases = runFever;
+    m.progFeverCases = runSmears;
     m.progBloodSmears = runSmears;
-    m.progTreatedCases = runTreated;
+    m.progTreatedCases = runSmears;
     m.progChloroquineSpent = runCq;
     m.progMpwHomeVisits = runMpw;
     m.progAnmHomeVisits = runAnm;

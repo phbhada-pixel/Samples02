@@ -511,6 +511,7 @@ app.post('/api/rpc', async (req, res) => {
           }
         });
 
+        recalculateAllMonthProgressives();
         saveDbToDisk();
 
         // Direct Google Sheet Sync: Await webhook persistence
@@ -856,20 +857,28 @@ app.post('/api/rpc', async (req, res) => {
 
         const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
 
+        // Auto-populate & auto-save Blood Smears from OPD section (बाह्यरुग्ण विभाग रक्त नमुने)
+        if (opdSummary.monthlyTotal > 0 && (!monthObj.bloodSmears || monthObj.bloodSmears === 0 || !monthObj.bloodSmearsManual)) {
+          monthObj.bloodSmears = opdSummary.monthlyTotal;
+        }
+
         const newOpd = parseInt(monthObj.newOpd != null ? monthObj.newOpd : (monthObj.opd || 0)) || 0;
         const progNewOpd = priorOpdSum + newOpd;
 
-        const feverCases = parseInt(monthObj.feverCases) || 0;
-        const progFeverCases = priorFeverSum + feverCases;
-
+        // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
         let bloodSmears = monthObj.bloodSmears != null ? parseInt(monthObj.bloodSmears) : 0;
         if (bloodSmears === 0 && opdSummary.monthlyTotal > 0) {
           bloodSmears = opdSummary.monthlyTotal;
         }
-        const progBloodSmears = priorSmearsSum + bloodSmears;
+        monthObj.bloodSmears = bloodSmears;
+        monthObj.feverCases = bloodSmears;
+        monthObj.treatedCases = bloodSmears;
 
-        const treatedCases = parseInt(monthObj.treatedCases) || 0;
-        const progTreatedCases = priorTreatedSum + treatedCases;
+        const progBloodSmears = priorSmearsSum + bloodSmears;
+        const feverCases = bloodSmears;
+        const progFeverCases = progBloodSmears;
+        const treatedCases = bloodSmears;
+        const progTreatedCases = progBloodSmears;
 
         const chloroquineSpent = parseInt(monthObj.chloroquineSpent) || 0;
         const progChloroquineSpent = priorCqSum + chloroquineSpent;
@@ -1052,26 +1061,34 @@ app.post('/api/rpc', async (req, res) => {
         // Calculate dynamic OPD Blood Smears directly from villagewise entries
         const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
 
-        const priorOpdSum = priorMonths.reduce((s, m) => s + (parseInt(m.newOpd) || 0), 0);
-        const priorFeverSum = priorMonths.reduce((s, m) => s + (parseInt(m.feverCases != null ? m.feverCases : 0) || 0), 0);
-        // Prior smears dynamically based on villagewise or prior months sum
-        const priorSmearsSum = opdSummary.priorTotal != null ? opdSummary.priorTotal : priorMonths.reduce((s, m) => s + (parseInt(m.bloodSmears != null ? m.bloodSmears : (m.feverCases || 0)) || 0), 0);
-        const priorTreatedSum = priorMonths.reduce((s, m) => s + (parseInt(m.treatedCases != null ? m.treatedCases : 0) || 0), 0);
-        const priorCqSum = priorMonths.reduce((s, m) => s + (parseInt(m.chloroquineSpent) || 0), 0);
+        // Auto-populate & auto-save Blood Smears from OPD section (त्या महिन्यात बाह्यरुग्ण विभाग रक्त नमुने auto save व्हावे)
+        if (opdSummary.monthlyTotal > 0 && (!monthObj.bloodSmears || monthObj.bloodSmears === 0 || !monthObj.bloodSmearsManual)) {
+          monthObj.bloodSmears = opdSummary.monthlyTotal;
+        }
+
+        // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
+        const bloodSmears = parseInt(monthObj.bloodSmears) || (opdSummary.monthlyTotal > 0 ? opdSummary.monthlyTotal : 0);
+        monthObj.bloodSmears = bloodSmears;
+        monthObj.feverCases = bloodSmears;
+        monthObj.treatedCases = bloodSmears;
+
+        recalculateAllMonthProgressives();
+        saveDbToDisk();
+
+        const priorOpdSum = monthObj.priorOpdSum != null ? monthObj.priorOpdSum : priorMonths.reduce((s, m) => s + (parseInt(m.newOpd) || 0), 0);
+        const priorSmearsSum = monthObj.priorSmearsSum != null ? monthObj.priorSmearsSum : priorMonths.reduce((s, m) => s + (parseInt(m.bloodSmears) || 0), 0);
+        const priorFeverSum = priorSmearsSum;
+        const priorTreatedSum = priorSmearsSum;
+        const priorCqSum = monthObj.priorCqSum != null ? monthObj.priorCqSum : priorMonths.reduce((s, m) => s + (parseInt(m.chloroquineSpent) || 0), 0);
 
         const newOpd = monthObj.newOpd != null ? parseInt(monthObj.newOpd) : 0;
         const progNewOpd = monthObj.progNewOpd != null ? parseInt(monthObj.progNewOpd) : (priorOpdSum + newOpd);
 
-        // Blood Smears automatically taken from OPD BS in villagewise
-        const bloodSmears = (monthObj.bloodSmearsManual && monthObj.bloodSmears != null) ? parseInt(monthObj.bloodSmears) : opdSummary.monthlyTotal;
-        const progBloodSmears = (monthObj.bloodSmearsManual && monthObj.progBloodSmears != null) ? parseInt(monthObj.progBloodSmears) : opdSummary.ytdTotal;
-
-        // In NVBDCP, fever cases in OPD routinely match blood smears taken unless explicitly entered
-        const feverCases = monthObj.feverCases != null ? parseInt(monthObj.feverCases) : bloodSmears;
-        const progFeverCases = monthObj.progFeverCases != null ? parseInt(monthObj.progFeverCases) : (priorFeverSum + feverCases);
-
-        const treatedCases = monthObj.treatedCases != null ? parseInt(monthObj.treatedCases) : feverCases;
-        const progTreatedCases = monthObj.progTreatedCases != null ? parseInt(monthObj.progTreatedCases) : (priorTreatedSum + treatedCases);
+        const progBloodSmears = monthObj.progBloodSmears != null ? parseInt(monthObj.progBloodSmears) : (priorSmearsSum + bloodSmears);
+        const feverCases = bloodSmears;
+        const progFeverCases = progBloodSmears;
+        const treatedCases = bloodSmears;
+        const progTreatedCases = progBloodSmears;
 
         const chloroquineSpent = parseInt(monthObj.chloroquineSpent) || 0;
         const progChloroquineSpent = monthObj.progChloroquineSpent != null ? parseInt(monthObj.progChloroquineSpent) : (priorCqSum + chloroquineSpent);
@@ -1123,11 +1140,18 @@ app.post('/api/rpc', async (req, res) => {
         const opdIn = indicatorData.newOpd !== undefined ? indicatorData.newOpd : indicatorData.opd;
         if (opdIn !== undefined) monthObj.newOpd = parseInt(opdIn) || 0;
 
-        if (indicatorData.feverCases !== undefined) monthObj.feverCases = parseInt(indicatorData.feverCases) || 0;
+        // Auto-resolve Blood Smears: from input or from OPD villagewise summary
+        const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
+        let bsVal = indicatorData.bloodSmears !== undefined ? parseInt(indicatorData.bloodSmears) : null;
+        if (bsVal === null || (bsVal === 0 && opdSummary.monthlyTotal > 0)) {
+          bsVal = opdSummary.monthlyTotal;
+        }
+        monthObj.bloodSmears = bsVal != null ? bsVal : 0;
+        monthObj.bloodSmearsManual = (indicatorData.bloodSmears !== undefined);
 
-        if (indicatorData.bloodSmears !== undefined) monthObj.bloodSmears = parseInt(indicatorData.bloodSmears) || 0;
-
-        if (indicatorData.treatedCases !== undefined) monthObj.treatedCases = parseInt(indicatorData.treatedCases) || 0;
+        // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
+        monthObj.feverCases = monthObj.bloodSmears;
+        monthObj.treatedCases = monthObj.bloodSmears;
 
         const cqIn = indicatorData.chloroquineSpent !== undefined ? indicatorData.chloroquineSpent : indicatorData.chloroquine;
         if (cqIn !== undefined) monthObj.chloroquineSpent = parseInt(cqIn) || 0;
@@ -1179,6 +1203,106 @@ app.post('/api/rpc', async (req, res) => {
             chloroquineSpent: monthObj.chloroquineSpent,
             progChloroquineSpent: monthObj.progChloroquineSpent
           }
+        };
+        break;
+      }
+
+      // ================= REPORT DATA VALIDATION & AUTO-ALIGN RPC =================
+      case 'validateMonthlyReport': {
+        const [monthName] = args;
+        if (!monthName) {
+          return res.status(400).json({ error: 'महिना निवडा.' });
+        }
+        const clean = s => String(s || '').trim();
+        const monthObj = monthMaster.find(m => clean(m.name) === clean(monthName));
+        if (!monthObj) {
+          return res.status(404).json({ error: `महिना '${monthName}' सापडला नाही.` });
+        }
+
+        const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
+        const priorMonths = monthMaster.slice(0, monthMaster.indexOf(monthObj));
+
+        const bloodSmears = parseInt(monthObj.bloodSmears) || 0;
+        const feverCases = parseInt(monthObj.feverCases) || 0;
+        const treatedCases = parseInt(monthObj.treatedCases) || 0;
+        const newOpd = parseInt(monthObj.newOpd) || 0;
+        const cq = parseInt(monthObj.chloroquineSpent) || 0;
+
+        const priorSmears = priorMonths.reduce((s, m) => s + (parseInt(m.bloodSmears) || 0), 0);
+        const progBloodSmears = parseInt(monthObj.progBloodSmears) || (priorSmears + bloodSmears);
+
+        const priorOpd = priorMonths.reduce((s, m) => s + (parseInt(m.newOpd) || 0), 0);
+        const progNewOpd = parseInt(monthObj.progNewOpd) || (priorOpd + newOpd);
+
+        const rule1Equal = (bloodSmears === feverCases && bloodSmears === treatedCases);
+        const rule2OpdMatch = (bloodSmears === opdSummary.monthlyTotal);
+        const rule3ProgMatch = (progBloodSmears === (priorSmears + bloodSmears));
+
+        const isValid = rule1Equal && rule2OpdMatch && rule3ProgMatch;
+
+        result = {
+          success: true,
+          monthName: monthObj.name,
+          isValid,
+          rule1: {
+            name: 'तपशील ३ समानता (रक्त नमुने = तापाचे रुग्ण = उपचारीत रुग्ण)',
+            passed: rule1Equal,
+            bloodSmears,
+            feverCases,
+            treatedCases
+          },
+          rule2: {
+            name: 'गावनिहाय OPD रक्त नमुने जुळणी (Village-wise OPD = Monthly Smears)',
+            passed: rule2OpdMatch,
+            monthlySmears: bloodSmears,
+            opdTotal: opdSummary.monthlyTotal,
+            opdVillages: opdSummary.villages
+          },
+          rule3: {
+            name: 'प्रगत संख्या स्वयं-गणना (Progressive YTD = Prior + Current)',
+            passed: rule3ProgMatch,
+            priorSmears,
+            currentSmears: bloodSmears,
+            expectedProg: priorSmears + bloodSmears,
+            actualProg: progBloodSmears
+          },
+          indicators: {
+            newOpd,
+            progNewOpd,
+            bloodSmears,
+            feverCases,
+            treatedCases,
+            chloroquineSpent: cq
+          }
+        };
+        break;
+      }
+
+      case 'autoAlignMonthlyReport': {
+        const [monthName] = args;
+        if (!monthName) {
+          return res.status(400).json({ error: 'महिना निवडा.' });
+        }
+        const clean = s => String(s || '').trim();
+        const monthObj = monthMaster.find(m => clean(m.name) === clean(monthName));
+        if (!monthObj) {
+          return res.status(404).json({ error: `महिना '${monthName}' सापडला नाही.` });
+        }
+
+        const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
+        const correctSmears = opdSummary.monthlyTotal;
+
+        monthObj.bloodSmears = correctSmears;
+        monthObj.feverCases = correctSmears;
+        monthObj.treatedCases = correctSmears;
+
+        recalculateAllMonthProgressives();
+        saveDbToDisk();
+
+        result = {
+          success: true,
+          message: `✅ माहे ${monthObj.name} साठी रक्त नमुने, तापाचे रुग्ण व उपचारीत रुग्ण (${correctSmears}) तंतोतंत सिंक झाले व प्रगत आकडे दुरुस्त झाले!`,
+          alignedValue: correctSmears
         };
         break;
       }

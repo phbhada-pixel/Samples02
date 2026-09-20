@@ -246,19 +246,20 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     const opdSummary = getOpdBsVillagewiseSummary(selectedMonthDisplay);
 
     // घेतलेले रक्त नमुणे (Blood smears collected: मासिक व प्रगत)
-    const smearsM = monthObj.bloodSmears != null ? parseInt(monthObj.bloodSmears) : opdSummary.monthlyTotal;
+    let smearsM = monthObj.bloodSmears != null ? parseInt(monthObj.bloodSmears) : 0;
+    if (smearsM === 0 && opdSummary.monthlyTotal > 0) {
+      smearsM = opdSummary.monthlyTotal;
+    }
     const priorSmears = priorMonths.reduce((sum, m) => sum + (parseInt(m.bloodSmears) || 0), 0);
     const smearsProg = priorSmears + smearsM; // घेतलेले रक्त नमुणे प्रगत (स्वयं-गणना)
 
-    // तापाचे रुग्ण (Fever cases: मासिक व प्रगत)
-    const feverM = monthObj.feverCases != null ? parseInt(monthObj.feverCases) : smearsM;
-    const priorFever = priorMonths.reduce((sum, m) => sum + (parseInt(m.feverCases) || 0), 0);
-    const feverProg = priorFever + feverM; // तापाचे रुग्ण प्रगत (स्वयं-गणना)
+    // तापाचे रुग्ण (Fever cases) = घेतलेले रक्त नमुणे (Blood Smears) = उपचारीत रुग्ण (Treated cases)
+    const feverM = smearsM;
+    const feverProg = smearsProg;
 
-    // उपचारीत रुग्ण (Treated cases: मासिक व प्रगत)
-    const treatedM = monthObj.treatedCases != null ? parseInt(monthObj.treatedCases) : feverM;
-    const priorTreated = priorMonths.reduce((sum, m) => sum + (parseInt(m.treatedCases) || 0), 0);
-    const treatedProg = priorTreated + treatedM; // उपचारीत रुग्ण प्रगत (स्वयं-गणना)
+    // उपचारीत रुग्ण (Treated cases) = घेतलेले रक्त नमुणे (Blood Smears)
+    const treatedM = smearsM;
+    const treatedProg = smearsProg;
 
     // क्लोरोक्वीन गोळया खर्च (Chloroquine tablets consumed: मासिक व प्रगत)
     const cqM = parseInt(monthObj.chloroquineSpent) || 0;

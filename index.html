@@ -1989,10 +1989,10 @@
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #dd6b20;">
                   <label style="font-size:12px; font-weight:700; color:#c05621; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>🌡️ तापाचे रुग्ण (Fever Cases)</span>
-                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                    <span style="font-size:10px; color:#c05621; font-weight:700;">(🔗 = रक्त नमुने)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpFeverM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
+                    <input type="number" id="mrdInpFeverM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange('fever')">
                     <input type="number" id="mrdInpFeverP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintFever" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
@@ -2002,10 +2002,10 @@
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #319795;">
                   <label style="font-size:12px; font-weight:700; color:#234e52; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>🩸 घेतलेले रक्त नमुणे (Blood Smears)</span>
-                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                    <span style="font-size:10px; color:#234e52; font-weight:700;">(🏥 OPD auto-save)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpSmearsM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
+                    <input type="number" id="mrdInpSmearsM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange('smears')">
                     <input type="number" id="mrdInpSmearsP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintSmears" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
@@ -2015,10 +2015,10 @@
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #38a169;">
                   <label style="font-size:12px; font-weight:700; color:#276749; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>💊 उपचारीत रुग्ण (Treated Cases)</span>
-                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                    <span style="font-size:10px; color:#276749; font-weight:700;">(🔗 = रक्त नमुने)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpTreatedM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
+                    <input type="number" id="mrdInpTreatedM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange('treated')">
                     <input type="number" id="mrdInpTreatedP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintTreated" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
@@ -2295,13 +2295,43 @@
       <div id="dataEntry" class="tab-pane">
         
         <!-- Subtabs for Data Entry: Daily Blood Smears vs Monthly Report Indicators -->
-        <div class="table-subtabs" style="margin-bottom:20px;">
+        <div class="table-subtabs" style="margin-bottom:14px;">
           <button id="subtabBtnDaily" class="subtab-btn active" onclick="switchDataEntrySubtab('daily')">
             🩸 दैनिक रक्त नमुने नोंदणी (Daily Smears)
           </button>
           <button id="subtabBtnMonthly" class="subtab-btn" onclick="switchDataEntrySubtab('monthly')">
             📋 मासिक अहवाल तपशील नोंदणी (नवीन बाह्यरुग्ण, तापाचे रुग्ण, उपचारीत रुग्ण, क्लोरोक्वीन)
           </button>
+        </div>
+
+        <!-- 3-Step Data Matching Guide Card -->
+        <div style="background:#f7fafc; border:1px solid #cbd5e0; border-left:4px solid #3182ce; border-radius:10px; padding:12px 16px; margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDataWorkflowGuide()">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">📖</span>
+              <span style="font-weight:700; color:#2b6cb0; font-size:14px;">डेटा १००% तंतोतंत जुळण्यासाठी ३ सोप्या पायऱ्या (Workflow Guide)</span>
+            </div>
+            <span id="guideToggleIcon" style="font-size:12px; color:#4a5568; font-weight:bold; background:#edf2f7; padding:2px 8px; border-radius:12px;">पहा ▼</span>
+          </div>
+          <div id="dataWorkflowGuideContent" style="display:none; margin-top:12px; border-top:1px solid #e2e8f0; padding-top:12px; font-size:13px; color:#2d3748; line-height:1.6;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
+              <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+                <div style="font-weight:700; color:#dd6b20; margin-bottom:4px;">पायरी १: दैनिक रक्त नमुने नोंदणी</div>
+                <div style="font-size:12px; color:#4a5568;">त्या महिन्यातील सर्व संशयित तापाच्या रुग्णांचे नमुने (गाव, वय, लिंग) अचूक नोंदवा. यावरून बाह्यरुग्ण (OPD) रक्त नमुने आपोआप तयार होतात.</div>
+              </div>
+              <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+                <div style="font-weight:700; color:#2b6cb0; margin-bottom:4px;">पायरी २: मासिक तपशील नोंदणी</div>
+                <div style="font-size:12px; color:#4a5568;">नवीन बाह्यरुग्ण (OPD) व क्लोरोक्वीन भरा. रक्त नमुने OPD वरून आपोआप येतात व <b>रक्त नमुने = तापाचे रुग्ण = उपचारीत रुग्ण</b> आपोआप समान होतात.</div>
+              </div>
+              <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+                <div style="font-weight:700; color:#276749; margin-bottom:4px;">पायरी ३: अहवाल पडताळणी</div>
+                <div style="font-size:12px; color:#4a5568;">अहवाल काढताना <b>तपशील ३</b> (समान संख्या), <b>गावनिहाय तक्ता</b> आणि <b>प्रगत संख्या</b> (मागील + चालू) यांची खात्री करून प्रिंट/PDF काढा.</div>
+              </div>
+            </div>
+            <div style="background:#ebf8ff; color:#2b6cb0; font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:6px; margin-top:10px; text-align:center;">
+              ⚡ सूत्र: पायरी १ (दैनिक रक्त नमुने) ➔ पायरी २ (मासिक OPD व क्लोरोक्वीन) ➔ पायरी ३ (अहवाल जनरेट व पडताळणी)
+            </div>
+          </div>
         </div>
 
         <!-- Subpane 1: Daily Smear Entry -->
@@ -2376,13 +2406,14 @@
 
               <!-- 2. तापाचे रुग्ण (Fever Patients) -->
               <div class="indicator-input-card" style="border-top:4px solid #dd6b20;">
-                <div class="indicator-card-title" style="color:#c05621;">
+                <div class="indicator-card-title" style="color:#c05621; display:flex; justify-content:space-between; align-items:center;">
                   <span>🌡️ २. तापाचे रुग्ण (Fever Cases)</span>
+                  <span style="background:#feebc8; color:#c05621; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔗 = रक्त नमुणे = उपचारीत</span>
                 </div>
                 <div class="indicator-card-body">
                   <div class="form-group" style="margin-bottom:10px;">
                     <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
-                    <input type="number" id="inpFeverCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
+                    <input type="number" id="inpFeverCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange('fever')">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -2399,7 +2430,7 @@
               <div class="indicator-input-card" style="border-top:4px solid #319795;">
                 <div class="indicator-card-title" style="color:#234e52; display:flex; justify-content:space-between; align-items:center;">
                   <span>🩸 ३. घेतलेले रक्त नमुणे (Blood Smears)</span>
-                  <span style="background:#c6f6d5; color:#22543d; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔄 गावनिहाय OPD BS मधून</span>
+                  <span style="background:#c6f6d5; color:#22543d; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🏥 बाह्यरुग्ण विभाग (OPD) auto-save</span>
                 </div>
                 <div class="indicator-card-body">
                   <div class="form-group" style="margin-bottom:10px;">
@@ -2407,7 +2438,7 @@
                       <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
                       <span id="badgeOpdMonthTag" style="font-size:11px; color:#2c7a7b; font-weight:700;"></span>
                     </div>
-                    <input type="number" id="inpBloodSmears" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
+                    <input type="number" id="inpBloodSmears" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange('smears')">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -2431,13 +2462,14 @@
 
               <!-- 4. उपचारीत रुग्ण (Treated Patients) -->
               <div class="indicator-input-card" style="border-top:4px solid #38a169;">
-                <div class="indicator-card-title" style="color:#276749;">
+                <div class="indicator-card-title" style="color:#276749; display:flex; justify-content:space-between; align-items:center;">
                   <span>💊 ४. उपचारीत रुग्ण (Treated Patients)</span>
+                  <span style="background:#c6f6d5; color:#276749; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔗 = रक्त नमुणे = तापाचे रुग्ण</span>
                 </div>
                 <div class="indicator-card-body">
                   <div class="form-group" style="margin-bottom:10px;">
                     <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
-                    <input type="number" id="inpTreatedCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
+                    <input type="number" id="inpTreatedCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange('treated')">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -2571,8 +2603,36 @@
           
           <div id="cardDaily" class="report-card" style="border-left: 5px solid #ed8936;"><h3 style="color:#dd6b20; margin-top:0;">🖨️ दैनिक पत्र</h3><div class="form-group"><label>तारीख निवडा</label><input type="date" id="dailyReportDate"></div><button class="report-btn" style="background:#dd6b20;" onclick="generateDailyLetter(this)">पत्राची PDF तयार करा</button><div id="dailyReportStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
           <div id="cardMonthly" class="report-card" style="border-left: 5px solid #3182ce;">
-            <h3 style="color:#2b6cb0; margin-top:0;">📊 मासिक अहवाल</h3>
-            <div class="form-group"><label>महिना निवडा</label><select id="reportMonthSelect"><option value="">लोड होत आहे...</option></select></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+              <h3 style="color:#2b6cb0; margin:0;">📊 मासिक अहवाल व डेटा पडताळणी</h3>
+              <span style="font-size:11px; background:#ebf8ff; color:#2b6cb0; border:1px solid #bee3f8; padding:3px 8px; border-radius:12px; font-weight:600;">
+                ३-पायऱ्या पडताळणी प्रमाणित
+              </span>
+            </div>
+            
+            <div class="form-group">
+              <label>महिना निवडा</label>
+              <select id="reportMonthSelect" onchange="runReportValidationForMonth(this.value)">
+                <option value="">लोड होत आहे...</option>
+              </select>
+            </div>
+
+            <!-- अहवाल डेटा पडताळणी कार्ड (Report Validation Check Card) -->
+            <div id="reportValidationContainer" style="background:#f8fafc; border:1px solid #cbd5e0; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-weight:700; color:#2b6cb0; font-size:13px; display:flex; align-items:center; gap:6px;">
+                  <span>🔍</span> <span>अहवाल डेटा पडताळणी (Validation Check)</span>
+                </div>
+                <button type="button" class="sheet-btn sheet-btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="runReportValidationForMonth(document.getElementById('reportMonthSelect').value)">
+                  🔄 पुन्हा तपासा
+                </button>
+              </div>
+
+              <div id="reportValidationStatus" style="font-size:12.5px; color:#4a5568;">
+                <div style="text-align:center; padding:8px; color:#718096;">महिना निवडा म्हणजे डेटा पडताळणी आपोआप होईल.</div>
+              </div>
+            </div>
+
             <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
               <button class="report-btn" style="background:#3182ce; flex:1;" onclick="generateReport(this)">मासिक रिपोर्ट जनरेट करा</button>
               <button type="button" class="sheet-btn" style="background:#00796b; padding:12px 16px;" onclick="goToMonthlyIndicatorsFromReport()">📝 या महिन्याचा डेटा भरा / बदला</button>
@@ -4498,7 +4558,16 @@
         const cur = rSelect.value;
         rSelect.innerHTML = '<option value="">-- महिना निवडा --</option>';
         list.forEach(m => rSelect.add(new Option(m, m)));
-        if (cur) rSelect.value = cur;
+        if (cur && list.includes(cur)) {
+          rSelect.value = cur;
+        } else if (list.includes("सप्टेंबर २०२६")) {
+          rSelect.value = "सप्टेंबर २०२६";
+        } else if (list.length > 0) {
+          rSelect.value = list[0];
+        }
+        if (rSelect.value && typeof runReportValidationForMonth === 'function') {
+          runReportValidationForMonth(rSelect.value);
+        }
       }
       if (nSelect) {
         const cur = nSelect.value;
@@ -6131,14 +6200,24 @@
       const inpCqM = document.getElementById('mrdInpCqM');
       const inpCqP = document.getElementById('mrdInpCqP');
 
+      let smearsM = m.bloodSmears != null ? parseInt(m.bloodSmears) : 0;
+      if (smearsM === 0 && d.opdVillagewise && d.opdVillagewise.monthlyTotal > 0) {
+        smearsM = d.opdVillagewise.monthlyTotal;
+      }
+      // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
+      let feverM = smearsM;
+      let treatedM = smearsM;
+
+      const pSmears = (mrdPriorCache.bloodSmears || 0) + smearsM;
+
       if (inpOpdM) inpOpdM.value = m.opd ?? 0;
       if (inpOpdP) inpOpdP.value = (mrdPriorCache.opd || 0) + (parseInt(m.opd) || 0);
-      if (inpFeverM) inpFeverM.value = m.feverCases ?? 0;
-      if (inpFeverP) inpFeverP.value = (mrdPriorCache.feverCases || 0) + (parseInt(m.feverCases) || 0);
-      if (inpSmearsM) inpSmearsM.value = m.bloodSmears ?? 0;
-      if (inpSmearsP) inpSmearsP.value = (mrdPriorCache.bloodSmears || 0) + (parseInt(m.bloodSmears) || 0);
-      if (inpTreatedM) inpTreatedM.value = m.treatedCases ?? 0;
-      if (inpTreatedP) inpTreatedP.value = (mrdPriorCache.treatedCases || 0) + (parseInt(m.treatedCases) || 0);
+      if (inpFeverM) inpFeverM.value = feverM;
+      if (inpFeverP) inpFeverP.value = pSmears;
+      if (inpSmearsM) inpSmearsM.value = smearsM;
+      if (inpSmearsP) inpSmearsP.value = pSmears;
+      if (inpTreatedM) inpTreatedM.value = treatedM;
+      if (inpTreatedP) inpTreatedP.value = pSmears;
       if (inpCqM) inpCqM.value = m.chloroquineSpent ?? 0;
       if (inpCqP) inpCqP.value = (mrdPriorCache.chloroquineSpent || 0) + (parseInt(m.chloroquineSpent) || 0);
 
@@ -6165,17 +6244,28 @@
       }
     }
 
-    function onMrdQuickEditFieldChange() {
+    function onMrdQuickEditFieldChange(source) {
+      let smearsM = parseInt(document.getElementById('mrdInpSmearsM').value) || 0;
+      if (source === 'fever') {
+        smearsM = parseInt(document.getElementById('mrdInpFeverM').value) || 0;
+        document.getElementById('mrdInpSmearsM').value = smearsM;
+      } else if (source === 'treated') {
+        smearsM = parseInt(document.getElementById('mrdInpTreatedM').value) || 0;
+        document.getElementById('mrdInpSmearsM').value = smearsM;
+      }
+      // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
+      document.getElementById('mrdInpFeverM').value = smearsM;
+      document.getElementById('mrdInpTreatedM').value = smearsM;
+
       const opdM = parseInt(document.getElementById('mrdInpOpdM').value) || 0;
-      const feverM = parseInt(document.getElementById('mrdInpFeverM').value) || 0;
-      const smearsM = parseInt(document.getElementById('mrdInpSmearsM').value) || 0;
-      const treatedM = parseInt(document.getElementById('mrdInpTreatedM').value) || 0;
       const cqM = parseInt(document.getElementById('mrdInpCqM').value) || 0;
 
+      const pSmears = (mrdPriorCache.bloodSmears || 0) + smearsM;
+
       document.getElementById('mrdInpOpdP').value = (mrdPriorCache.opd || 0) + opdM;
-      document.getElementById('mrdInpFeverP').value = (mrdPriorCache.feverCases || 0) + feverM;
-      document.getElementById('mrdInpSmearsP').value = (mrdPriorCache.bloodSmears || 0) + smearsM;
-      document.getElementById('mrdInpTreatedP').value = (mrdPriorCache.treatedCases || 0) + treatedM;
+      document.getElementById('mrdInpFeverP').value = pSmears;
+      document.getElementById('mrdInpSmearsP').value = pSmears;
+      document.getElementById('mrdInpTreatedP').value = pSmears;
       document.getElementById('mrdInpCqP').value = (mrdPriorCache.chloroquineSpent || 0) + cqM;
 
       updateMrdQuickEditHints();
@@ -6183,10 +6273,9 @@
 
     function updateMrdQuickEditHints() {
       const opdM = parseInt(document.getElementById('mrdInpOpdM')?.value) || 0;
-      const feverM = parseInt(document.getElementById('mrdInpFeverM')?.value) || 0;
       const smearsM = parseInt(document.getElementById('mrdInpSmearsM')?.value) || 0;
-      const treatedM = parseInt(document.getElementById('mrdInpTreatedM')?.value) || 0;
       const cqM = parseInt(document.getElementById('mrdInpCqM')?.value) || 0;
+      const pSmears = (mrdPriorCache.bloodSmears || 0) + smearsM;
 
       const hOpd = document.getElementById('mrdHintOpd');
       const hFever = document.getElementById('mrdHintFever');
@@ -6195,9 +6284,9 @@
       const hCq = document.getElementById('mrdHintCq');
 
       if (hOpd) hOpd.textContent = `मागील: ${mrdPriorCache.opd || 0} + चालू: ${opdM} = ${(mrdPriorCache.opd || 0) + opdM}`;
-      if (hFever) hFever.textContent = `मागील: ${mrdPriorCache.feverCases || 0} + चालू: ${feverM} = ${(mrdPriorCache.feverCases || 0) + feverM}`;
-      if (hSmears) hSmears.textContent = `मागील: ${mrdPriorCache.bloodSmears || 0} + चालू: ${smearsM} = ${(mrdPriorCache.bloodSmears || 0) + smearsM}`;
-      if (hTreated) hTreated.textContent = `मागील: ${mrdPriorCache.treatedCases || 0} + चालू: ${treatedM} = ${(mrdPriorCache.treatedCases || 0) + treatedM}`;
+      if (hFever) hFever.textContent = `मागील: ${mrdPriorCache.bloodSmears || 0} + चालू: ${smearsM} = ${pSmears} (= रक्त नमुने)`;
+      if (hSmears) hSmears.textContent = `मागील: ${mrdPriorCache.bloodSmears || 0} + चालू: ${smearsM} = ${pSmears} (OPD auto-save)`;
+      if (hTreated) hTreated.textContent = `मागील: ${mrdPriorCache.bloodSmears || 0} + चालू: ${smearsM} = ${pSmears} (= रक्त नमुने)`;
       if (hCq) hCq.textContent = `मागील: ${mrdPriorCache.chloroquineSpent || 0} + चालू: ${cqM} = ${(mrdPriorCache.chloroquineSpent || 0) + cqM}`;
     }
 
@@ -6210,8 +6299,10 @@
           const inp = document.getElementById('mrdInpSmearsM');
           if (inp) {
             inp.value = count;
-            onMrdQuickEditFieldChange();
-            alert(`✅ गावनिहाय ओपीडी रक्त नमुने (${count}) यशस्वीरित्या रक्त नमुने फील्डमध्ये सेट केले.`);
+            document.getElementById('mrdInpFeverM').value = count;
+            document.getElementById('mrdInpTreatedM').value = count;
+            onMrdQuickEditFieldChange('smears');
+            alert(`✅ बाह्यरुग्ण विभाग (OPD) रक्त नमुन्यांनुसार रक्त नमुने, तापाचे रुग्ण व उपचारीत रुग्ण (${count}) सेट झाले!`);
           }
         }
       } else {
@@ -6220,16 +6311,18 @@
     }
 
     function saveMrdQuickEdit(btn) {
+      const smearsVal = parseInt(document.getElementById('mrdInpSmearsM').value) || 0;
+      const progSmears = parseInt(document.getElementById('mrdInpSmearsP').value) || 0;
       const payload = {
         monthName: currentMrdMonth,
         opd: parseInt(document.getElementById('mrdInpOpdM').value) || 0,
         progOpd: parseInt(document.getElementById('mrdInpOpdP').value) || 0,
-        feverCases: parseInt(document.getElementById('mrdInpFeverM').value) || 0,
-        progFeverCases: parseInt(document.getElementById('mrdInpFeverP').value) || 0,
-        bloodSmears: parseInt(document.getElementById('mrdInpSmearsM').value) || 0,
-        progBloodSmears: parseInt(document.getElementById('mrdInpSmearsP').value) || 0,
-        treatedCases: parseInt(document.getElementById('mrdInpTreatedM').value) || 0,
-        progTreatedCases: parseInt(document.getElementById('mrdInpTreatedP').value) || 0,
+        feverCases: smearsVal,
+        progFeverCases: progSmears,
+        bloodSmears: smearsVal,
+        progBloodSmears: progSmears,
+        treatedCases: smearsVal,
+        progTreatedCases: progSmears,
         chloroquineSpent: parseInt(document.getElementById('mrdInpCqM').value) || 0,
         progChloroquineSpent: parseInt(document.getElementById('mrdInpCqP').value) || 0
       };
@@ -6402,6 +6495,10 @@
       document.getElementById('reportForms').style.display = 'block';
       document.querySelectorAll('.report-card').forEach(c => c.style.display = 'none');
       document.getElementById(cardId).style.display = 'block';
+      if (cardId === 'cardMonthly') {
+        const m = document.getElementById('reportMonthSelect')?.value;
+        if (m) runReportValidationForMonth(m);
+      }
     }
     function showReportMenu() {
       document.getElementById('reportForms').style.display = 'none';
@@ -6470,6 +6567,139 @@
     function toggleAllDefaulters(source) { const cbs = document.querySelectorAll('.defaulter-cb'); cbs.forEach(cb => cb.checked = source.checked); }
 
     function showDownload(res, statusDiv, btn, btnText) { btn.disabled = false; btn.textContent = btnText; if (res.success) { if(res.base64) { const byteCharacters = atob(res.base64); const byteNumbers = new Array(byteCharacters.length); for (let i = 0; i < byteCharacters.length; i++) { byteNumbers[i] = byteCharacters.charCodeAt(i); } const byteArray = new Uint8Array(byteNumbers); const blob = new Blob([byteArray], {type: 'application/pdf'}); const blobUrl = URL.createObjectURL(blob); statusDiv.style.color = "#38a169"; statusDiv.innerHTML = res.message + `<br><br><a href="${blobUrl}" download="${res.filename}" style="background:#38a169; color:white; padding:12px 20px; text-decoration:none; border-radius:8px; display:inline-flex; align-items:center; gap:8px; font-weight:bold; box-shadow:0 4px 6px rgba(56,161,105,0.2); transition:0.2s;">📥 PDF डाऊनलोड करा</a>`; } else { statusDiv.style.color = "#38a169"; statusDiv.innerHTML = res.message + (res.url ? `<br><br><a href="${res.url}" target="_blank" style="background:#38a169; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; display:inline-block;">PDF पहा / डाऊनलोड करा</a>` : ""); } } else { statusDiv.style.color = "#e53e3e"; statusDiv.innerHTML = "⚠️ एरर: " + res.message; } }
+
+    // ================= REPORT DATA VALIDATION & AUTO-ALIGN FUNCTIONS =================
+    function runReportValidationForMonth(monthName) {
+      const box = document.getElementById('reportValidationStatus');
+      if (!box) return;
+      if (!monthName) {
+        box.innerHTML = '<div style="text-align:center; padding:8px; color:#718096;">महिना निवडा म्हणजे डेटा पडताळणी आपोआप होईल.</div>';
+        return;
+      }
+      box.innerHTML = '<div style="color:#3182ce; font-weight:600; padding:6px 0; text-align:center;">डेटा पडताळणी सुरू आहे... ⏳</div>';
+
+      google.script.run.withSuccessHandler(res => {
+        if (!res || !res.success) {
+          box.innerHTML = `<div style="color:#e53e3e; padding:6px;">पडताळणी एरर: ${res ? (res.error || res.message) : 'अज्ञात एरर'}</div>`;
+          return;
+        }
+        renderReportValidationResults(res);
+      }).withFailureHandler(err => {
+        box.innerHTML = `<div style="color:#e53e3e; padding:6px;">पडताळणी एरर: ${err.message}</div>`;
+      }).validateMonthlyReport(monthName);
+    }
+
+    function renderReportValidationResults(res) {
+      const box = document.getElementById('reportValidationStatus');
+      if (!box) return;
+
+      const r1 = res.rule1;
+      const r2 = res.rule2;
+      const r3 = res.rule3;
+
+      let html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
+
+      // Check 1: तपशील ३ समानता (रक्त नमुने = तापाचे रुग्ण = उपचारीत रुग्ण)
+      html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid ${r1.passed ? '#c6f6d5' : '#fed7d7'}; padding:8px 12px; border-radius:6px;">
+          <div>
+            <div style="font-weight:700; font-size:12.5px; color:${r1.passed ? '#22543d' : '#9b2c2c'};">
+              ${r1.passed ? '✅' : '❌'} १. तपशील ३ समानता (रक्त नमुने = ताप = उपचार)
+            </div>
+            <div style="font-size:11.5px; color:#4a5568; margin-top:2px;">
+              रक्त नमुने: <b>${r1.bloodSmears}</b> | तापाचे रुग्ण: <b>${r1.feverCases}</b> | उपचारीत: <b>${r1.treatedCases}</b>
+            </div>
+          </div>
+          <span style="font-size:11px; font-weight:700; color:${r1.passed ? '#276749' : '#c53030'}; background:${r1.passed ? '#e6fffa' : '#fff5f5'}; padding:2px 8px; border-radius:10px;">
+            ${r1.passed ? 'तंतोतंत समान' : 'तफावत'}
+          </span>
+        </div>
+      `;
+
+      // Check 2: गावनिहाय OPD रक्त नमुने जुळणी
+      html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid ${r2.passed ? '#c6f6d5' : '#fed7d7'}; padding:8px 12px; border-radius:6px;">
+          <div>
+            <div style="font-weight:700; font-size:12.5px; color:${r2.passed ? '#22543d' : '#9b2c2c'};">
+              ${r2.passed ? '✅' : '❌'} २. गावनिहाय OPD रक्त नमुने जुळणी
+            </div>
+            <div style="font-size:11.5px; color:#4a5568; margin-top:2px;">
+              दैनिक नोंदींची बेरीज: <b>${r2.opdTotal}</b> | मासिक अहवाल रक्त नमुने: <b>${r2.monthlySmears}</b>
+            </div>
+          </div>
+          <span style="font-size:11px; font-weight:700; color:${r2.passed ? '#276749' : '#c53030'}; background:${r2.passed ? '#e6fffa' : '#fff5f5'}; padding:2px 8px; border-radius:10px;">
+            ${r2.passed ? '१००% जुळले' : 'तफावत'}
+          </span>
+        </div>
+      `;
+
+      // Check 3: प्रगत संख्या स्वयं-गणना (YTD Progressive)
+      html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid ${r3.passed ? '#c6f6d5' : '#fed7d7'}; padding:8px 12px; border-radius:6px;">
+          <div>
+            <div style="font-weight:700; font-size:12.5px; color:${r3.passed ? '#22543d' : '#9b2c2c'};">
+              ${r3.passed ? '✅' : '❌'} ३. प्रगत संख्या (YTD Progressive) बेरीज
+            </div>
+            <div style="font-size:11.5px; color:#4a5568; margin-top:2px;">
+              मागील बेरीज (${r3.priorSmears}) + चालू (${r3.currentSmears}) = एकूण प्रगत: <b>${r3.actualProg}</b>
+            </div>
+          </div>
+          <span style="font-size:11px; font-weight:700; color:${r3.passed ? '#276749' : '#c53030'}; background:${r3.passed ? '#e6fffa' : '#fff5f5'}; padding:2px 8px; border-radius:10px;">
+            ${r3.passed ? 'अचूक बेरीज' : 'तफावत'}
+          </span>
+        </div>
+      `;
+
+      // Overall status banner
+      if (res.isValid) {
+        html += `
+          <div style="background:#c6f6d5; border:1px solid #38a169; color:#22543d; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:6px; margin-top:4px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <span>🎉</span> <span>अभिनंदन! सर्व डेटा १००% तंतोतंत जुळत आहे. अहवाल काढण्यास तयार!</span>
+          </div>
+        `;
+      } else {
+        html += `
+          <div style="background:#feebc8; border:1px solid #dd6b20; color:#744210; font-size:12.5px; padding:10px 12px; border-radius:6px; margin-top:4px;">
+            <div style="font-weight:700; margin-bottom:4px;">⚠️ दैनंदिन नोंद व मासिक अहवालात बदल आढळले आहेत.</div>
+            <div style="font-size:11.5px; margin-bottom:8px;">खालील १-क्लिक बटनावर क्लिक करून सर्व संख्या त्वरित एका सेकंदात तंतोतंत समान व अचूक करा:</div>
+            <button type="button" class="submit-btn" style="margin:0; padding:8px 16px; font-size:12px; background:#dd6b20; width:100%; text-align:center;" onclick="autoAlignReportData('${res.monthName}')">
+              ⚡ १-क्लिकमध्ये आपोआप दुरुस्त व सिंक करा (Auto-Align & Fix All)
+            </button>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      box.innerHTML = html;
+    }
+
+    function autoAlignReportData(monthName) {
+      if (!monthName) return;
+      const box = document.getElementById('reportValidationStatus');
+      if (box) {
+        box.innerHTML = '<div style="color:#dd6b20; font-weight:600; padding:6px 0; text-align:center;">डेटा आपोआप दुरुस्त व सिंक होत आहे... ⏳</div>';
+      }
+      google.script.run.withSuccessHandler(res => {
+        if (res && res.success) {
+          if (typeof showFeedback === 'function') {
+            showFeedback(res.message, 'success');
+          } else {
+            alert(res.message);
+          }
+          runReportValidationForMonth(monthName);
+          // Also reload indicators if on monthly indicators tab
+          if (typeof loadSelectedMonthIndicators === 'function') {
+            loadSelectedMonthIndicators(monthName);
+          }
+        } else {
+          alert("एरर: " + (res ? (res.error || res.message) : 'त्रुटी आली'));
+          runReportValidationForMonth(monthName);
+        }
+      }).withFailureHandler(err => {
+        alert("एरर: " + err.message);
+        runReportValidationForMonth(monthName);
+      }).autoAlignMonthlyReport(monthName);
+    }
 
     function generateDailyLetter(btn) { const dateVal = document.getElementById('dailyReportDate').value; if (!dateVal) { alert("तारीख निवडा."); return; } btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('dailyReportStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#dd6b20"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "पत्राची PDF तयार करा")).generateDailyMalariaReportWebApp(dateVal); }
     function generateReport(btn) { const month = document.getElementById('reportMonthSelect').value; if (!month) { alert("महिना निवडा."); return; } btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('reportStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#3182ce"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "मासिक रिपोर्ट जनरेट करा")).generateMonthlyReportWebApp(month); }
@@ -6543,6 +6773,19 @@
       priorCq: 0
     };
     let currentLoadedIndicators = null;
+
+    function toggleDataWorkflowGuide() {
+      const el = document.getElementById('dataWorkflowGuideContent');
+      const icon = document.getElementById('guideToggleIcon');
+      if (!el) return;
+      if (el.style.display === 'none' || el.style.display === '') {
+        el.style.display = 'block';
+        if (icon) icon.textContent = 'बंद करा ▲';
+      } else {
+        el.style.display = 'none';
+        if (icon) icon.textContent = 'पहा ▼';
+      }
+    }
 
     function switchDataEntrySubtab(subtab) {
       const btnDaily = document.getElementById('subtabBtnDaily');
@@ -6647,14 +6890,17 @@
             document.getElementById('inpNewOpd').value = d.newOpd != null ? d.newOpd : (d.opd || 0);
             document.getElementById('inpProgNewOpd').value = d.progNewOpd != null ? d.progNewOpd : (d.progOpd || 0);
 
-            document.getElementById('inpFeverCases').value = d.feverCases != null ? d.feverCases : 0;
-            document.getElementById('inpProgFeverCases').value = d.progFeverCases != null ? d.progFeverCases : 0;
+            let smearsVal = d.bloodSmears != null ? parseInt(d.bloodSmears) : 0;
+            if (smearsVal === 0 && d.opdVillagewise && d.opdVillagewise.monthlyTotal > 0) {
+              smearsVal = d.opdVillagewise.monthlyTotal;
+            }
+            // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
+            let feverVal = smearsVal;
+            let treatedVal = smearsVal;
 
-            document.getElementById('inpBloodSmears').value = d.bloodSmears != null ? d.bloodSmears : 0;
-            document.getElementById('inpProgBloodSmears').value = d.progBloodSmears != null ? d.progBloodSmears : 0;
-
-            document.getElementById('inpTreatedCases').value = d.treatedCases != null ? d.treatedCases : 0;
-            document.getElementById('inpProgTreatedCases').value = d.progTreatedCases != null ? d.progTreatedCases : 0;
+            document.getElementById('inpFeverCases').value = feverVal;
+            document.getElementById('inpBloodSmears').value = smearsVal;
+            document.getElementById('inpTreatedCases').value = treatedVal;
 
             document.getElementById('inpChloroquine').value = d.chloroquineSpent != null ? d.chloroquineSpent : 0;
             document.getElementById('inpProgChloroquine').value = d.progChloroquineSpent != null ? d.progChloroquineSpent : 0;
@@ -6686,27 +6932,35 @@
       }
       const vDetails = opd.villages.map(v => `<b>${v.villageName}</b>: ${v.count} (पु: ${v.male}, स्त्री: ${v.female})`).join(' | ');
       listEl.innerHTML = `<div>📍 <b>गावनिहाय:</b> ${vDetails}</div><div style="font-size:11px; color:#276749; margin-top:2px;">(मागील बेरीज: ${opd.priorTotal} + चालू: ${opd.monthlyTotal} = एकूण प्रगत: ${opd.ytdTotal})</div>`;
-      if (tagEl) tagEl.textContent = `${opd.monthlyTotal} नमुने (आपोआप)`;
+      if (tagEl) tagEl.textContent = `${opd.monthlyTotal} नमुने (auto-save)`;
     }
 
     function syncWithOpdVillagewise() {
       if (currentLoadedIndicators && currentLoadedIndicators.opdVillagewise) {
         const opd = currentLoadedIndicators.opdVillagewise;
         document.getElementById('inpBloodSmears').value = opd.monthlyTotal;
-        document.getElementById('inpProgBloodSmears').value = opd.ytdTotal;
-        const fInp = document.getElementById('inpFeverCases');
-        if (fInp && (parseInt(fInp.value) === 0 || fInp.value === '')) {
-          fInp.value = opd.monthlyTotal;
-          document.getElementById('inpProgFeverCases').value = opd.ytdTotal;
-        }
-        updateIndicatorHintsAndPreview();
+        document.getElementById('inpFeverCases').value = opd.monthlyTotal;
+        document.getElementById('inpTreatedCases').value = opd.monthlyTotal;
+        onIndicatorFieldChange('smears');
         if (typeof showFeedback === 'function') {
-          showFeedback("✅ गावनिहाय ओपीडी रक्त नमुन्यांनुसार संख्या अपडेट झाली!", "success");
+          showFeedback(`✅ बाह्यरुग्ण विभाग (OPD) रक्त नमुन्यांनुसार रक्त नमुने, तापाचे रुग्ण व उपचारीत रुग्ण (${opd.monthlyTotal}) सेट झाले!`, "success");
         }
       }
     }
 
-    function onIndicatorFieldChange() {
+    function onIndicatorFieldChange(source) {
+      let smearsM = parseInt(document.getElementById('inpBloodSmears').value) || 0;
+      if (source === 'fever') {
+        smearsM = parseInt(document.getElementById('inpFeverCases').value) || 0;
+        document.getElementById('inpBloodSmears').value = smearsM;
+      } else if (source === 'treated') {
+        smearsM = parseInt(document.getElementById('inpTreatedCases').value) || 0;
+        document.getElementById('inpBloodSmears').value = smearsM;
+      }
+      // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
+      document.getElementById('inpFeverCases').value = smearsM;
+      document.getElementById('inpTreatedCases').value = smearsM;
+
       updateIndicatorHintsAndPreview();
     }
 
@@ -6715,17 +6969,18 @@
       const pOpd = (currentPriorIndicators.priorOpd || 0) + mOpd;
       document.getElementById('inpProgNewOpd').value = pOpd;
 
-      const mFever = parseInt(document.getElementById('inpFeverCases').value) || 0;
-      const pFever = (currentPriorIndicators.priorFever || 0) + mFever;
-      document.getElementById('inpProgFeverCases').value = pFever;
-
       const mSmears = parseInt(document.getElementById('inpBloodSmears').value) || 0;
       const pSmears = (currentPriorIndicators.priorSmears || 0) + mSmears;
       document.getElementById('inpProgBloodSmears').value = pSmears;
 
-      const mTreated = parseInt(document.getElementById('inpTreatedCases').value) || 0;
-      const pTreated = (currentPriorIndicators.priorTreated || 0) + mTreated;
-      document.getElementById('inpProgTreatedCases').value = pTreated;
+      // 🩸 घेतलेले रक्त नमुणे = 🌡️ तापाचे रुग्ण = 💊 उपचारीत रुग्ण
+      document.getElementById('inpProgFeverCases').value = pSmears;
+      document.getElementById('inpProgTreatedCases').value = pSmears;
+
+      const mFever = mSmears;
+      const pFever = pSmears;
+      const mTreated = mSmears;
+      const pTreated = pSmears;
 
       const mCq = parseInt(document.getElementById('inpChloroquine').value) || 0;
       const pCq = (currentPriorIndicators.priorCq || 0) + mCq;
@@ -6736,17 +6991,17 @@
       if (hintOpd) hintOpd.textContent = `मागील बेरीज: ${currentPriorIndicators.priorOpd} + चालू (${mOpd}) = ${currentPriorIndicators.priorOpd + mOpd}`;
 
       const hintFever = document.getElementById('hintFever');
-      if (hintFever) hintFever.textContent = `मागील बेरीज: ${currentPriorIndicators.priorFever} + चालू (${mFever}) = ${currentPriorIndicators.priorFever + mFever}`;
+      if (hintFever) hintFever.textContent = `मागील बेरीज: ${currentPriorIndicators.priorSmears} + चालू (${mFever}) = ${pFever} (= रक्त नमुने)`;
 
       const hintSmears = document.getElementById('hintSmears');
       if (hintSmears) {
         const isOpd = (currentLoadedIndicators && currentLoadedIndicators.opdVillagewise && currentLoadedIndicators.opdVillagewise.monthlyTotal === mSmears);
-        const opdText = isOpd ? ' (गावनिहाय OPD BS मधून आपोआप)' : '';
-        hintSmears.textContent = `मागील बेरीज: ${currentPriorIndicators.priorSmears} + चालू (${mSmears}) = ${currentPriorIndicators.priorSmears + mSmears}${opdText}`;
+        const opdText = isOpd ? ' (बाह्यरुग्ण विभाग OPD auto-save)' : '';
+        hintSmears.textContent = `मागील बेरीज: ${currentPriorIndicators.priorSmears} + चालू (${mSmears}) = ${pSmears}${opdText}`;
       }
 
       const hintTreated = document.getElementById('hintTreated');
-      if (hintTreated) hintTreated.textContent = `मागील बेरीज: ${currentPriorIndicators.priorTreated} + चालू (${mTreated}) = ${currentPriorIndicators.priorTreated + mTreated}`;
+      if (hintTreated) hintTreated.textContent = `मागील बेरीज: ${currentPriorIndicators.priorSmears} + चालू (${mTreated}) = ${pTreated} (= रक्त नमुने)`;
 
       const hintCq = document.getElementById('hintCq');
       if (hintCq) hintCq.textContent = `मागील बेरीज: ${currentPriorIndicators.priorCq} + चालू (${mCq}) = ${currentPriorIndicators.priorCq + mCq}`;
@@ -6790,16 +7045,19 @@
         return;
       }
 
+      const smearsVal = parseInt(document.getElementById('inpBloodSmears').value) || 0;
+      const progSmears = parseInt(document.getElementById('inpProgBloodSmears').value) || 0;
+
       const payload = {
         monthName: monthName,
         opd: parseInt(document.getElementById('inpNewOpd').value) || 0,
         progOpd: parseInt(document.getElementById('inpProgNewOpd').value) || 0,
-        feverCases: parseInt(document.getElementById('inpFeverCases').value) || 0,
-        progFeverCases: parseInt(document.getElementById('inpProgFeverCases').value) || 0,
-        bloodSmears: parseInt(document.getElementById('inpBloodSmears').value) || 0,
-        progBloodSmears: parseInt(document.getElementById('inpProgBloodSmears').value) || 0,
-        treatedCases: parseInt(document.getElementById('inpTreatedCases').value) || 0,
-        progTreatedCases: parseInt(document.getElementById('inpProgTreatedCases').value) || 0,
+        feverCases: smearsVal,
+        progFeverCases: progSmears,
+        bloodSmears: smearsVal,
+        progBloodSmears: progSmears,
+        treatedCases: smearsVal,
+        progTreatedCases: progSmears,
         chloroquineSpent: parseInt(document.getElementById('inpChloroquine').value) || 0,
         progChloroquineSpent: parseInt(document.getElementById('inpProgChloroquine').value) || 0
       };
