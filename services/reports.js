@@ -239,36 +239,31 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
 
     // OPD calculations (मासिक व प्रगत)
     const D1 = monthObj.newOpd != null ? parseInt(monthObj.newOpd) : 0; // नवीन बाह्यरुग्ण मासिक
-    const D2 = monthObj.progNewOpd != null
-      ? parseInt(monthObj.progNewOpd)
-      : priorMonths.reduce((sum, m) => sum + (parseInt(m.newOpd) || 0), 0); // नवीन बाह्यरुग्ण प्रगत
+    const priorOpd = priorMonths.reduce((sum, m) => sum + (parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0), 0);
+    const D2 = priorOpd + D1; // नवीन बाह्यरुग्ण प्रगत (स्वयं-गणना: मागील बेरीज + चालू महिना)
 
     // Dynamic OPD BS from villagewise entries (villageDetails & bsDataEntry)
     const opdSummary = getOpdBsVillagewiseSummary(selectedMonthDisplay);
 
-    // घेतलेले रक्त नमुणे (Blood smears collected: मासिक व प्रगत) - Automatically taken from OPD BS in villagewise
+    // घेतलेले रक्त नमुणे (Blood smears collected: मासिक व प्रगत)
     const smearsM = monthObj.bloodSmears != null ? parseInt(monthObj.bloodSmears) : opdSummary.monthlyTotal;
-    const smearsProg = monthObj.progBloodSmears != null
-      ? parseInt(monthObj.progBloodSmears)
-      : opdSummary.ytdTotal;
+    const priorSmears = priorMonths.reduce((sum, m) => sum + (parseInt(m.bloodSmears) || 0), 0);
+    const smearsProg = priorSmears + smearsM; // घेतलेले रक्त नमुणे प्रगत (स्वयं-गणना)
 
     // तापाचे रुग्ण (Fever cases: मासिक व प्रगत)
     const feverM = monthObj.feverCases != null ? parseInt(monthObj.feverCases) : smearsM;
-    const feverProg = monthObj.progFeverCases != null
-      ? parseInt(monthObj.progFeverCases)
-      : (monthObj.feverCases != null ? priorMonths.reduce((sum, m) => sum + (parseInt(m.feverCases != null ? m.feverCases : 0) || 0), 0) + feverM : smearsProg);
+    const priorFever = priorMonths.reduce((sum, m) => sum + (parseInt(m.feverCases) || 0), 0);
+    const feverProg = priorFever + feverM; // तापाचे रुग्ण प्रगत (स्वयं-गणना)
 
     // उपचारीत रुग्ण (Treated cases: मासिक व प्रगत)
     const treatedM = monthObj.treatedCases != null ? parseInt(monthObj.treatedCases) : feverM;
-    const treatedProg = monthObj.progTreatedCases != null
-      ? parseInt(monthObj.progTreatedCases)
-      : (monthObj.treatedCases != null ? priorMonths.reduce((sum, m) => sum + (parseInt(m.treatedCases != null ? m.treatedCases : 0) || 0), 0) + treatedM : feverProg);
+    const priorTreated = priorMonths.reduce((sum, m) => sum + (parseInt(m.treatedCases) || 0), 0);
+    const treatedProg = priorTreated + treatedM; // उपचारीत रुग्ण प्रगत (स्वयं-गणना)
 
     // क्लोरोक्वीन गोळया खर्च (Chloroquine tablets consumed: मासिक व प्रगत)
     const cqM = parseInt(monthObj.chloroquineSpent) || 0;
-    const cqProg = monthObj.progChloroquineSpent != null
-      ? parseInt(monthObj.progChloroquineSpent)
-      : priorMonths.reduce((sum, m) => sum + (parseInt(m.chloroquineSpent) || 0), 0);
+    const priorCq = priorMonths.reduce((sum, m) => sum + (parseInt(m.chloroquineSpent) || 0), 0);
+    const cqProg = priorCq + cqM; // क्लोरोक्वीन खर्च प्रगत (स्वयं-गणना)
 
     // Filter BS Data for current month and YTD
     const monthBsRows = bsDataEntry.filter(r => {

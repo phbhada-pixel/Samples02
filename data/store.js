@@ -3608,8 +3608,59 @@ export function loadDbFromDisk() {
   }
 }
 
+export function recalculateAllMonthProgressives() {
+  let runOpd = 0;
+  let runFever = 0;
+  let runSmears = 0;
+  let runTreated = 0;
+  let runCq = 0;
+  let runMpw = 0;
+  let runAnm = 0;
+  let runAsha = 0;
+
+  for (let i = 0; i < monthMaster.length; i++) {
+    const m = monthMaster[i];
+    const mOpd = parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0;
+    const mFever = parseInt(m.feverCases) || 0;
+    const mSmears = parseInt(m.bloodSmears) || 0;
+    const mTreated = parseInt(m.treatedCases) || 0;
+    const mCq = parseInt(m.chloroquineSpent) || 0;
+    const mMpw = parseInt(m.mpwHomeVisits) || 0;
+    const mAnm = parseInt(m.anmHomeVisits) || 0;
+    const mAsha = parseInt(m.ashaHomeVisits) || 0;
+
+    m.priorOpdSum = runOpd;
+    m.priorFeverSum = runFever;
+    m.priorSmearsSum = runSmears;
+    m.priorTreatedSum = runTreated;
+    m.priorCqSum = runCq;
+    m.priorMpwSum = runMpw;
+    m.priorAnmSum = runAnm;
+    m.priorAshaSum = runAsha;
+
+    runOpd += mOpd;
+    runFever += mFever;
+    runSmears += mSmears;
+    runTreated += mTreated;
+    runCq += mCq;
+    runMpw += mMpw;
+    runAnm += mAnm;
+    runAsha += mAsha;
+
+    m.progNewOpd = runOpd;
+    m.progFeverCases = runFever;
+    m.progBloodSmears = runSmears;
+    m.progTreatedCases = runTreated;
+    m.progChloroquineSpent = runCq;
+    m.progMpwHomeVisits = runMpw;
+    m.progAnmHomeVisits = runAnm;
+    m.progAshaHomeVisits = runAsha;
+  }
+}
+
 // Auto-load existing database from disk upon startup
 loadDbFromDisk();
+recalculateAllMonthProgressives();
 
 
 

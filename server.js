@@ -35,6 +35,7 @@ import {
   clearAllTransactionData,
   getOpdBsVillagewiseSummary,
   getEmployeeVillageDistributionSummary,
+  recalculateAllMonthProgressives,
   saveDbToDisk,
   loadDbFromDisk
 } from './data/store.js';
@@ -856,22 +857,22 @@ app.post('/api/rpc', async (req, res) => {
         const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
 
         const newOpd = parseInt(monthObj.newOpd != null ? monthObj.newOpd : (monthObj.opd || 0)) || 0;
-        const progNewOpd = monthObj.progNewOpd != null ? parseInt(monthObj.progNewOpd) : (priorOpdSum + newOpd);
+        const progNewOpd = priorOpdSum + newOpd;
 
         const feverCases = parseInt(monthObj.feverCases) || 0;
-        const progFeverCases = monthObj.progFeverCases != null ? parseInt(monthObj.progFeverCases) : (priorFeverSum + feverCases);
+        const progFeverCases = priorFeverSum + feverCases;
 
         let bloodSmears = monthObj.bloodSmears != null ? parseInt(monthObj.bloodSmears) : 0;
         if (bloodSmears === 0 && opdSummary.monthlyTotal > 0) {
           bloodSmears = opdSummary.monthlyTotal;
         }
-        const progBloodSmears = monthObj.progBloodSmears != null ? parseInt(monthObj.progBloodSmears) : (priorSmearsSum + bloodSmears);
+        const progBloodSmears = priorSmearsSum + bloodSmears;
 
         const treatedCases = parseInt(monthObj.treatedCases) || 0;
-        const progTreatedCases = monthObj.progTreatedCases != null ? parseInt(monthObj.progTreatedCases) : (priorTreatedSum + treatedCases);
+        const progTreatedCases = priorTreatedSum + treatedCases;
 
         const chloroquineSpent = parseInt(monthObj.chloroquineSpent) || 0;
-        const progChloroquineSpent = monthObj.progChloroquineSpent != null ? parseInt(monthObj.progChloroquineSpent) : (priorCqSum + chloroquineSpent);
+        const progChloroquineSpent = priorCqSum + chloroquineSpent;
 
         // Calculate field vs opd smears in this month from entries
         let fieldSmears = 0;
@@ -1121,29 +1122,18 @@ app.post('/api/rpc', async (req, res) => {
 
         const opdIn = indicatorData.newOpd !== undefined ? indicatorData.newOpd : indicatorData.opd;
         if (opdIn !== undefined) monthObj.newOpd = parseInt(opdIn) || 0;
-        const progOpdIn = indicatorData.progNewOpd !== undefined ? indicatorData.progNewOpd : indicatorData.progOpd;
-        if (progOpdIn !== undefined && progOpdIn !== '') {
-          monthObj.progNewOpd = parseInt(progOpdIn) || 0;
-        }
+
         if (indicatorData.feverCases !== undefined) monthObj.feverCases = parseInt(indicatorData.feverCases) || 0;
-        if (indicatorData.progFeverCases !== undefined && indicatorData.progFeverCases !== '') {
-          monthObj.progFeverCases = parseInt(indicatorData.progFeverCases) || 0;
-        }
+
         if (indicatorData.bloodSmears !== undefined) monthObj.bloodSmears = parseInt(indicatorData.bloodSmears) || 0;
-        if (indicatorData.progBloodSmears !== undefined && indicatorData.progBloodSmears !== '') {
-          monthObj.progBloodSmears = parseInt(indicatorData.progBloodSmears) || 0;
-        }
+
         if (indicatorData.treatedCases !== undefined) monthObj.treatedCases = parseInt(indicatorData.treatedCases) || 0;
-        if (indicatorData.progTreatedCases !== undefined && indicatorData.progTreatedCases !== '') {
-          monthObj.progTreatedCases = parseInt(indicatorData.progTreatedCases) || 0;
-        }
+
         const cqIn = indicatorData.chloroquineSpent !== undefined ? indicatorData.chloroquineSpent : indicatorData.chloroquine;
         if (cqIn !== undefined) monthObj.chloroquineSpent = parseInt(cqIn) || 0;
-        const progCqIn = indicatorData.progChloroquineSpent !== undefined ? indicatorData.progChloroquineSpent : indicatorData.progChloroquine;
-        if (progCqIn !== undefined && progCqIn !== '') {
-          monthObj.progChloroquineSpent = parseInt(progCqIn) || 0;
-        }
 
+        // Automatically recalculate and lock progressive values for all months
+        recalculateAllMonthProgressives();
         saveDbToDisk();
 
         // Direct Google Sheet Sync for Monthly Indicators

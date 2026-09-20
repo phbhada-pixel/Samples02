@@ -1974,50 +1974,65 @@
                 
                 <!-- New OPD -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #3182ce;">
-                  <label style="font-size:12px; font-weight:700; color:#2b6cb0; display:block; margin-bottom:4px;">🏥 नवीन बाह्यरुग्ण (New OPD)</label>
+                  <label style="font-size:12px; font-weight:700; color:#2b6cb0; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span>🏥 नवीन बाह्यरुग्ण (New OPD)</span>
+                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                  </label>
                   <div style="display:flex; gap:6px;">
                     <input type="number" id="mrdInpOpdM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
-                    <input type="number" id="mrdInpOpdP" placeholder="प्रगत" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;">
+                    <input type="number" id="mrdInpOpdP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintOpd" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
                 <!-- Fever Cases -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #dd6b20;">
-                  <label style="font-size:12px; font-weight:700; color:#c05621; display:block; margin-bottom:4px;">🌡️ तापाचे रुग्ण (Fever Cases)</label>
+                  <label style="font-size:12px; font-weight:700; color:#c05621; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span>🌡️ तापाचे रुग्ण (Fever Cases)</span>
+                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                  </label>
                   <div style="display:flex; gap:6px;">
                     <input type="number" id="mrdInpFeverM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
-                    <input type="number" id="mrdInpFeverP" placeholder="प्रगत" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;">
+                    <input type="number" id="mrdInpFeverP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintFever" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
                 <!-- Blood Smears -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #319795;">
-                  <label style="font-size:12px; font-weight:700; color:#234e52; display:block; margin-bottom:4px;">🩸 घेतलेले रक्त नमुणे (Blood Smears)</label>
+                  <label style="font-size:12px; font-weight:700; color:#234e52; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span>🩸 घेतलेले रक्त नमुणे (Blood Smears)</span>
+                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                  </label>
                   <div style="display:flex; gap:6px;">
                     <input type="number" id="mrdInpSmearsM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
-                    <input type="number" id="mrdInpSmearsP" placeholder="प्रगत" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;">
+                    <input type="number" id="mrdInpSmearsP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintSmears" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
                 <!-- Treated Cases -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #38a169;">
-                  <label style="font-size:12px; font-weight:700; color:#276749; display:block; margin-bottom:4px;">💊 उपचारीत रुग्ण (Treated Cases)</label>
+                  <label style="font-size:12px; font-weight:700; color:#276749; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span>💊 उपचारीत रुग्ण (Treated Cases)</span>
+                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                  </label>
                   <div style="display:flex; gap:6px;">
                     <input type="number" id="mrdInpTreatedM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
-                    <input type="number" id="mrdInpTreatedP" placeholder="प्रगत" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;">
+                    <input type="number" id="mrdInpTreatedP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintTreated" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
                 <!-- Chloroquine Spent -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #805ad5;">
-                  <label style="font-size:12px; font-weight:700; color:#553c9a; display:block; margin-bottom:4px;">⚪ क्लोरोक्वीन गोळया खर्च (Chloroquine)</label>
+                  <label style="font-size:12px; font-weight:700; color:#553c9a; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span>⚪ क्लोरोक्वीन गोळया खर्च (Chloroquine)</span>
+                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                  </label>
                   <div style="display:flex; gap:6px;">
                     <input type="number" id="mrdInpCqM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
-                    <input type="number" id="mrdInpCqP" placeholder="प्रगत" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;">
+                    <input type="number" id="mrdInpCqP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintCq" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
@@ -2349,8 +2364,11 @@
                     <input type="number" id="inpNewOpd" class="indicator-input" placeholder="उदा. 470" oninput="onIndicatorFieldChange()">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
-                    <label style="font-size:12px; font-weight:600;">प्रगत संख्या (Progressive - YTD)</label>
-                    <input type="number" id="inpProgNewOpd" class="indicator-input" placeholder="उदा. 4100" oninput="onIndicatorFieldChange()">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
+                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    </div>
+                    <input type="number" id="inpProgNewOpd" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
                   </div>
                   <div class="indicator-hint" id="hintOpd">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                 </div>
@@ -2367,8 +2385,11 @@
                     <input type="number" id="inpFeverCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
-                    <label style="font-size:12px; font-weight:600;">प्रगत संख्या (Progressive - YTD)</label>
-                    <input type="number" id="inpProgFeverCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
+                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    </div>
+                    <input type="number" id="inpProgFeverCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
                   </div>
                   <div class="indicator-hint" id="hintFever">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                 </div>
@@ -2389,8 +2410,11 @@
                     <input type="number" id="inpBloodSmears" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
-                    <label style="font-size:12px; font-weight:600;">प्रगत संख्या (Progressive - YTD)</label>
-                    <input type="number" id="inpProgBloodSmears" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
+                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    </div>
+                    <input type="number" id="inpProgBloodSmears" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
                   </div>
                   <div class="indicator-hint" id="hintSmears">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
 
@@ -2416,8 +2440,11 @@
                     <input type="number" id="inpTreatedCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
-                    <label style="font-size:12px; font-weight:600;">प्रगत संख्या (Progressive - YTD)</label>
-                    <input type="number" id="inpProgTreatedCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange()">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
+                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    </div>
+                    <input type="number" id="inpProgTreatedCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
                   </div>
                   <div class="indicator-hint" id="hintTreated">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                 </div>
@@ -2434,8 +2461,11 @@
                     <input type="number" id="inpChloroquine" class="indicator-input" placeholder="उदा. 0" oninput="onIndicatorFieldChange()">
                   </div>
                   <div class="form-group" style="margin-bottom:6px;">
-                    <label style="font-size:12px; font-weight:600;">प्रगत गोळ्या खर्च (Progressive - YTD)</label>
-                    <input type="number" id="inpProgChloroquine" class="indicator-input" placeholder="उदा. 0" oninput="onIndicatorFieldChange()">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत गोळ्या खर्च (Progressive - YTD)</label>
+                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    </div>
+                    <input type="number" id="inpProgChloroquine" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
                   </div>
                   <div class="indicator-hint" id="hintCq">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                 </div>
@@ -6102,15 +6132,15 @@
       const inpCqP = document.getElementById('mrdInpCqP');
 
       if (inpOpdM) inpOpdM.value = m.opd ?? 0;
-      if (inpOpdP) inpOpdP.value = p.opd ?? 0;
+      if (inpOpdP) inpOpdP.value = (mrdPriorCache.opd || 0) + (parseInt(m.opd) || 0);
       if (inpFeverM) inpFeverM.value = m.feverCases ?? 0;
-      if (inpFeverP) inpFeverP.value = p.feverCases ?? 0;
+      if (inpFeverP) inpFeverP.value = (mrdPriorCache.feverCases || 0) + (parseInt(m.feverCases) || 0);
       if (inpSmearsM) inpSmearsM.value = m.bloodSmears ?? 0;
-      if (inpSmearsP) inpSmearsP.value = p.bloodSmears ?? 0;
+      if (inpSmearsP) inpSmearsP.value = (mrdPriorCache.bloodSmears || 0) + (parseInt(m.bloodSmears) || 0);
       if (inpTreatedM) inpTreatedM.value = m.treatedCases ?? 0;
-      if (inpTreatedP) inpTreatedP.value = p.treatedCases ?? 0;
+      if (inpTreatedP) inpTreatedP.value = (mrdPriorCache.treatedCases || 0) + (parseInt(m.treatedCases) || 0);
       if (inpCqM) inpCqM.value = m.chloroquineSpent ?? 0;
-      if (inpCqP) inpCqP.value = p.chloroquineSpent ?? 0;
+      if (inpCqP) inpCqP.value = (mrdPriorCache.chloroquineSpent || 0) + (parseInt(m.chloroquineSpent) || 0);
 
       updateMrdQuickEditHints();
     }
@@ -6682,39 +6712,24 @@
 
     function updateIndicatorHintsAndPreview() {
       const mOpd = parseInt(document.getElementById('inpNewOpd').value) || 0;
-      let pOpd = parseInt(document.getElementById('inpProgNewOpd').value);
-      if (isNaN(pOpd) || pOpd < mOpd) {
-        pOpd = currentPriorIndicators.priorOpd + mOpd;
-        document.getElementById('inpProgNewOpd').value = pOpd;
-      }
+      const pOpd = (currentPriorIndicators.priorOpd || 0) + mOpd;
+      document.getElementById('inpProgNewOpd').value = pOpd;
 
       const mFever = parseInt(document.getElementById('inpFeverCases').value) || 0;
-      let pFever = parseInt(document.getElementById('inpProgFeverCases').value);
-      if (isNaN(pFever) || pFever < mFever) {
-        pFever = currentPriorIndicators.priorFever + mFever;
-        document.getElementById('inpProgFeverCases').value = pFever;
-      }
+      const pFever = (currentPriorIndicators.priorFever || 0) + mFever;
+      document.getElementById('inpProgFeverCases').value = pFever;
 
       const mSmears = parseInt(document.getElementById('inpBloodSmears').value) || 0;
-      let pSmears = parseInt(document.getElementById('inpProgBloodSmears').value);
-      if (isNaN(pSmears) || pSmears < mSmears) {
-        pSmears = currentPriorIndicators.priorSmears + mSmears;
-        document.getElementById('inpProgBloodSmears').value = pSmears;
-      }
+      const pSmears = (currentPriorIndicators.priorSmears || 0) + mSmears;
+      document.getElementById('inpProgBloodSmears').value = pSmears;
 
       const mTreated = parseInt(document.getElementById('inpTreatedCases').value) || 0;
-      let pTreated = parseInt(document.getElementById('inpProgTreatedCases').value);
-      if (isNaN(pTreated) || pTreated < mTreated) {
-        pTreated = currentPriorIndicators.priorTreated + mTreated;
-        document.getElementById('inpProgTreatedCases').value = pTreated;
-      }
+      const pTreated = (currentPriorIndicators.priorTreated || 0) + mTreated;
+      document.getElementById('inpProgTreatedCases').value = pTreated;
 
       const mCq = parseInt(document.getElementById('inpChloroquine').value) || 0;
-      let pCq = parseInt(document.getElementById('inpProgChloroquine').value);
-      if (isNaN(pCq) || pCq < mCq) {
-        pCq = currentPriorIndicators.priorCq + mCq;
-        document.getElementById('inpProgChloroquine').value = pCq;
-      }
+      const pCq = (currentPriorIndicators.priorCq || 0) + mCq;
+      document.getElementById('inpProgChloroquine').value = pCq;
 
       // Update hints
       const hintOpd = document.getElementById('hintOpd');
