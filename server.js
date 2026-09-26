@@ -72,6 +72,10 @@ app.get('/Form.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/defaultData.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'defaultData.js'));
+});
+
 // RPC health/info endpoint
 app.get('/api/rpc', (req, res) => {
   res.json({ status: 'ok', service: 'PHC Bhada Malaria RPC API' });
