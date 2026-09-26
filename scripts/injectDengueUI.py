@@ -34,7 +34,7 @@ if 'dashDengueSamplesCount' not in html:
 
 # 4. Add the full #dengueTab Markup right before uploadTab
 if 'id="dengueTab"' not in html:
-    upload_target = '<!-- ================= DATA UPLOAD & VALIDATION TAB ================= -->'
+    upload_target = '<!-- ================= CSV DATA UPLOAD & DATE VALIDATION COMPONENT ================= -->'
     dengue_tab_html = """<!-- ================= DENGUE & CHIKUNGUNYA MANAGEMENT TAB ================= -->
       <div id="dengueTab" class="tab-pane">
         
