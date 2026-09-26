@@ -2782,6 +2782,99 @@ export const bsDataEntry = [];
 // [uniqueId, employeeName, dateObj, villageName, sampleCount, maleCount, femaleCount, upkendra]
 export const villageDetails = [];
 
+// ================= DENGUE & CHIKUNGUNYA SAMPLE ENTRIES =================
+export const dengueChikungunyaEntries = [];
+
+export function saveDengueEntry(entryData) {
+  try {
+    if (!entryData || !entryData.patientName) {
+      return { success: false, message: "रुग्णाचे नाव आवश्यक आहे (Patient name is required)." };
+    }
+    const cleanName = String(entryData.patientName).trim().toUpperCase();
+    const cleanRegNo = entryData.patientRegNo ? String(entryData.patientRegNo).trim() : "";
+    const cleanDate = entryData.dateCollection ? String(entryData.dateCollection).trim() : new Date().toISOString().slice(0, 10);
+    const id = entryData.id || `DENGUE_${cleanDate.replace(/-/g, "")}_${cleanRegNo || Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newRecord = {
+      id,
+      patientName: cleanName,
+      mobile: entryData.mobile ? String(entryData.mobile).trim() : "-",
+      houseNo: entryData.houseNo ? String(entryData.houseNo).trim() : "-",
+      village: entryData.village ? String(entryData.village).trim() : "भादा",
+      taluka: entryData.taluka ? String(entryData.taluka).trim() : "AUSA",
+      district: entryData.district ? String(entryData.district).trim() : "LATUR",
+      hospitalAddress: entryData.hospitalAddress ? String(entryData.hospitalAddress).trim() : "प्राथमिक आरोग्य केंद्र भादा",
+      patientRegNo: cleanRegNo || "-",
+      wardNo: entryData.wardNo ? String(entryData.wardNo).trim() : "--",
+      bedNo: entryData.bedNo ? String(entryData.bedNo).trim() : "--",
+      age: parseInt(entryData.age) || 0,
+      sex: entryData.sex ? String(entryData.sex).trim().toUpperCase() : "FEMALE",
+      dateOnset: entryData.dateOnset ? String(entryData.dateOnset).trim() : cleanDate,
+      sampleNature: entryData.sampleNature ? String(entryData.sampleNature).trim() : "Serum",
+      dateCollection: cleanDate,
+      clinicalFever: parseInt(entryData.clinicalFever) ?? 1,
+      clinicalHeadache: parseInt(entryData.clinicalHeadache) ?? 0,
+      clinicalBodyache: parseInt(entryData.clinicalBodyache) ?? 0,
+      clinicalJointPain: parseInt(entryData.clinicalJointPain) ?? 0,
+      clinicalRetroOrbitalPain: parseInt(entryData.clinicalRetroOrbitalPain) ?? 0,
+      clinicalRash: parseInt(entryData.clinicalRash) ?? 0,
+      haemorrhagic: entryData.haemorrhagic ? String(entryData.haemorrhagic).trim() : "No",
+      haemHematemesis: entryData.haemHematemesis ? String(entryData.haemHematemesis).trim() : "",
+      haemEpistaxis: entryData.haemEpistaxis ? String(entryData.haemEpistaxis).trim() : "",
+      haemMelena: entryData.haemMelena ? String(entryData.haemMelena).trim() : "",
+      haemOther: entryData.haemOther ? String(entryData.haemOther).trim() : "",
+      doctorName: entryData.doctorName ? String(entryData.doctorName).trim() : "Dr. Patil S.S.",
+      doctorMobile: entryData.doctorMobile ? String(entryData.doctorMobile).trim() : "9689686901",
+      outwardNo: entryData.outwardNo ? String(entryData.outwardNo).trim() : "",
+      testResult: entryData.testResult ? String(entryData.testResult).trim() : "Pending",
+      createdAt: entryData.createdAt || new Date().toISOString()
+    };
+
+    const existingIdx = dengueChikungunyaEntries.findIndex(e => e.id === id);
+    if (existingIdx !== -1) {
+      dengueChikungunyaEntries[existingIdx] = newRecord;
+    } else {
+      dengueChikungunyaEntries.push(newRecord);
+    }
+
+    saveDbToDisk();
+    return { success: true, message: `रुग्ण ${newRecord.patientName} ची डेंगी/चिकनगुनिया सिरम नोंद यशस्वीरित्या जतन केली.`, id: newRecord.id, record: newRecord };
+  } catch (err) {
+    console.error("[Store] Error saving dengue entry:", err);
+    return { success: false, message: `नोंद जतन करताना त्रुटी: ${err.message}` };
+  }
+}
+
+export function deleteDengueEntry(id) {
+  try {
+    const idx = dengueChikungunyaEntries.findIndex(e => e.id === id);
+    if (idx === -1) {
+      return { success: false, message: "नोंद सापडली नाही (Record not found)." };
+    }
+    const removed = dengueChikungunyaEntries.splice(idx, 1)[0];
+    saveDbToDisk();
+    return { success: true, message: `रुग्ण ${removed.patientName} ची नोंद यशस्वीरित्या हटवली.` };
+  } catch (err) {
+    return { success: false, message: `हटवताना त्रुटी: ${err.message}` };
+  }
+}
+
+export function getDengueEntries(filterDate, filterVillage) {
+  let list = [...dengueChikungunyaEntries];
+  if (filterDate && filterDate !== "All") {
+    list = list.filter(e => e.dateCollection === filterDate);
+  }
+  if (filterVillage && filterVillage !== "All") {
+    list = list.filter(e => e.village === filterVillage);
+  }
+  // Sort descending by collection date, then patient name
+  list.sort((a, b) => {
+    if (b.dateCollection !== a.dateCollection) return b.dateCollection.localeCompare(a.dateCollection);
+    return a.patientName.localeCompare(b.patientName);
+  });
+  return list;
+}
+
 // Dummy data seeding removed - system starts with clean empty datasets and syncs with real-time data
 export function seedInitialMalariaData() {
   console.log('[Store] seedInitialMalariaData called: Real-time mode active. No dummy data seeded.');
@@ -3563,7 +3656,8 @@ export function saveDbToDisk() {
       villagesMaster,
       masterData,
       transferHistory,
-      googleSheetConfig
+      googleSheetConfig,
+      dengueChikungunyaEntries
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
   } catch (err) {
@@ -3620,6 +3714,10 @@ export function loadDbFromDisk() {
         if (Array.isArray(parsed.villagesMaster) && parsed.villagesMaster.length > 0) {
           villagesMaster.length = 0;
           parsed.villagesMaster.forEach(v => villagesMaster.push(v));
+        }
+        if (Array.isArray(parsed.dengueChikungunyaEntries) && parsed.dengueChikungunyaEntries.length > 0) {
+          dengueChikungunyaEntries.length = 0;
+          parsed.dengueChikungunyaEntries.forEach(item => dengueChikungunyaEntries.push(item));
         }
         if (Array.isArray(parsed.masterData) && parsed.masterData.length > 0) {
           masterData.length = 0;

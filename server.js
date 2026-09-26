@@ -38,7 +38,11 @@ import {
   getEmployeeVillageDistributionSummary,
   recalculateAllMonthProgressives,
   saveDbToDisk,
-  loadDbFromDisk
+  loadDbFromDisk,
+  dengueChikungunyaEntries,
+  saveDengueEntry,
+  deleteDengueEntry,
+  getDengueEntries
 } from './data/store.js';
 
 import {
@@ -49,7 +53,9 @@ import {
   generateEmployeeNoticesWebApp,
   generateLowPerformanceReportWebApp,
   generateEmployeeVillageMonthlyReportWebApp,
-  getEmployeeVillageMonthlyData
+  getEmployeeVillageMonthlyData,
+  generateGmcForwardingLetter,
+  generateNivCaseHistorySheets
 } from './services/reports.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -92,6 +98,71 @@ app.get('/api/reports/:id', (req, res) => {
 });
 
 // Export BS Data as CSV (compatible with Google Sheets / Excel with UTF-8 BOM)
+app.get('/api/export/dengue-samples.csv', (req, res) => {
+  const headers = [
+    'आयडी (ID)',
+    'रुग्णाचे नाव (Patient Name)',
+    'मोबाईल (Mobile)',
+    'घर क्र. (House No)',
+    'गाव (Village)',
+    'तालुका (Taluka)',
+    'जिल्हा (District)',
+    'रुग्णालय पत्ता (Hospital Address)',
+    'नोंदणी क्र. (Reg No)',
+    'वार्ड (Ward)',
+    'बेड (Bed)',
+    'वय (Age)',
+    'लिंग (Sex)',
+    'लक्षणे सुरू दिनांक (Onset Date)',
+    'नमुना प्रकार (Sample Nature)',
+    'नमुना घेतल्याचा दिनांक (Collection Date)',
+    'ताप दिवस (Fever Days)',
+    'डोकेदुखी दिवस (Headache Days)',
+    'अंगदुखी दिवस (Bodyache Days)',
+    'सांधेदुखी दिवस (Joint Pain Days)',
+    'डोळ्यांमागे दुखणे (Retro Orbital Pain Days)',
+    'पुरळ दिवस (Rash Days)',
+    'रक्तस्राव (Haemorrhagic)',
+    'डॉक्टर नाव (Doctor Name)',
+    'डॉक्टर मोबाईल (Doctor Mobile)',
+    'चाचणी अहवाल (Test Result)'
+  ];
+
+  const rows = dengueChikungunyaEntries.map(e => [
+    e.id,
+    `"${(e.patientName || '').replace(/"/g, '""')}"`,
+    e.mobile || '-',
+    e.houseNo || '-',
+    `"${(e.village || '').replace(/"/g, '""')}"`,
+    e.taluka || 'AUSA',
+    e.district || 'LATUR',
+    `"${(e.hospitalAddress || '').replace(/"/g, '""')}"`,
+    e.patientRegNo || '-',
+    e.wardNo || '--',
+    e.bedNo || '--',
+    e.age || 0,
+    e.sex || '',
+    e.dateOnset || '',
+    e.sampleNature || 'Serum',
+    e.dateCollection || '',
+    e.clinicalFever ?? 1,
+    e.clinicalHeadache ?? 0,
+    e.clinicalBodyache ?? 0,
+    e.clinicalJointPain ?? 0,
+    e.clinicalRetroOrbitalPain ?? 0,
+    e.clinicalRash ?? 0,
+    e.haemorrhagic || 'No',
+    `"${(e.doctorName || '').replace(/"/g, '""')}"`,
+    e.doctorMobile || '',
+    e.testResult || 'Pending'
+  ]);
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="phc_bhada_dengue_chikungunya_samples.csv"');
+  res.status(200).send(csvContent);
+});
+
 app.get('/api/export/bs-data.csv', (req, res) => {
   const headers = ['BS_ID', 'तारीख', 'उपकेंद्र', 'कर्मचारी नाव', 'पदनाम', 'BS Code', 'बंडल क्र.', 'पासून', 'पर्यंत', 'एकूण नमुने'];
   const rows = bsDataEntry.map(r => {
@@ -1150,6 +1221,36 @@ app.post('/api/rpc', async (req, res) => {
 
       case 'clearAllTransactionData': {
         result = clearAllTransactionData();
+        break;
+      }
+
+      case 'getDengueEntries': {
+        const [filterDate, filterVillage] = args;
+        result = { success: true, entries: getDengueEntries(filterDate, filterVillage) };
+        break;
+      }
+
+      case 'saveDengueEntry': {
+        const [entryData] = args;
+        result = saveDengueEntry(entryData);
+        break;
+      }
+
+      case 'deleteDengueEntry': {
+        const [id] = args;
+        result = deleteDengueEntry(id);
+        break;
+      }
+
+      case 'generateGmcForwardingLetter': {
+        const [dateStr, outwardNo] = args;
+        result = generateGmcForwardingLetter(dateStr, outwardNo);
+        break;
+      }
+
+      case 'generateNivCaseHistorySheets': {
+        const [patientIdsOrDate] = args;
+        result = generateNivCaseHistorySheets(patientIdsOrDate);
         break;
       }
 
