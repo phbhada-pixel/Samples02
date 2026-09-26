@@ -3230,6 +3230,20 @@ export function deleteDengueEntry(id) {
   }
 }
 
+export function clearDengueEntries() {
+  try {
+    const prevCount = dengueChikungunyaEntries.length;
+    dengueChikungunyaEntries.length = 0;
+    saveDbToDisk();
+    return {
+      success: true,
+      message: `एकूण ${prevCount} डमी / चाचणी नोंदी यशस्वीरित्या हटवण्यात आल्या. नोंदवही पूर्णपणे स्वच्छ झाली आहे.`
+    };
+  } catch (err) {
+    return { success: false, message: `डेटा साफ करताना त्रुटी: ${err.message}` };
+  }
+}
+
 export function getDengueEntries(filterDate, filterVillage) {
   let list = [...dengueChikungunyaEntries];
   if (filterDate && filterDate !== "All") {
