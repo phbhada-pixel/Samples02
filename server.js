@@ -42,7 +42,9 @@ import {
   dengueChikungunyaEntries,
   saveDengueEntry,
   deleteDengueEntry,
-  getDengueEntries
+  getDengueEntries,
+  updateDengueLabReport,
+  saveDengueBatchLabReport
 } from './data/store.js';
 
 import {
@@ -125,7 +127,15 @@ app.get('/api/export/dengue-samples.csv', (req, res) => {
     'रक्तस्राव (Haemorrhagic)',
     'डॉक्टर नाव (Doctor Name)',
     'डॉक्टर मोबाईल (Doctor Mobile)',
-    'चाचणी अहवाल (Test Result)'
+    'डेंगी निष्कर्ष (Dengue Result)',
+    'डेंगी चाचणी प्रकार (Dengue Test Type)',
+    'डेंगी लॅब संदर्भ क्र. (Dengue Report Ref)',
+    'डेंगी अहवाल दिनांक (Dengue Report Date)',
+    'चिकनगुनिया निष्कर्ष (Chikungunya Result)',
+    'चिकनगुनिया चाचणी प्रकार (Chikungunya Test Type)',
+    'चिकनगुनिया लॅब संदर्भ क्र. (Chikungunya Report Ref)',
+    'चिकनगुनिया अहवाल दिनांक (Chikungunya Report Date)',
+    'एकूण स्थिती (Overall Status)'
   ];
 
   const rows = dengueChikungunyaEntries.map(e => [
@@ -154,7 +164,15 @@ app.get('/api/export/dengue-samples.csv', (req, res) => {
     e.haemorrhagic || 'No',
     `"${(e.doctorName || '').replace(/"/g, '""')}"`,
     e.doctorMobile || '',
-    e.testResult || 'Pending'
+    e.dengueResult || 'Pending',
+    `"${(e.dengueTestType || '').replace(/"/g, '""')}"`,
+    `"${(e.dengueReportRef || '').replace(/"/g, '""')}"`,
+    e.dengueReportDate || '',
+    e.chikungunyaResult || 'Pending',
+    `"${(e.chikungunyaTestType || '').replace(/"/g, '""')}"`,
+    `"${(e.chikungunyaReportRef || '').replace(/"/g, '""')}"`,
+    e.chikungunyaReportDate || '',
+    `"${(e.testResult || 'Pending').replace(/"/g, '""')}"`
   ]);
 
   const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -1233,6 +1251,18 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveDengueEntry': {
         const [entryData] = args;
         result = saveDengueEntry(entryData);
+        break;
+      }
+
+      case 'updateDengueLabReport': {
+        const [reportData] = args;
+        result = updateDengueLabReport(reportData);
+        break;
+      }
+
+      case 'saveDengueBatchLabReport': {
+        const [batchData] = args;
+        result = saveDengueBatchLabReport(batchData);
         break;
       }
 

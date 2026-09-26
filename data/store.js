@@ -2827,8 +2827,39 @@ export function saveDengueEntry(entryData) {
       doctorMobile: entryData.doctorMobile ? String(entryData.doctorMobile).trim() : "9689686901",
       outwardNo: entryData.outwardNo ? String(entryData.outwardNo).trim() : "",
       testResult: entryData.testResult ? String(entryData.testResult).trim() : "Pending",
+      // Dengue Lab Report Details
+      dengueResult: entryData.dengueResult ? String(entryData.dengueResult).trim() : (entryData.testResult || "Pending"),
+      dengueReportRef: entryData.dengueReportRef ? String(entryData.dengueReportRef).trim() : "",
+      dengueReportDate: entryData.dengueReportDate ? String(entryData.dengueReportDate).trim() : "",
+      dengueTestType: entryData.dengueTestType ? String(entryData.dengueTestType).trim() : "NS1 Ag & IgM ELISA",
+      dengueReportFile: entryData.dengueReportFile || "",
+      dengueReportFileName: entryData.dengueReportFileName || "",
+      dengueRemarks: entryData.dengueRemarks || "",
+      // Chikungunya Lab Report Details
+      chikungunyaResult: entryData.chikungunyaResult ? String(entryData.chikungunyaResult).trim() : "Pending",
+      chikungunyaReportRef: entryData.chikungunyaReportRef ? String(entryData.chikungunyaReportRef).trim() : "",
+      chikungunyaReportDate: entryData.chikungunyaReportDate ? String(entryData.chikungunyaReportDate).trim() : "",
+      chikungunyaTestType: entryData.chikungunyaTestType ? String(entryData.chikungunyaTestType).trim() : "Chikungunya IgM ELISA",
+      chikungunyaReportFile: entryData.chikungunyaReportFile || "",
+      chikungunyaReportFileName: entryData.chikungunyaReportFileName || "",
+      chikungunyaRemarks: entryData.chikungunyaRemarks || "",
       createdAt: entryData.createdAt || new Date().toISOString()
     };
+
+    // Calculate summarized testResult if needed
+    const dRes = newRecord.dengueResult;
+    const cRes = newRecord.chikungunyaResult;
+    if (dRes === "Positive" || cRes === "Positive") {
+      newRecord.testResult = `Positive (${dRes === "Positive" ? "Dengue" : ""}${dRes === "Positive" && cRes === "Positive" ? " + " : ""}${cRes === "Positive" ? "Chikungunya" : ""})`;
+    } else if (dRes === "Equivocal" || cRes === "Equivocal") {
+      newRecord.testResult = "Equivocal";
+    } else if (dRes === "Negative" && cRes === "Negative") {
+      newRecord.testResult = "Negative";
+    } else if (dRes !== "Pending" || cRes !== "Pending") {
+      newRecord.testResult = `D:${dRes} | C:${cRes}`;
+    } else {
+      newRecord.testResult = "Pending";
+    }
 
     const existingIdx = dengueChikungunyaEntries.findIndex(e => e.id === id);
     if (existingIdx !== -1) {
@@ -2842,6 +2873,155 @@ export function saveDengueEntry(entryData) {
   } catch (err) {
     console.error("[Store] Error saving dengue entry:", err);
     return { success: false, message: `नोंद जतन करताना त्रुटी: ${err.message}` };
+  }
+}
+
+export function updateDengueLabReport(data) {
+  try {
+    if (!data || !data.id) {
+      return { success: false, message: "रुग्ण आयडी (ID) आवश्यक आहे." };
+    }
+    const idx = dengueChikungunyaEntries.findIndex(e => e.id === data.id);
+    if (idx === -1) {
+      return { success: false, message: "रुग्ण नोंद सापडली नाही." };
+    }
+    const rec = dengueChikungunyaEntries[idx];
+    const disease = data.targetDisease || "both"; // "dengue", "chikungunya", "both"
+
+    // Update Dengue results
+    if (disease === "dengue" || disease === "both") {
+      if (data.dengueResult) rec.dengueResult = String(data.dengueResult).trim();
+      if (data.dengueReportRef !== undefined) rec.dengueReportRef = String(data.dengueReportRef).trim();
+      if (data.dengueReportDate !== undefined) rec.dengueReportDate = String(data.dengueReportDate).trim();
+      if (data.dengueTestType !== undefined) rec.dengueTestType = String(data.dengueTestType).trim();
+      if (data.dengueReportFile !== undefined) rec.dengueReportFile = data.dengueReportFile;
+      if (data.dengueReportFileName !== undefined) rec.dengueReportFileName = data.dengueReportFileName;
+      if (data.dengueRemarks !== undefined) rec.dengueRemarks = String(data.dengueRemarks).trim();
+    }
+
+    // Update Chikungunya results
+    if (disease === "chikungunya" || disease === "both") {
+      if (data.chikungunyaResult) rec.chikungunyaResult = String(data.chikungunyaResult).trim();
+      if (data.chikungunyaReportRef !== undefined) rec.chikungunyaReportRef = String(data.chikungunyaReportRef).trim();
+      if (data.chikungunyaReportDate !== undefined) rec.chikungunyaReportDate = String(data.chikungunyaReportDate).trim();
+      if (data.chikungunyaTestType !== undefined) rec.chikungunyaTestType = String(data.chikungunyaTestType).trim();
+      if (data.chikungunyaReportFile !== undefined) rec.chikungunyaReportFile = data.chikungunyaReportFile;
+      if (data.chikungunyaReportFileName !== undefined) rec.chikungunyaReportFileName = data.chikungunyaReportFileName;
+      if (data.chikungunyaRemarks !== undefined) rec.chikungunyaRemarks = String(data.chikungunyaRemarks).trim();
+    }
+
+    // Calculate summarized testResult
+    const dRes = rec.dengueResult || "Pending";
+    const cRes = rec.chikungunyaResult || "Pending";
+    if (dRes === "Positive" || cRes === "Positive") {
+      rec.testResult = `Positive (${dRes === "Positive" ? "Dengue" : ""}${dRes === "Positive" && cRes === "Positive" ? " + " : ""}${cRes === "Positive" ? "Chikungunya" : ""})`;
+    } else if (dRes === "Equivocal" || cRes === "Equivocal") {
+      rec.testResult = "Equivocal";
+    } else if (dRes === "Negative" && cRes === "Negative") {
+      rec.testResult = "Negative";
+    } else if (dRes !== "Pending" || cRes !== "Pending") {
+      rec.testResult = `D:${dRes} | C:${cRes}`;
+    } else {
+      rec.testResult = "Pending";
+    }
+
+    rec.updatedAt = new Date().toISOString();
+    saveDbToDisk();
+    return {
+      success: true,
+      message: `रुग्ण ${rec.patientName} चा ${disease === "dengue" ? "डेंगी" : disease === "chikungunya" ? "चिकनगुनिया" : "डेंगी व चिकनगुनिया"} प्रयोगशाळा अहवाल यशस्वीरित्या अपडेट केला!`,
+      record: rec
+    };
+  } catch (err) {
+    console.error("[Store] Error updating dengue lab report:", err);
+    return { success: false, message: "अहवाल अपडेट करताना त्रुटी: " + err.message };
+  }
+}
+
+export function saveDengueBatchLabReport(batchData) {
+  try {
+    if (!batchData || !Array.isArray(batchData.patientResults) || batchData.patientResults.length === 0) {
+      return { success: false, message: "कोणत्याही रुग्णाचा अहवाल डेटा आढळला नाही (No patient results provided)." };
+    }
+
+    const {
+      dateCollection,
+      targetDisease = "both",
+      reportRefNo = "",
+      reportReceivedDate = "",
+      testType = "",
+      reportFile = "",
+      reportFileName = "",
+      commonRemarks = "",
+      patientResults = []
+    } = batchData;
+
+    let updatedCount = 0;
+
+    patientResults.forEach(item => {
+      const idx = dengueChikungunyaEntries.findIndex(e => e.id === item.id);
+      if (idx === -1) return;
+      const rec = dengueChikungunyaEntries[idx];
+
+      // Update Dengue
+      if (targetDisease === "dengue" || targetDisease === "both") {
+        if (item.dengueResult) rec.dengueResult = String(item.dengueResult).trim();
+        if (reportRefNo) rec.dengueReportRef = String(reportRefNo).trim();
+        if (reportReceivedDate) rec.dengueReportDate = String(reportReceivedDate).trim();
+        if (testType) rec.dengueTestType = String(testType).trim();
+        if (reportFile) {
+          rec.dengueReportFile = reportFile;
+          rec.dengueReportFileName = reportFileName || `GMC_Dengue_Batch_${dateCollection || "Report"}.pdf`;
+        }
+        if (item.remarks || commonRemarks) {
+          rec.dengueRemarks = [item.remarks, commonRemarks].filter(Boolean).join(" | ");
+        }
+      }
+
+      // Update Chikungunya
+      if (targetDisease === "chikungunya" || targetDisease === "both") {
+        if (item.chikungunyaResult) rec.chikungunyaResult = String(item.chikungunyaResult).trim();
+        if (reportRefNo) rec.chikungunyaReportRef = String(reportRefNo).trim();
+        if (reportReceivedDate) rec.chikungunyaReportDate = String(reportReceivedDate).trim();
+        if (testType) rec.chikungunyaTestType = String(testType).trim();
+        if (reportFile) {
+          rec.chikungunyaReportFile = reportFile;
+          rec.chikungunyaReportFileName = reportFileName || `GMC_Chik_Batch_${dateCollection || "Report"}.pdf`;
+        }
+        if (item.remarks || commonRemarks) {
+          rec.chikungunyaRemarks = [item.remarks, commonRemarks].filter(Boolean).join(" | ");
+        }
+      }
+
+      // Recalculate combined testResult
+      const dRes = rec.dengueResult || "Pending";
+      const cRes = rec.chikungunyaResult || "Pending";
+      if (dRes === "Positive" || cRes === "Positive") {
+        rec.testResult = `Positive (${dRes === "Positive" ? "Dengue" : ""}${dRes === "Positive" && cRes === "Positive" ? " + " : ""}${cRes === "Positive" ? "Chikungunya" : ""})`;
+      } else if (dRes === "Equivocal" || cRes === "Equivocal") {
+        rec.testResult = "Equivocal";
+      } else if (dRes === "Negative" && cRes === "Negative") {
+        rec.testResult = "Negative";
+      } else if (dRes !== "Pending" || cRes !== "Pending") {
+        rec.testResult = `D:${dRes} | C:${cRes}`;
+      } else {
+        rec.testResult = "Pending";
+      }
+
+      rec.updatedAt = new Date().toISOString();
+      updatedCount++;
+    });
+
+    saveDbToDisk();
+    const diseaseName = targetDisease === "dengue" ? "डेंगी" : targetDisease === "chikungunya" ? "चिकनगुनिया" : "डेंगी व चिकनगुनिया";
+    return {
+      success: true,
+      count: updatedCount,
+      message: `दिनांक ${dateCollection ? dateCollection.split("-").reverse().join("-") : ""} च्या एकूण ${updatedCount} रुग्णांचा ${diseaseName} GMC एकत्रित अहवाल यशस्वीरित्या सेव्ह झाला!`
+    };
+  } catch (err) {
+    console.error("[Store] Error saving batch lab report:", err);
+    return { success: false, message: "बॅच अहवाल जतन करताना त्रुटी: " + err.message };
   }
 }
 

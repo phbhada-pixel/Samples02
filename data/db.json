@@ -36669,8 +36669,23 @@
       "doctorName": "डॉ. सचिन एस. शिंदे (वैद्यकीय अधिकारी, प्रा.आ.केंद्र भादा)",
       "doctorMobile": "9422000000",
       "outwardNo": "",
-      "testResult": "Pending",
-      "createdAt": "2026-09-26T07:19:37.243Z"
+      "testResult": "Positive (Dengue)",
+      "createdAt": "2026-09-26T07:19:37.243Z",
+      "dengueResult": "Positive",
+      "dengueReportRef": "GMC/MICRO/BATCH/2026/092",
+      "dengueReportDate": "2026-09-28",
+      "dengueTestType": "NS1 Ag & IgM ELISA",
+      "dengueReportFile": "data:text/plain;base64,R01DIENPTlNPTElEQVRFRCBCQVRDSCBSRVBPUlQ=",
+      "dengueReportFileName": "GMC_Batch_Report_26092026.pdf",
+      "dengueRemarks": "NS1 Positive | GMC Latur Microbiology Batch Testing",
+      "updatedAt": "2026-09-26T07:40:30.999Z",
+      "chikungunyaResult": "Negative",
+      "chikungunyaReportRef": "GMC/MICRO/CHIK/2026/89",
+      "chikungunyaReportDate": "2026-09-30",
+      "chikungunyaTestType": "Chikungunya IgM ELISA",
+      "chikungunyaReportFile": "data:text/plain;base64,Q0hJSyBSRVBPUlQ=",
+      "chikungunyaReportFileName": "GMC_Chik_Report_Ramesh_Patil.pdf",
+      "chikungunyaRemarks": "Chikungunya IgM Negative"
     }
   ]
 }

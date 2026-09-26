@@ -60,6 +60,11 @@
         if (clientBsData.length > 0) setLocalStore('bsDataEntry', clientBsData);
       }
 
+      let clientDengueEntries = getLocalStore('dengueChikungunyaEntries', null);
+      if (!clientDengueEntries || !Array.isArray(clientDengueEntries)) {
+        clientDengueEntries = (defaultSnap.dengueChikungunyaEntries && Array.isArray(defaultSnap.dengueChikungunyaEntries)) ? defaultSnap.dengueChikungunyaEntries : [];
+        if (clientDengueEntries.length > 0) setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+      }
       let clientVillageDetails = getLocalStore('villageDetails', null);
       if (!clientVillageDetails || !Array.isArray(clientVillageDetails) || clientVillageDetails.length === 0) {
         clientVillageDetails = (defaultSnap.villageDetails && Array.isArray(defaultSnap.villageDetails)) ? defaultSnap.villageDetails : [];
@@ -1050,6 +1055,85 @@
           }
 
           case 'getDriveDownloads':
+          case 'getDengueEntries': {
+            const [filterDate, filterVillage] = args;
+            let list = [...clientDengueEntries];
+            if (filterDate && filterDate !== 'All') list = list.filter(e => e.dateCollection === filterDate);
+            if (filterVillage && filterVillage !== 'All') list = list.filter(e => e.village === filterVillage);
+            return { result: { success: true, entries: list } };
+          }
+
+          case 'saveDengueEntry': {
+            const [entryData] = args;
+            const cleanDate = entryData.dateCollection ? String(entryData.dateCollection).trim() : new Date().toISOString().slice(0, 10);
+            const id = entryData.id || `DENGUE_${cleanDate.replace(/-/g, '')}_${Math.floor(1000 + Math.random() * 9000)}`;
+            const rec = { ...entryData, id, createdAt: entryData.createdAt || new Date().toISOString() };
+            const exIdx = clientDengueEntries.findIndex(e => e.id === id);
+            if (exIdx !== -1) clientDengueEntries[exIdx] = rec;
+            else clientDengueEntries.push(rec);
+            setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+            return { result: { success: true, message: `रुग्ण ${rec.patientName} ची नोंद सुरक्षित सेव्ह झाली.`, record: rec } };
+          }
+
+          case 'updateDengueLabReport': {
+            const [repData] = args;
+            const exIdx = clientDengueEntries.findIndex(e => e.id === repData.id);
+            if (exIdx === -1) return { result: { success: false, message: 'रुग्ण नोंद सापडली नाही.' } };
+            const rec = { ...clientDengueEntries[exIdx], ...repData, updatedAt: new Date().toISOString() };
+            clientDengueEntries[exIdx] = rec;
+            setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+            return { result: { success: true, message: `रुग्ण ${rec.patientName} चा प्रयोगशाळा अहवाल सुरक्षित सेव्ह झाला.`, record: rec } };
+          }
+
+          case 'saveDengueBatchLabReport': {
+            const [batchData] = args;
+            if (!batchData || !Array.isArray(batchData.patientResults)) {
+              return { result: { success: false, message: 'डेटा उपलब्ध नाही.' } };
+            }
+            batchData.patientResults.forEach(item => {
+              const exIdx = clientDengueEntries.findIndex(e => e.id === item.id);
+              if (exIdx !== -1) {
+                const rec = clientDengueEntries[exIdx];
+                if (batchData.targetDisease === 'dengue' || batchData.targetDisease === 'both') {
+                  if (item.dengueResult) rec.dengueResult = item.dengueResult;
+                  if (batchData.reportRefNo) rec.dengueReportRef = batchData.reportRefNo;
+                  if (batchData.reportReceivedDate) rec.dengueReportDate = batchData.reportReceivedDate;
+                  if (batchData.testType) rec.dengueTestType = batchData.testType;
+                  if (batchData.reportFile) {
+                    rec.dengueReportFile = batchData.reportFile;
+                    rec.dengueReportFileName = batchData.reportFileName;
+                  }
+                }
+                if (batchData.targetDisease === 'chikungunya' || batchData.targetDisease === 'both') {
+                  if (item.chikungunyaResult) rec.chikungunyaResult = item.chikungunyaResult;
+                  if (batchData.reportRefNo) rec.chikungunyaReportRef = batchData.reportRefNo;
+                  if (batchData.reportReceivedDate) rec.chikungunyaReportDate = batchData.reportReceivedDate;
+                  if (batchData.testType) rec.chikungunyaTestType = batchData.testType;
+                  if (batchData.reportFile) {
+                    rec.chikungunyaReportFile = batchData.reportFile;
+                    rec.chikungunyaReportFileName = batchData.reportFileName;
+                  }
+                }
+                const dRes = rec.dengueResult || 'Pending';
+                const cRes = rec.chikungunyaResult || 'Pending';
+                if (dRes === 'Positive' || cRes === 'Positive') rec.testResult = `Positive (${dRes === 'Positive' ? 'Dengue' : ''}${cRes === 'Positive' ? ' Chik' : ''})`;
+                else if (dRes === 'Negative' && cRes === 'Negative') rec.testResult = 'Negative';
+                else rec.testResult = 'Pending';
+                clientDengueEntries[exIdx] = rec;
+              }
+            });
+            setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+            return { result: { success: true, message: `एकूण ${batchData.patientResults.length} रुग्णांचे अहवाल सुरक्षित सेव्ह झाले.` } };
+          }
+
+          case 'deleteDengueEntry': {
+            const [id] = args;
+            const exIdx = clientDengueEntries.findIndex(e => e.id === id);
+            if (exIdx !== -1) clientDengueEntries.splice(exIdx, 1);
+            setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+            return { result: { success: true, message: 'नोंद यशस्वीरित्या हटवली.' } };
+          }
+
           case 'getDrivePhotos': {
             return { result: { success: true, folders: [], files: [] } };
           }
@@ -3948,7 +4032,10 @@
           <button id="dengueSubtabBtnEntry" class="subtab-btn active" onclick="switchDengueSubtab('entry')">
             📝 नवीन रुग्ण नोंद (New Entry)
           </button>
-          <button id="dengueSubtabBtnRegister" class="subtab-btn" onclick="switchDengueSubtab('register')">
+          <button id="dengueSubtabBtnBatch" class="subtab-btn" onclick="switchDengueSubtab('batch')" style="border-left:3px solid #2b6cb0; font-weight:700;">
+            🔬 GMC एकत्रित अहवाल नोंदणी (Batch Report)
+          </button>
+          <button id="dengueSubtabBtnRegister" class="subtab-btn"  onclick="switchDengueSubtab('register')">
             📋 नमुने नोंदवही व यादी (Register & Samples)
           </button>
           <button id="dengueSubtabBtnLetter" class="subtab-btn" onclick="switchDengueSubtab('letter')">
@@ -4164,6 +4251,176 @@
           </div>
         </div>
 
+        <!-- ================= SUBPANE: DATE-WISE / BATCH LAB REPORT ENTRY ================= -->
+        <div id="subpaneDengueBatch" style="display:none;">
+          <div class="sheet-card" style="border-top:4px solid #2b6cb0;">
+            <div class="sheet-card-header">
+              <div class="sheet-title">
+                <span style="font-size:24px;">🔬</span>
+                <div>
+                  <div style="font-size:17px; font-weight:800; color:#1a365d;">
+                    दिनांकनिहाय (Batch) GMC प्रयोगशाळा एकत्रित अहवाल नोंदणी
+                  </div>
+                  <div style="font-size:12.5px; color:var(--text-muted); font-weight:500;">
+                    GMC लातूर प्रयोगशाळेकडून पाठवलेल्या नमुन्यांच्या संपूर्ण तारखेचा एकत्रित अहवाल (Positive/Negative/Equivocal) एकाच वेळी नोंदवा व एकच एकत्रित पत्र स्कॅन प्रत जोडा.
+                  </div>
+                </div>
+              </div>
+              <div class="sheet-actions">
+                <button type="button" class="sheet-btn" onclick="switchDengueSubtab('register')">
+                  📋 नोंदवही पाहा (View Register)
+                </button>
+              </div>
+            </div>
+
+            <!-- Notice & Disease Tabs -->
+            <div style="background:#ebf8ff; border:1px solid #bee3f8; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div style="font-size:13px; color:#2b6cb0; font-weight:600;">
+                ℹ️ <b>GMC लातूर पद्धत:</b> नमुने दिनांकनिहाय बॅचमध्ये तपासले जातात. डेंगी व चिकनगुनिया अहवाल वेगवेगळ्या वेळी उपलब्ध झाल्यास फक्त त्या आजाराचा अहवाल निवडून एका क्लिकवर सर्व रुग्णांचे निकाल सेव्ह करा.
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="sheet-btn dg-batch-disease-btn" id="btnBatchDiseaseDengue" style="padding:5px 12px; font-size:12px; font-weight:700; background:#dd6b20; color:#fff;" onclick="switchBatchDiseaseTab('dengue')">
+                  🦟 डेंगी अहवाल (Dengue)
+                </button>
+                <button type="button" class="sheet-btn dg-batch-disease-btn" id="btnBatchDiseaseChik" style="padding:5px 12px; font-size:12px; font-weight:700; background:#edf2f7; color:#4a5568;" onclick="switchBatchDiseaseTab('chikungunya')">
+                  🦠 चिकनगुनिया अहवाल (Chik)
+                </button>
+                <button type="button" class="sheet-btn dg-batch-disease-btn" id="btnBatchDiseaseBoth" style="padding:5px 12px; font-size:12px; font-weight:700; background:#edf2f7; color:#4a5568;" onclick="switchBatchDiseaseTab('both')">
+                  ⭐ दोन्ही एकत्र (Both)
+                </button>
+              </div>
+            </div>
+
+            <!-- Common Batch Header Form -->
+            <div style="background:#f8fafc; border:1.5px solid #cbd5e0; border-radius:10px; padding:18px 20px; margin-bottom:22px;">
+              <div style="font-size:14px; font-weight:800; color:#2d3748; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+                १. एकत्रित प्रयोगशाळा अहवाल तपशील (Common Batch Details):
+              </div>
+              
+              <div class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px;">
+                
+                <!-- Date Selector -->
+                <div>
+                  <label class="form-label" style="font-weight:700; color:#1a365d;">
+                    📅 नमुना पाठवल्याचा दिनांक निवडा (Dispatch Date) <span style="color:#e53e3e;">*</span>
+                  </label>
+                  <select id="dgBatchSelectDate" class="form-control" style="font-weight:700; border-color:#3182ce;" onchange="loadBatchDatePatients()">
+                    <option value="">-- दिनांक निवडा --</option>
+                  </select>
+                </div>
+
+                <!-- Report Ref No -->
+                <div>
+                  <label class="form-label" style="font-weight:700; color:#1a365d;">
+                    📑 GMC अहवाल संदर्भ क्र. (Report Ref No.) <span style="color:#e53e3e;">*</span>
+                  </label>
+                  <input type="text" id="dgBatchReportRef" class="form-control" placeholder="उदा. GMC/MICRO/2026/DEN-145" style="font-weight:600;">
+                </div>
+
+                <!-- Report Received Date -->
+                <div>
+                  <label class="form-label" style="font-weight:700; color:#1a365d;">
+                    📅 अहवाल प्राप्त दिनांक (Received Date) <span style="color:#e53e3e;">*</span>
+                  </label>
+                  <input type="date" id="dgBatchReportDate" class="form-control" style="font-weight:600;">
+                </div>
+
+                <!-- Test Type -->
+                <div>
+                  <label class="form-label" style="font-weight:700; color:#1a365d;">
+                    🧪 चाचणी प्रकार (Test Method)
+                  </label>
+                  <select id="dgBatchTestType" class="form-control">
+                    <option value="NS1 Ag & IgM ELISA">NS1 Ag & IgM ELISA</option>
+                    <option value="NS1 Ag ELISA">NS1 Ag ELISA</option>
+                    <option value="Dengue IgM ELISA">Dengue IgM ELISA</option>
+                    <option value="Chikungunya IgM ELISA">Chikungunya IgM ELISA</option>
+                    <option value="Rapid Card Test">Rapid Card Test</option>
+                    <option value="RT-PCR">RT-PCR</option>
+                  </select>
+                </div>
+
+                <!-- Common Upload File -->
+                <div style="grid-column:span 2;">
+                  <label class="form-label" style="font-weight:700; color:#1a365d;">
+                    📎 GMC एकत्रित अहवाल पत्र स्कॅन प्रत (Upload Consolidated Batch PDF / Image)
+                  </label>
+                  <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="file" id="dgBatchReportFile" accept="image/*,.pdf" class="form-control" style="font-size:12px; padding:6px;" onchange="handleBatchFileUpload(event)">
+                    <button type="button" class="sheet-btn" id="btnBatchFileClear" style="display:none; padding:6px 12px; font-size:12px; background:#e2e8f0; color:#4a5568;" onclick="removeBatchFile()">काढून टाका</button>
+                  </div>
+                  <div id="dgBatchFilePreviewStatus" style="font-size:11.5px; margin-top:4px; color:#4a5568;"></div>
+                </div>
+
+                <!-- Common Remarks -->
+                <div style="grid-column:span 2;">
+                  <label class="form-label" style="font-weight:600;">
+                    📝 एकत्रित शेरा / टीप (Common Remarks)
+                  </label>
+                  <input type="text" id="dgBatchRemarks" class="form-control" placeholder="उदा. शासकीय वैद्यकीय महाविद्यालय लातूर सूक्ष्मजीवशास्त्र विभाग अहवाल">
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Patient Result List Table -->
+            <div style="margin-bottom:18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                <div style="font-size:14px; font-weight:800; color:#2d3748;">
+                  २. निवडलेल्या दिनांकाचे रुग्ण व निकाल (Patient Results List) - <span id="dgBatchPatientCountText" style="color:#2b6cb0;">० रुग्ण</span>:
+                </div>
+                
+                <!-- Quick Set Bulk Actions -->
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span style="font-size:12px; font-weight:700; color:#718096; margin-right:4px;">त्वरित निकाल लावा:</span>
+                  <button type="button" class="sheet-btn" style="padding:4px 10px; font-size:11.5px; background:#c6f6d5; color:#22543d; border-color:#9ae6b4; font-weight:700;" onclick="setBatchBulkResult('Negative')">
+                    🟢 सर्वांना Negative करा
+                  </button>
+                  <button type="button" class="sheet-btn" style="padding:4px 10px; font-size:11.5px; background:#fed7d7; color:#9b2c2c; border-color:#feb2b2; font-weight:700;" onclick="setBatchBulkResult('Positive')">
+                    🔴 सर्वांना Positive करा
+                  </button>
+                  <button type="button" class="sheet-btn" style="padding:4px 10px; font-size:11.5px; background:#edf2f7; color:#4a5568; border-color:#e2e8f0;" onclick="setBatchBulkResult('Pending')">
+                    ⏳ प्रलंबित ठेवा (Pending)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="table-container" style="border:1px solid #cbd5e0; border-radius:8px;">
+                <table class="app-table" id="tblDengueBatchResults">
+                  <thead>
+                    <tr style="background:#f1f5f9;">
+                      <th style="width:40px; text-align:center;">अ.क्र.</th>
+                      <th style="min-width:180px;" class="text-left">रुग्णाचे नाव (Patient Name)</th>
+                      <th>गाव (Village)</th>
+                      <th style="width:90px; text-align:center;">वय / लिंग</th>
+                      <th style="min-width:160px; text-align:center;" id="thBatchDengue">डेंगी निकाल (Dengue Result)</th>
+                      <th style="min-width:160px; text-align:center;" id="thBatchChik">चिकनगुनिया निकाल (Chik Result)</th>
+                      <th style="min-width:150px;">वैयक्तिक शेरा (Patient Remarks)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tblDengueBatchBody">
+                    <tr>
+                      <td colspan="7" style="text-align:center; padding:35px; color:#718096; font-size:13.5px;">
+                        कृपया वरून नमुना पाठवल्याचा दिनांक निवडा.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Save Complete Batch Button -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:2px solid #e2e8f0; padding-top:16px;">
+              <span id="dgBatchSaveStatusMsg" style="font-size:13.5px; font-weight:700; color:#2b6cb0;"></span>
+              <button type="button" class="sheet-btn" id="btnSaveBatchReport" style="background:#2b6cb0; color:#fff; font-size:14px; font-weight:800; padding:12px 28px; border-radius:8px; box-shadow:0 2px 6px rgba(43,108,176,0.3);" onclick="saveBatchLabReport()">
+                💾 संपूर्ण बॅचचा एकत्रित अहवाल सेव्ह करा (Save Complete Batch Report)
+              </button>
+            </div>
+
+          </div>
+        </div>
+
         <!-- ================= SUBPANE 2: PATIENT REGISTER ================= -->
         <div id="subpaneDengueRegister" style="display:none;">
           <div class="sheet-card">
@@ -4178,6 +4435,9 @@
                 </div>
               </div>
               <div class="sheet-actions">
+                <button type="button" class="sheet-btn" style="background:#2b6cb0; color:#fff; font-weight:700;" onclick="switchDengueSubtab('batch')">
+                  🔬 GMC एकत्रित अहवाल नोंदवा (Batch Report)
+                </button>
                 <button type="button" class="sheet-btn" style="background:#c05621; color:#fff;" onclick="printSelectedNivSheets()">
                   🖨️ निवडलेल्यांचे NIV केस शीट प्रिंट करा
                 </button>
@@ -4197,6 +4457,20 @@
                 <select id="dgFilterDate" class="filter-select" onchange="filterDengueTable()">
                   <option value="All">-- सर्व नमुना दिनांक (All Dates) --</option>
                 </select>
+                <select id="dgFilterDengueResult" class="filter-select" onchange="filterDengueTable()">
+                  <option value="All">-- सर्व डेंगी अहवाल (All Dengue) --</option>
+                  <option value="Pending">⏳ डेंगी प्रलंबित (Pending)</option>
+                  <option value="Positive">🔴 डेंगी पॉझिटिव्ह (Positive)</option>
+                  <option value="Negative">🟢 डेंगी निगेटिव्ह (Negative)</option>
+                  <option value="Equivocal">🟠 डेंगी संशयित (Equivocal)</option>
+                </select>
+                <select id="dgFilterChikResult" class="filter-select" onchange="filterDengueTable()">
+                  <option value="All">-- सर्व चिकनगुनिया अहवाल (All Chikungunya) --</option>
+                  <option value="Pending">⏳ चिकनगुनिया प्रलंबित (Pending)</option>
+                  <option value="Positive">🔴 चिकनगुनिया पॉझिटिव्ह (Positive)</option>
+                  <option value="Negative">🟢 चिकनगुनिया निगेटिव्ह (Negative)</option>
+                  <option value="Equivocal">🟠 चिकनगुनिया संशयित (Equivocal)</option>
+                </select>
               </div>
               <div style="font-size:12.5px; font-weight:700; color:#4a5568;">
                 एकूण नोंदी: <span id="dgRegisterCount" style="color:#c05621; font-size:15px;">0</span>
@@ -4215,9 +4489,10 @@
                     <th>गाव (Village)</th>
                     <th>वय / लिंग</th>
                     <th>नमुना दिनांक</th>
-                    <th>लक्षणे दिवस</th>
-                    <th>रक्तस्राव</th>
-                    <th style="text-align:center;">कृती (Actions)</th>
+                    <th style="min-width:140px; text-align:center;">डेंगी अहवाल (Dengue)</th>
+                    <th style="min-width:140px; text-align:center;">चिकनगुनिया अहवाल (Chik)</th>
+                    <th>लक्षणे / रक्तस्राव</th>
+                    <th style="text-align:center; min-width:160px;">कृती (Actions)</th>
                   </tr>
                 </thead>
                 <tbody id="tblDengueRegisterBody">
@@ -5023,6 +5298,202 @@
   </div>
 
   <!-- Universal Data Upload & Import Modal -->
+  <!-- ================= DENGUE & CHIKUNGUNYA LAB REPORT UPDATE MODAL ================= -->
+  <div id="dengueLabReportModal" class="sheet-modal">
+    <div class="sheet-modal-body" style="max-width:820px; width:95%; border-radius:14px; padding:22px 26px;">
+      
+      <!-- Modal Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #fed7aa; padding-bottom:12px; margin-bottom:18px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:44px; height:44px; border-radius:10px; background:#dd6b20; color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px;">
+            🔬
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#7b341e;">
+              प्रयोगशाळा तपासणी अहवाल नोंदणी व अपडेट
+            </h3>
+            <p style="margin:2px 0 0 0; font-size:12.5px; color:#9c4221;">
+              शासकीय वैद्यकीय महाविद्यालय (GMC) / प्रयोगशाळेकडून प्राप्त अहवाल, संदर्भ क्र., दिनांक व स्कॅन प्रत नोंदवा.
+            </p>
+          </div>
+        </div>
+        <button type="button" class="close-btn" onclick="closeLabReportModal()" style="font-size:24px; color:#a0aec0; background:none; border:none; cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Patient Information Banner -->
+      <div style="background:#fffaf0; border:1px solid #fbd38d; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; font-size:13px;">
+        <div><span style="color:#744210; font-weight:600;">रुग्णाचे नाव:</span> <b id="dgModalPatientName" style="color:#1a202c; text-transform:uppercase;">-</b></div>
+        <div><span style="color:#744210; font-weight:600;">नोंदणी क्र.:</span> <b id="dgModalRegNo" style="color:#2b6cb0;">-</b></div>
+        <div><span style="color:#744210; font-weight:600;">गाव / उपकेंद्र:</span> <b id="dgModalVillage" style="color:#1a202c;">-</b></div>
+        <div><span style="color:#744210; font-weight:600;">वय / लिंग:</span> <b id="dgModalAgeSex" style="color:#1a202c;">-</b></div>
+        <div><span style="color:#744210; font-weight:600;">नमुना गोळा दिनांक:</span> <b id="dgModalCollDate" style="color:#1a202c;">-</b></div>
+        <div><span style="color:#744210; font-weight:600;">जावक क्र.:</span> <b id="dgModalOutwardNo" style="color:#1a202c;">-</b></div>
+      </div>
+
+      <!-- Time Separation Notice & Disease Tab Selectors -->
+      <div style="background:#ebf8ff; border:1px solid #bee3f8; border-radius:8px; padding:10px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:12px; color:#2b6cb0; font-weight:600; display:flex; align-items:center; gap:6px;">
+          <span>💡</span> डेंगी व चिकनगुनिया अहवाल वेगवेगळ्या वेळी उपलब्ध झाल्यास फक्त एका आजाराचा अहवाल स्वतंत्रपणे सेव्ह करू शकता.
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="sheet-btn dg-disease-btn" id="btnDiseaseBoth" style="padding:4px 10px; font-size:12px; font-weight:700; background:#3182ce; color:#fff;" onclick="switchReportDiseaseTab('both')">⭐ दोन्ही आजार</button>
+          <button type="button" class="sheet-btn dg-disease-btn" id="btnDiseaseDengue" style="padding:4px 10px; font-size:12px; font-weight:700; background:#edf2f7; color:#4a5568;" onclick="switchReportDiseaseTab('dengue')">🦟 फक्त डेंगी</button>
+          <button type="button" class="sheet-btn dg-disease-btn" id="btnDiseaseChik" style="padding:4px 10px; font-size:12px; font-weight:700; background:#edf2f7; color:#4a5568;" onclick="switchReportDiseaseTab('chikungunya')">🦠 फक्त चिकनगुनिया</button>
+        </div>
+      </div>
+
+      <input type="hidden" id="dgModalPatientId" value="">
+      <input type="hidden" id="dgModalActiveDisease" value="both">
+
+      <!-- Form Container with Side-by-Side or Single View -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:18px; margin-bottom:18px;">
+        
+        <!-- SECTION A: DENGUE LAB REPORT -->
+        <div id="sectionDengueReport" style="border:1.5px solid #fed7aa; background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1.5px solid #ffedd5; padding-bottom:8px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">🦟</span>
+              <h4 style="margin:0; font-size:15px; font-weight:800; color:#9a3412;">डेंगी चाचणी अहवाल (Dengue Test)</h4>
+            </div>
+            <span id="badgeDengueCurrentStatus" style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:#edf2f7; color:#4a5568;">Pending</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label class="form-label" style="font-weight:700; color:#7c2d12;">१. अहवाल निष्कर्ष (Test Result) <span style="color:#e53e3e;">*</span></label>
+              <select id="dgModalDengueResult" class="form-control" style="font-weight:700; border-color:#fed7aa;" onchange="updateModalStatusBadges()">
+                <option value="Pending">⏳ Pending (प्रलंबित / अद्याप प्राप्त नाही)</option>
+                <option value="Positive" style="color:#c53030; font-weight:700;">🔴 Positive (पॉझिटिव्ह / बाधित)</option>
+                <option value="Negative" style="color:#276749; font-weight:700;">🟢 Negative (निगेटिव्ह / दोषमुक्त)</option>
+                <option value="Equivocal" style="color:#c05621; font-weight:700;">🟠 Equivocal (संशयित / अनिश्चित)</option>
+              </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <label class="form-label" style="font-weight:600;">२. चाचणी प्रकार (Test Type)</label>
+                <select id="dgModalDengueTestType" class="form-control">
+                  <option value="NS1 Ag ELISA">NS1 Ag ELISA</option>
+                  <option value="Dengue IgM ELISA">Dengue IgM ELISA</option>
+                  <option value="NS1 Ag & IgM ELISA">NS1 Ag & IgM ELISA</option>
+                  <option value="Rapid Card Test">Rapid Card Test</option>
+                  <option value="RT-PCR">RT-PCR</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-weight:600;">३. अहवाल प्राप्त दिनांक</label>
+                <input type="date" id="dgModalDengueReportDate" class="form-control">
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label" style="font-weight:600;">४. प्रयोगशाळा अहवाल संदर्भ क्र. (Report Ref No)</label>
+              <input type="text" id="dgModalDengueReportRef" class="form-control" placeholder="उदा. GMC/MICRO/2026/DEN-104">
+            </div>
+
+            <div>
+              <label class="form-label" style="font-weight:600;">५. प्रयोगशाळा अहवाल फाईल (Upload Report File)</label>
+              <input type="file" id="dgModalDengueFile" accept="image/*,.pdf" class="form-control" style="font-size:12px; padding:6px;" onchange="handleModalFileUpload(event, 'dengue')">
+              <div id="dgModalDengueFileStatus" style="font-size:11.5px; margin-top:4px; color:#4a5568;"></div>
+            </div>
+
+            <div>
+              <label class="form-label" style="font-weight:600;">६. शेरा / टीप (Remarks)</label>
+              <input type="text" id="dgModalDengueRemarks" class="form-control" placeholder="उदा. NS1 Positive, Platelet normal">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION B: CHIKUNGUNYA LAB REPORT -->
+        <div id="sectionChikReport" style="border:1.5px solid #fed7aa; background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1.5px solid #ffedd5; padding-bottom:8px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">🦠</span>
+              <h4 style="margin:0; font-size:15px; font-weight:800; color:#9a3412;">चिकनगुनिया चाचणी अहवाल (Chikungunya Test)</h4>
+            </div>
+            <span id="badgeChikCurrentStatus" style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:#edf2f7; color:#4a5568;">Pending</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label class="form-label" style="font-weight:700; color:#7c2d12;">१. अहवाल निष्कर्ष (Test Result) <span style="color:#e53e3e;">*</span></label>
+              <select id="dgModalChikResult" class="form-control" style="font-weight:700; border-color:#fed7aa;" onchange="updateModalStatusBadges()">
+                <option value="Pending">⏳ Pending (प्रलंबित / अद्याप प्राप्त नाही)</option>
+                <option value="Positive" style="color:#c53030; font-weight:700;">🔴 Positive (पॉझिटिव्ह / बाधित)</option>
+                <option value="Negative" style="color:#276749; font-weight:700;">🟢 Negative (निगेटिव्ह / दोषमुक्त)</option>
+                <option value="Equivocal" style="color:#c05621; font-weight:700;">🟠 Equivocal (संशयित / अनिश्चित)</option>
+              </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <label class="form-label" style="font-weight:600;">२. चाचणी प्रकार (Test Type)</label>
+                <select id="dgModalChikTestType" class="form-control">
+                  <option value="Chikungunya IgM ELISA">Chikungunya IgM ELISA</option>
+                  <option value="Rapid Card Test">Rapid Card Test</option>
+                  <option value="RT-PCR">RT-PCR</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-weight:600;">३. अहवाल प्राप्त दिनांक</label>
+                <input type="date" id="dgModalChikReportDate" class="form-control">
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label" style="font-weight:600;">४. प्रयोगशाळा अहवाल संदर्भ क्र. (Report Ref No)</label>
+              <input type="text" id="dgModalChikReportRef" class="form-control" placeholder="उदा. GMC/MICRO/2026/CHIK-78">
+            </div>
+
+            <div>
+              <label class="form-label" style="font-weight:600;">५. प्रयोगशाळा अहवाल फाईल (Upload Report File)</label>
+              <input type="file" id="dgModalChikFile" accept="image/*,.pdf" class="form-control" style="font-size:12px; padding:6px;" onchange="handleModalFileUpload(event, 'chikungunya')">
+              <div id="dgModalChikFileStatus" style="font-size:11.5px; margin-top:4px; color:#4a5568;"></div>
+            </div>
+
+            <div>
+              <label class="form-label" style="font-weight:600;">६. शेरा / टीप (Remarks)</label>
+              <input type="text" id="dgModalChikRemarks" class="form-control" placeholder="उदा. IgM Positive, Joint pain persisting">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #fed7aa; padding-top:14px; margin-top:10px;">
+        <span id="dgModalSaveMsg" style="font-size:13px; font-weight:600; color:#c05621;"></span>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="sheet-btn" style="background:#e2e8f0; color:#4a5568;" onclick="closeLabReportModal()">रद्द करा (Cancel)</button>
+          <button type="button" class="sheet-btn" id="btnSaveLabReportModal" style="background:#dd6b20; color:#fff; font-weight:700; padding:9px 20px;" onclick="saveLabReportModal()">
+            💾 अहवाल सेव्ह करा (Save Report)
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= DENGUE REPORT FILE PREVIEW MODAL ================= -->
+  <div id="dengueFileViewModal" class="sheet-modal">
+    <div class="sheet-modal-body" style="max-width:850px; width:95%; max-height:92vh; border-radius:12px; padding:18px 22px; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">📎</span>
+          <div>
+            <h4 style="margin:0; font-size:16px; font-weight:700;" id="dgFileViewerTitle">प्रयोगशाळा अहवाल फाईल</h4>
+            <div style="font-size:12px; color:#718096;" id="dgFileViewerSubtitle">-</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <a id="dgFileViewerDownloadBtn" href="#" download="report" class="sheet-btn" style="background:#ebf8ff; color:#2b6cb0; text-decoration:none; padding:5px 12px; font-size:12px; font-weight:600;">📥 डाऊनलोड</a>
+          <button type="button" class="close-btn" onclick="closeDengueFileViewModal()" style="font-size:22px; color:#a0aec0; background:none; border:none; cursor:pointer;">✕</button>
+        </div>
+      </div>
+      <div id="dgFileViewerContent" style="flex:1; overflow:auto; min-height:450px; display:flex; align-items:center; justify-content:center; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+      </div>
+    </div>
+  </div>
   <div id="importCsvModal" class="sheet-modal">
     <div class="sheet-modal-body" style="max-width:750px; width:95%;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
@@ -11334,7 +11805,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
 
     function switchDengueSubtab(subtab) {
       document.querySelectorAll('#dengueTab .subtab-btn').forEach(b => b.classList.remove('active'));
-      const panes = ['subpaneDengueEntry', 'subpaneDengueRegister', 'subpaneDengueLetter', 'subpaneDengueSheets'];
+      const panes = ['subpaneDengueEntry', 'subpaneDengueBatch', 'subpaneDengueRegister', 'subpaneDengueLetter', 'subpaneDengueSheets'];
       panes.forEach(p => {
         const el = document.getElementById(p);
         if (el) el.style.display = 'none';
@@ -11342,19 +11813,29 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
 
       if (subtab === 'entry') {
         document.getElementById('dengueSubtabBtnEntry')?.classList.add('active');
-        document.getElementById('subpaneDengueEntry').style.display = 'block';
+        const p = document.getElementById('subpaneDengueEntry');
+        if (p) p.style.display = 'block';
+      } else if (subtab === 'batch') {
+        document.getElementById('dengueSubtabBtnBatch')?.classList.add('active');
+        const p = document.getElementById('subpaneDengueBatch');
+        if (p) p.style.display = 'block';
+        populateBatchDateSelector();
+        loadBatchDatePatients();
       } else if (subtab === 'register') {
         document.getElementById('dengueSubtabBtnRegister')?.classList.add('active');
-        document.getElementById('subpaneDengueRegister').style.display = 'block';
+        const p = document.getElementById('subpaneDengueRegister');
+        if (p) p.style.display = 'block';
         filterDengueTable();
       } else if (subtab === 'letter') {
         document.getElementById('dengueSubtabBtnLetter')?.classList.add('active');
-        document.getElementById('subpaneDengueLetter').style.display = 'block';
+        const p = document.getElementById('subpaneDengueLetter');
+        if (p) p.style.display = 'block';
         populateDengueLetterDateSelect();
         renderGmcLetterPreview();
       } else if (subtab === 'sheets') {
         document.getElementById('dengueSubtabBtnSheets')?.classList.add('active');
-        document.getElementById('subpaneDengueSheets').style.display = 'block';
+        const p = document.getElementById('subpaneDengueSheets');
+        if (p) p.style.display = 'block';
         populateDengueSheetsSelect();
         renderNivSheetsPreview();
       }
@@ -11510,22 +11991,51 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       const sVal = (document.getElementById('dgFilterSearch')?.value || '').toLowerCase().trim();
       const vVal = document.getElementById('dgFilterVillage')?.value || 'All';
       const dVal = document.getElementById('dgFilterDate')?.value || 'All';
+      const dgResVal = document.getElementById('dgFilterDengueResult')?.value || 'All';
+      const chikResVal = document.getElementById('dgFilterChikResult')?.value || 'All';
 
       let filtered = [...mDengueData];
+
       if (vVal !== 'All') {
         filtered = filtered.filter(e => e.village === vVal);
       }
       if (dVal !== 'All') {
         filtered = filtered.filter(e => e.dateCollection === dVal);
       }
+      if (dgResVal !== 'All') {
+        filtered = filtered.filter(e => (e.dengueResult || 'Pending') === dgResVal);
+      }
+      if (chikResVal !== 'All') {
+        filtered = filtered.filter(e => (e.chikungunyaResult || 'Pending') === chikResVal);
+      }
       if (sVal) {
         filtered = filtered.filter(e => {
           return (e.patientName && e.patientName.toLowerCase().includes(sVal)) ||
                  (e.patientRegNo && e.patientRegNo.toLowerCase().includes(sVal)) ||
                  (e.village && e.village.toLowerCase().includes(sVal)) ||
-                 (e.mobile && e.mobile.includes(sVal));
+                 (e.mobile && e.mobile.includes(sVal)) ||
+                 (e.dengueReportRef && e.dengueReportRef.toLowerCase().includes(sVal)) ||
+                 (e.chikungunyaReportRef && e.chikungunyaReportRef.toLowerCase().includes(sVal));
         });
       }
+
+      // Update KPI strip counts based on full mDengueData
+      const totalCount = mDengueData.length;
+      const dPosCount = mDengueData.filter(e => e.dengueResult === 'Positive').length;
+      const cPosCount = mDengueData.filter(e => e.chikungunyaResult === 'Positive').length;
+      const pendingCount = mDengueData.filter(e => (e.dengueResult === 'Pending' || e.chikungunyaResult === 'Pending' || (!e.dengueResult && !e.chikungunyaResult))).length;
+      const negCount = mDengueData.filter(e => (e.dengueResult === 'Negative' && (e.chikungunyaResult === 'Negative' || !e.chikungunyaResult))).length;
+
+      const elTotal = document.getElementById('dgKpiTotalSamples');
+      if (elTotal) elTotal.textContent = totalCount;
+      const elDPos = document.getElementById('dgKpiDenguePos');
+      if (elDPos) elDPos.textContent = dPosCount;
+      const elCPos = document.getElementById('dgKpiChikPos');
+      if (elCPos) elCPos.textContent = cPosCount;
+      const elPend = document.getElementById('dgKpiPending');
+      if (elPend) elPend.textContent = pendingCount;
+      const elNeg = document.getElementById('dgKpiNegative');
+      if (elNeg) elNeg.textContent = negCount;
 
       const countEl = document.getElementById('dgRegisterCount');
       if (countEl) countEl.textContent = filtered.length;
@@ -11552,6 +12062,58 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         if (p.clinicalJointPain) symptomsList.push(`सांधे: ${p.clinicalJointPain}d`);
         const symStr = symptomsList.length > 0 ? symptomsList.join(', ') : 'Fever: 1d';
 
+        // Dengue Result badge & meta
+        const dRes = p.dengueResult || 'Pending';
+        let dBadge = '';
+        if (dRes === 'Positive') {
+          dBadge = '<span style="display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:#fed7d7; color:#9b2c2c; border:1px solid #feb2b2;">🔴 Positive</span>';
+        } else if (dRes === 'Negative') {
+          dBadge = '<span style="display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:#c6f6d5; color:#22543d; border:1px solid #9ae6b4;">🟢 Negative</span>';
+        } else if (dRes === 'Equivocal') {
+          dBadge = '<span style="display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:#feebc8; color:#7b341e; border:1px solid #fbd38d;">🟠 Equivocal</span>';
+        } else {
+          dBadge = '<span style="display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:12px; background:#edf2f7; color:#4a5568; border:1px solid #e2e8f0;">⏳ Pending</span>';
+        }
+
+        let dMeta = '';
+        if (p.dengueReportRef || p.dengueReportDate) {
+          const dDateFmt = p.dengueReportDate ? p.dengueReportDate.split('-').reverse().join('-') : '';
+          dMeta = `<div style="font-size:11px; color:#4a5568; margin-top:2px;">
+            ${p.dengueReportRef ? `<span title="Report Ref">Ref: <b>${p.dengueReportRef}</b></span><br>` : ''}
+            ${dDateFmt ? `<span style="color:#718096;">📅 ${dDateFmt}</span>` : ''}
+          </div>`;
+        }
+        let dFileBtn = '';
+        if (p.dengueReportFile) {
+          dFileBtn = `<button type="button" class="sheet-btn" style="padding:2px 6px; font-size:10.5px; margin-top:3px; background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;" onclick="viewDengueReportFile('${p.id}', 'dengue')">📎 अहवाल प्रत</button>`;
+        }
+
+        // Chikungunya Result badge & meta
+        const cRes = p.chikungunyaResult || 'Pending';
+        let cBadge = '';
+        if (cRes === 'Positive') {
+          cBadge = '<span style="display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:#fed7d7; color:#9b2c2c; border:1px solid #feb2b2;">🔴 Positive</span>';
+        } else if (cRes === 'Negative') {
+          cBadge = '<span style="display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:#c6f6d5; color:#22543d; border:1px solid #9ae6b4;">🟢 Negative</span>';
+        } else if (cRes === 'Equivocal') {
+          cBadge = '<span style="display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:#feebc8; color:#7b341e; border:1px solid #fbd38d;">🟠 Equivocal</span>';
+        } else {
+          cBadge = '<span style="display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:12px; background:#edf2f7; color:#4a5568; border:1px solid #e2e8f0;">⏳ Pending</span>';
+        }
+
+        let cMeta = '';
+        if (p.chikungunyaReportRef || p.chikungunyaReportDate) {
+          const cDateFmt = p.chikungunyaReportDate ? p.chikungunyaReportDate.split('-').reverse().join('-') : '';
+          cMeta = `<div style="font-size:11px; color:#4a5568; margin-top:2px;">
+            ${p.chikungunyaReportRef ? `<span title="Report Ref">Ref: <b>${p.chikungunyaReportRef}</b></span><br>` : ''}
+            ${cDateFmt ? `<span style="color:#718096;">📅 ${cDateFmt}</span>` : ''}
+          </div>`;
+        }
+        let cFileBtn = '';
+        if (p.chikungunyaReportFile) {
+          cFileBtn = `<button type="button" class="sheet-btn" style="padding:2px 6px; font-size:10.5px; margin-top:3px; background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;" onclick="viewDengueReportFile('${p.id}', 'chikungunya')">📎 अहवाल प्रत</button>`;
+        }
+
         html += `
           <tr>
             <td style="text-align:center;"><input type="checkbox" class="dg-row-cb" value="${p.id}"></td>
@@ -11559,25 +12121,40 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
             <td style="font-weight:700; color:#2b6cb0;">${p.patientRegNo || '-'}</td>
             <td class="text-left" style="font-weight:700; text-transform:uppercase;">
               ${p.patientName}
-              <div style="font-size:11.5px; color:#718096; font-weight:normal;">📱 ${p.mobile || '-'}</div>
+              <div style="font-size:11.5px; color:#718096; text-transform:none; font-weight:500;">
+                📱 ${p.mobile && p.mobile !== '-' ? p.mobile : 'नाही'} | घर क्र: ${p.houseNo || '-'}
+              </div>
             </td>
-            <td><span class="sheet-badge" style="background:#f0fff4; color:#22543d; border-color:#9ae6b4;">${p.village}</span></td>
-            <td>${p.age} / <b>${p.sex}</b></td>
-            <td><b>${pDate}</b></td>
-            <td style="font-size:12px; color:#4a5568;">${symStr}</td>
+            <td style="font-weight:600; color:#2d3748;">${p.village || '-'}</td>
+            <td style="text-align:center;">${p.age || '-'} / ${p.sex === 'FEMALE' ? 'स्त्री' : 'पुरुष'}</td>
+            <td style="text-align:center; font-weight:600;">${pDate}</td>
+            <td style="text-align:center;">
+              ${dBadge}
+              ${dMeta}
+              ${dFileBtn}
+            </td>
+            <td style="text-align:center;">
+              ${cBadge}
+              ${cMeta}
+              ${cFileBtn}
+            </td>
             <td>
-              <span style="font-size:11.5px; font-weight:700; color:${p.haemorrhagic === 'Yes' ? '#e53e3e' : '#38a169'};">
-                ${p.haemorrhagic === 'Yes' ? '⚠️ Yes' : 'No'}
+              <div style="font-size:12px; color:#4a5568;">${symStr}</div>
+              <span style="font-size:11px; font-weight:700; color:${p.haemorrhagic === 'Yes' ? '#e53e3e' : '#38a169'};">
+                ${p.haemorrhagic === 'Yes' ? '⚠️ रक्तस्राव: होय' : 'रक्तस्राव: नाही'}
               </span>
             </td>
             <td style="text-align:center; white-space:nowrap;">
-              <button type="button" class="sheet-btn" style="padding:4px 8px; font-size:11.5px; background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;" onclick="printSingleNivSheet('${p.id}')" title="NIV केस शीट प्रिंट करा">
-                📄 केस शीट
+              <button type="button" class="sheet-btn" style="padding:4px 8px; font-size:11.5px; background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8; font-weight:700;" onclick="openLabReportModal('${p.id}')" title="प्रयोगशाळा अहवाल नोंदवा / अपडेट करा">
+                🔬 अहवाल अपडेट
               </button>
-              <button type="button" class="sheet-btn" style="padding:4px 8px; font-size:11.5px; background:#fffaf0; color:#c05621; border-color:#fbd38d;" onclick="editDengueRecord('${p.id}')" title="नोंद संपादन">
+              <button type="button" class="sheet-btn" style="padding:4px 7px; font-size:11.5px; background:#fffaf0; color:#c05621; border-color:#fbd38d;" onclick="printSingleNivSheet('${p.id}')" title="NIV केस शीट प्रिंट करा">
+                📄
+              </button>
+              <button type="button" class="sheet-btn" style="padding:4px 7px; font-size:11.5px; background:#fffaf0; color:#744210; border-color:#ecc94b;" onclick="editDengueRecord('${p.id}')" title="नोंद संपादन">
                 ✏️
               </button>
-              <button type="button" class="sheet-btn" style="padding:4px 8px; font-size:11.5px; background:#fff5f5; color:#e53e3e; border-color:#feb2b2;" onclick="deleteDengueRecord('${p.id}')" title="हटवा">
+              <button type="button" class="sheet-btn" style="padding:4px 7px; font-size:11.5px; background:#fff5f5; color:#e53e3e; border-color:#feb2b2;" onclick="deleteDengueRecord('${p.id}')" title="हटवा">
                 🗑️
               </button>
             </td>
@@ -12107,6 +12684,625 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       } catch (e) {
         window.open(blobUrl, '_blank');
       }
+    }
+
+
+    // ================= DENGUE & CHIKUNGUNYA LAB REPORT MODAL LOGIC =================
+    let mModalDengueFileBase64 = null;
+    let mModalDengueFileName = null;
+    let mModalChikFileBase64 = null;
+    let mModalChikFileName = null;
+
+    function openLabReportModal(patientId, targetDisease = 'both') {
+      const rec = mDengueData.find(e => e.id === patientId);
+      if (!rec) {
+        showToast('⚠️ रुग्ण नोंद सापडली नाही.');
+        return;
+      }
+
+      document.getElementById('dgModalPatientId').value = rec.id;
+      document.getElementById('dgModalPatientName').textContent = rec.patientName || '-';
+      document.getElementById('dgModalRegNo').textContent = rec.patientRegNo || '-';
+      document.getElementById('dgModalVillage').textContent = `${rec.village || '-'} (${rec.subcenter || 'भादा'})`;
+      document.getElementById('dgModalAgeSex').textContent = `${rec.age || '-'} / ${rec.sex || '-'}`;
+      document.getElementById('dgModalCollDate').textContent = rec.dateCollection ? rec.dateCollection.split('-').reverse().join('-') : '-';
+      document.getElementById('dgModalOutwardNo').textContent = rec.outwardNo || '-';
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      // Populate Dengue section
+      document.getElementById('dgModalDengueResult').value = rec.dengueResult || 'Pending';
+      document.getElementById('dgModalDengueTestType').value = rec.dengueTestType || 'NS1 Ag ELISA';
+      document.getElementById('dgModalDengueReportDate').value = rec.dengueReportDate || todayStr;
+      document.getElementById('dgModalDengueReportRef').value = rec.dengueReportRef || '';
+      document.getElementById('dgModalDengueRemarks').value = rec.dengueRemarks || '';
+      mModalDengueFileBase64 = rec.dengueReportFile || null;
+      mModalDengueFileName = rec.dengueReportFileName || null;
+      updateFileStatusDisplay('dengue');
+
+      // Populate Chikungunya section
+      document.getElementById('dgModalChikResult').value = rec.chikungunyaResult || 'Pending';
+      document.getElementById('dgModalChikTestType').value = rec.chikungunyaTestType || 'Chikungunya IgM ELISA';
+      document.getElementById('dgModalChikReportDate').value = rec.chikungunyaReportDate || todayStr;
+      document.getElementById('dgModalChikReportRef').value = rec.chikungunyaReportRef || '';
+      document.getElementById('dgModalChikRemarks').value = rec.chikungunyaRemarks || '';
+      mModalChikFileBase64 = rec.chikungunyaReportFile || null;
+      mModalChikFileName = rec.chikungunyaReportFileName || null;
+      updateFileStatusDisplay('chikungunya');
+
+      // Update Badges
+      updateModalStatusBadges();
+
+      // Set Disease Tab
+      switchReportDiseaseTab(targetDisease);
+
+      const msg = document.getElementById('dgModalSaveMsg');
+      if (msg) msg.textContent = '';
+
+      const modal = document.getElementById('dengueLabReportModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeLabReportModal() {
+      const modal = document.getElementById('dengueLabReportModal');
+      if (modal) modal.style.display = 'none';
+      mModalDengueFileBase64 = null;
+      mModalDengueFileName = null;
+      mModalChikFileBase64 = null;
+      mModalChikFileName = null;
+      const f1 = document.getElementById('dgModalDengueFile');
+      if (f1) f1.value = '';
+      const f2 = document.getElementById('dgModalChikFile');
+      if (f2) f2.value = '';
+    }
+
+    function switchReportDiseaseTab(disease) {
+      document.getElementById('dgModalActiveDisease').value = disease;
+
+      const secDengue = document.getElementById('sectionDengueReport');
+      const secChik = document.getElementById('sectionChikReport');
+
+      const btnBoth = document.getElementById('btnDiseaseBoth');
+      const btnDengue = document.getElementById('btnDiseaseDengue');
+      const btnChik = document.getElementById('btnDiseaseChik');
+
+      [btnBoth, btnDengue, btnChik].forEach(b => {
+        if (b) {
+          b.style.background = '#edf2f7';
+          b.style.color = '#4a5568';
+        }
+      });
+
+      if (disease === 'both') {
+        if (btnBoth) { btnBoth.style.background = '#3182ce'; btnBoth.style.color = '#fff'; }
+        if (secDengue) secDengue.style.display = 'block';
+        if (secChik) secChik.style.display = 'block';
+      } else if (disease === 'dengue') {
+        if (btnDengue) { btnDengue.style.background = '#dd6b20'; btnDengue.style.color = '#fff'; }
+        if (secDengue) secDengue.style.display = 'block';
+        if (secChik) secChik.style.display = 'none';
+      } else if (disease === 'chikungunya') {
+        if (btnChik) { btnChik.style.background = '#dd6b20'; btnChik.style.color = '#fff'; }
+        if (secDengue) secDengue.style.display = 'none';
+        if (secChik) secChik.style.display = 'block';
+      }
+    }
+
+    function updateModalStatusBadges() {
+      const dVal = document.getElementById('dgModalDengueResult')?.value || 'Pending';
+      const cVal = document.getElementById('dgModalChikResult')?.value || 'Pending';
+
+      const dBadge = document.getElementById('badgeDengueCurrentStatus');
+      if (dBadge) {
+        dBadge.textContent = dVal;
+        if (dVal === 'Positive') { dBadge.style.background = '#fed7d7'; dBadge.style.color = '#9b2c2c'; }
+        else if (dVal === 'Negative') { dBadge.style.background = '#c6f6d5'; dBadge.style.color = '#22543d'; }
+        else if (dVal === 'Equivocal') { dBadge.style.background = '#feebc8'; dBadge.style.color = '#7b341e'; }
+        else { dBadge.style.background = '#edf2f7'; dBadge.style.color = '#4a5568'; }
+      }
+
+      const cBadge = document.getElementById('badgeChikCurrentStatus');
+      if (cBadge) {
+        cBadge.textContent = cVal;
+        if (cVal === 'Positive') { cBadge.style.background = '#fed7d7'; cBadge.style.color = '#9b2c2c'; }
+        else if (cVal === 'Negative') { cBadge.style.background = '#c6f6d5'; cBadge.style.color = '#22543d'; }
+        else if (cVal === 'Equivocal') { cBadge.style.background = '#feebc8'; cBadge.style.color = '#7b341e'; }
+        else { cBadge.style.background = '#edf2f7'; cBadge.style.color = '#4a5568'; }
+      }
+    }
+
+    function handleModalFileUpload(event, disease) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 15 * 1024 * 1024) {
+        alert('⚠️ फाईल साईझ खूप मोठी आहे (जास्तीत जास्त १५ MB अनुज्ञेय आहे).');
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (disease === 'dengue') {
+          mModalDengueFileBase64 = e.target.result;
+          mModalDengueFileName = file.name;
+          updateFileStatusDisplay('dengue');
+        } else {
+          mModalChikFileBase64 = e.target.result;
+          mModalChikFileName = file.name;
+          updateFileStatusDisplay('chikungunya');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateFileStatusDisplay(disease) {
+      const el = document.getElementById(disease === 'dengue' ? 'dgModalDengueFileStatus' : 'dgModalChikFileStatus');
+      const fileData = disease === 'dengue' ? mModalDengueFileBase64 : mModalChikFileBase64;
+      const fileName = disease === 'dengue' ? mModalDengueFileName : mModalChikFileName;
+
+      if (!el) return;
+      if (fileData) {
+        el.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px; background:#f0fff4; border:1px solid #9ae6b4; padding:4px 8px; border-radius:6px; margin-top:3px;">
+            <span style="color:#276749; font-weight:600;">📎 फाईल जोडलेली आहे: ${fileName || 'Report File'}</span>
+            <button type="button" class="sheet-btn" style="padding:2px 6px; font-size:11px; background:#e2e8f0; color:#4a5568;" onclick="removeModalFile('${disease}')">काढून टाका</button>
+          </div>
+        `;
+      } else {
+        el.innerHTML = '<span style="color:#a0aec0; font-size:11px;">कोणतीही फाईल निवडलेली नाही (PDF / JPG / PNG).</span>';
+      }
+    }
+
+    function removeModalFile(disease) {
+      if (disease === 'dengue') {
+        mModalDengueFileBase64 = null;
+        mModalDengueFileName = null;
+        const f1 = document.getElementById('dgModalDengueFile');
+        if (f1) f1.value = '';
+        updateFileStatusDisplay('dengue');
+      } else {
+        mModalChikFileBase64 = null;
+        mModalChikFileName = null;
+        const f2 = document.getElementById('dgModalChikFile');
+        if (f2) f2.value = '';
+        updateFileStatusDisplay('chikungunya');
+      }
+    }
+
+    function saveLabReportModal() {
+      const patientId = document.getElementById('dgModalPatientId').value;
+      if (!patientId) {
+        showToast('⚠️ रुग्ण आयडी आढळला नाही.');
+        return;
+      }
+
+      const activeDisease = document.getElementById('dgModalActiveDisease').value || 'both';
+
+      const payload = {
+        id: patientId,
+        targetDisease: activeDisease,
+        dengueResult: document.getElementById('dgModalDengueResult')?.value || 'Pending',
+        dengueReportRef: document.getElementById('dgModalDengueReportRef')?.value || '',
+        dengueReportDate: document.getElementById('dgModalDengueReportDate')?.value || '',
+        dengueTestType: document.getElementById('dgModalDengueTestType')?.value || 'NS1 Ag ELISA',
+        dengueRemarks: document.getElementById('dgModalDengueRemarks')?.value || '',
+        dengueReportFile: mModalDengueFileBase64 || '',
+        dengueReportFileName: mModalDengueFileName || '',
+        chikungunyaResult: document.getElementById('dgModalChikResult')?.value || 'Pending',
+        chikungunyaReportRef: document.getElementById('dgModalChikReportRef')?.value || '',
+        chikungunyaReportDate: document.getElementById('dgModalChikReportDate')?.value || '',
+        chikungunyaTestType: document.getElementById('dgModalChikTestType')?.value || 'Chikungunya IgM ELISA',
+        chikungunyaRemarks: document.getElementById('dgModalChikRemarks')?.value || '',
+        chikungunyaReportFile: mModalChikFileBase64 || '',
+        chikungunyaReportFileName: mModalChikFileName || ''
+      };
+
+      const btnSave = document.getElementById('btnSaveLabReportModal');
+      const msgEl = document.getElementById('dgModalSaveMsg');
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = '⏳ सेव्ह होत आहे...';
+      }
+      if (msgEl) msgEl.textContent = 'प्रयोगशाळा अहवाल नोंदविला जात आहे...';
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = '💾 अहवाल सेव्ह करा (Save Report)';
+          }
+          if (res && res.success) {
+            showToast('✅ ' + (res.message || 'प्रयोगशाळा अहवाल यशस्वीरित्या अपडेट केला!'));
+            closeLabReportModal();
+            loadDengueData();
+          } else {
+            if (msgEl) msgEl.textContent = '⚠️ ' + ((res && res.message) || 'त्रुटी आली.');
+          }
+        })
+        .withFailureHandler(err => {
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = '💾 अहवाल सेव्ह करा (Save Report)';
+          }
+          if (msgEl) msgEl.textContent = '⚠️ ' + err.message;
+        })
+        .updateDengueLabReport(payload);
+    }
+
+    function viewDengueReportFile(patientId, disease) {
+      const rec = mDengueData.find(e => e.id === patientId);
+      if (!rec) {
+        showToast('⚠️ रुग्ण नोंद सापडली नाही.');
+        return;
+      }
+
+      const fileData = disease === 'dengue' ? rec.dengueReportFile : rec.chikungunyaReportFile;
+      const fileName = (disease === 'dengue' ? rec.dengueReportFileName : rec.chikungunyaReportFileName) || `${rec.patientName}_${disease}_report`;
+
+      if (!fileData) {
+        showToast('⚠️ या रुग्णासाठी कोणतीही फाईल अपलोड केलेली नाही.');
+        return;
+      }
+
+      const titleEl = document.getElementById('dgFileViewerTitle');
+      const subEl = document.getElementById('dgFileViewerSubtitle');
+      const contentEl = document.getElementById('dgFileViewerContent');
+      const downloadBtn = document.getElementById('dgFileViewerDownloadBtn');
+
+      if (titleEl) titleEl.textContent = `${disease === 'dengue' ? 'डेंगी' : 'चिकनगुनिया'} तपासणी अहवाल - ${rec.patientName}`;
+      if (subEl) subEl.textContent = `गाव: ${rec.village || '-'} | नमुना दिनांक: ${rec.dateCollection || '-'} | Ref: ${(disease === 'dengue' ? rec.dengueReportRef : rec.chikungunyaReportRef) || '-'}`;
+
+      if (downloadBtn) {
+        downloadBtn.href = fileData;
+        downloadBtn.download = fileName;
+      }
+
+      if (contentEl) {
+        if (fileData.startsWith('data:application/pdf') || fileData.endsWith('.pdf')) {
+          contentEl.innerHTML = `<iframe src="${fileData}" style="width:100%; height:550px; border:none; border-radius:6px;"></iframe>`;
+        } else {
+          contentEl.innerHTML = `<img src="${fileData}" alt="Report" style="max-width:100%; max-height:550px; object-fit:contain; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">`;
+        }
+      }
+
+      const modal = document.getElementById('dengueFileViewModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeDengueFileViewModal() {
+      const modal = document.getElementById('dengueFileViewModal');
+      if (modal) modal.style.display = 'none';
+      const contentEl = document.getElementById('dgFileViewerContent');
+      if (contentEl) contentEl.innerHTML = '';
+    }
+
+
+    // ================= DENGUE & CHIKUNGUNYA DATE-WISE / BATCH LAB REPORT LOGIC =================
+    let mBatchReportFileBase64 = null;
+    let mBatchReportFileName = null;
+    let mActiveBatchDisease = 'dengue'; // 'dengue', 'chikungunya', 'both'
+
+    function switchBatchDiseaseTab(disease) {
+      mActiveBatchDisease = disease;
+      const bDengue = document.getElementById('btnBatchDiseaseDengue');
+      const bChik = document.getElementById('btnBatchDiseaseChik');
+      const bBoth = document.getElementById('btnBatchDiseaseBoth');
+
+      [bDengue, bChik, bBoth].forEach(b => {
+        if (b) {
+          b.style.background = '#edf2f7';
+          b.style.color = '#4a5568';
+        }
+      });
+
+      if (disease === 'dengue') {
+        if (bDengue) { bDengue.style.background = '#dd6b20'; bDengue.style.color = '#fff'; }
+        document.getElementById('thBatchDengue')?.style.setProperty('display', 'table-cell');
+        document.getElementById('thBatchChik')?.style.setProperty('display', 'none');
+        document.querySelectorAll('.batch-col-dengue').forEach(c => c.style.display = 'table-cell');
+        document.querySelectorAll('.batch-col-chik').forEach(c => c.style.display = 'none');
+      } else if (disease === 'chikungunya') {
+        if (bChik) { bChik.style.background = '#dd6b20'; bChik.style.color = '#fff'; }
+        document.getElementById('thBatchDengue')?.style.setProperty('display', 'none');
+        document.getElementById('thBatchChik')?.style.setProperty('display', 'table-cell');
+        document.querySelectorAll('.batch-col-dengue').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.batch-col-chik').forEach(c => c.style.display = 'table-cell');
+      } else {
+        if (bBoth) { bBoth.style.background = '#3182ce'; bBoth.style.color = '#fff'; }
+        document.getElementById('thBatchDengue')?.style.setProperty('display', 'table-cell');
+        document.getElementById('thBatchChik')?.style.setProperty('display', 'table-cell');
+        document.querySelectorAll('.batch-col-dengue').forEach(c => c.style.display = 'table-cell');
+        document.querySelectorAll('.batch-col-chik').forEach(c => c.style.display = 'table-cell');
+      }
+    }
+
+    function populateBatchDateSelector() {
+      const select = document.getElementById('dgBatchSelectDate');
+      if (!select) return;
+
+      const currentVal = select.value;
+      const dates = Array.from(new Set(mDengueData.map(e => e.dateCollection).filter(Boolean))).sort().reverse();
+
+      select.innerHTML = '<option value="">-- नमुना पाठवल्याचा दिनांक निवडा --</option>';
+      dates.forEach(d => {
+        const count = mDengueData.filter(e => e.dateCollection === d).length;
+        const dFmt = d.split('-').reverse().join('-');
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = `📅 दिनांक: ${dFmt} (एकूण ${count} सिरम नमुने पाठवले)`;
+        select.appendChild(opt);
+      });
+
+      if (currentVal && dates.includes(currentVal)) {
+        select.value = currentVal;
+      } else if (dates.length > 0) {
+        select.value = dates[0];
+      }
+
+      const recDate = document.getElementById('dgBatchReportDate');
+      if (recDate && !recDate.value) {
+        recDate.value = new Date().toISOString().slice(0, 10);
+      }
+    }
+
+    function loadBatchDatePatients() {
+      const selDate = document.getElementById('dgBatchSelectDate')?.value;
+      const tbody = document.getElementById('tblDengueBatchBody');
+      const countText = document.getElementById('dgBatchPatientCountText');
+      if (!tbody) return;
+
+      if (!selDate) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:35px; color:#718096; font-size:13.5px;">कृपया वरून नमुना पाठवल्याचा दिनांक निवडा.</td></tr>';
+        if (countText) countText.textContent = '० रुग्ण';
+        return;
+      }
+
+      const patients = mDengueData.filter(e => e.dateCollection === selDate);
+      if (countText) countText.textContent = `${patients.length} रुग्ण`;
+
+      if (patients.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:35px; color:#718096; font-size:13.5px;">दिनांक ${selDate.split('-').reverse().join('-')} साठी कोणतेही नमुने सापडले नाहीत.</td></tr>`;
+        return;
+      }
+
+      // Pre-fill existing reference number and date if any patient in the batch already has it
+      const existingRef = patients.find(p => p.dengueReportRef || p.chikungunyaReportRef);
+      if (existingRef) {
+        const refField = document.getElementById('dgBatchReportRef');
+        if (refField && !refField.value) {
+          refField.value = existingRef.dengueReportRef || existingRef.chikungunyaReportRef || '';
+        }
+        const dateField = document.getElementById('dgBatchReportDate');
+        if (dateField && (!dateField.value || dateField.value === new Date().toISOString().slice(0, 10))) {
+          if (existingRef.dengueReportDate) dateField.value = existingRef.dengueReportDate;
+          else if (existingRef.chikungunyaReportDate) dateField.value = existingRef.chikungunyaReportDate;
+        }
+        if (existingRef.dengueReportFile && !mBatchReportFileBase64) {
+          mBatchReportFileBase64 = existingRef.dengueReportFile;
+          mBatchReportFileName = existingRef.dengueReportFileName;
+          updateBatchFileStatusDisplay();
+        }
+      }
+
+      let html = '';
+      patients.forEach((p, idx) => {
+        const dRes = p.dengueResult || 'Pending';
+        const cRes = p.chikungunyaResult || 'Pending';
+
+        html += `
+          <tr data-patient-id="${p.id}">
+            <td style="text-align:center; font-weight:700;">${idx + 1}</td>
+            <td class="text-left" style="font-weight:700; text-transform:uppercase;">
+              ${p.patientName}
+              <div style="font-size:11.5px; color:#718096; font-weight:500; text-transform:none;">
+                नोंदणी: <b>${p.patientRegNo || '-'}</b> | 📱 ${p.mobile && p.mobile !== '-' ? p.mobile : 'नाही'}
+              </div>
+            </td>
+            <td style="font-weight:600; color:#2d3748;">${p.village || '-'}</td>
+            <td style="text-align:center;">${p.age || '-'} / ${p.sex === 'FEMALE' ? 'स्त्री' : 'पुरुष'}</td>
+            <td class="batch-col-dengue" style="text-align:center;">
+              <select class="form-control batch-dengue-res" style="font-weight:700; font-size:12px; padding:4px 8px; border-color:#cbd5e0;">
+                <option value="Pending" ${dRes === 'Pending' ? 'selected' : ''}>⏳ Pending</option>
+                <option value="Positive" ${dRes === 'Positive' ? 'selected' : ''} style="color:#c53030; font-weight:700;">🔴 Positive</option>
+                <option value="Negative" ${dRes === 'Negative' ? 'selected' : ''} style="color:#276749; font-weight:700;">🟢 Negative</option>
+                <option value="Equivocal" ${dRes === 'Equivocal' ? 'selected' : ''} style="color:#c05621; font-weight:700;">🟠 Equivocal</option>
+              </select>
+            </td>
+            <td class="batch-col-chik" style="text-align:center;">
+              <select class="form-control batch-chik-res" style="font-weight:700; font-size:12px; padding:4px 8px; border-color:#cbd5e0;">
+                <option value="Pending" ${cRes === 'Pending' ? 'selected' : ''}>⏳ Pending</option>
+                <option value="Positive" ${cRes === 'Positive' ? 'selected' : ''} style="color:#c53030; font-weight:700;">🔴 Positive</option>
+                <option value="Negative" ${cRes === 'Negative' ? 'selected' : ''} style="color:#276749; font-weight:700;">🟢 Negative</option>
+                <option value="Equivocal" ${cRes === 'Equivocal' ? 'selected' : ''} style="color:#c05621; font-weight:700;">🟠 Equivocal</option>
+              </select>
+            </td>
+            <td>
+              <input type="text" class="form-control batch-remarks" placeholder="शेरा (ऐच्छिक)" value="${p.dengueRemarks || p.chikungunyaRemarks || ''}" style="font-size:12px; padding:4px 8px;">
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      switchBatchDiseaseTab(mActiveBatchDisease);
+    }
+
+    function setBatchBulkResult(resultVal) {
+      if (mActiveBatchDisease === 'dengue' || mActiveBatchDisease === 'both') {
+        document.querySelectorAll('.batch-dengue-res').forEach(sel => sel.value = resultVal);
+      }
+      if (mActiveBatchDisease === 'chikungunya' || mActiveBatchDisease === 'both') {
+        document.querySelectorAll('.batch-chik-res').forEach(sel => sel.value = resultVal);
+      }
+      showToast(`सर्व रुग्णांचे निकाल ${resultVal === 'Negative' ? '🟢 Negative' : resultVal === 'Positive' ? '🔴 Positive' : '⏳ Pending'} केले.`);
+    }
+
+    function handleBatchFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 15 * 1024 * 1024) {
+        alert('⚠️ फाईल साईझ खूप मोठी आहे (जास्तीत जास्त १५ MB अनुज्ञेय आहे).');
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        mBatchReportFileBase64 = e.target.result;
+        mBatchReportFileName = file.name;
+        updateBatchFileStatusDisplay();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateBatchFileStatusDisplay() {
+      const statusEl = document.getElementById('dgBatchFilePreviewStatus');
+      const clearBtn = document.getElementById('btnBatchFileClear');
+
+      if (!statusEl) return;
+      if (mBatchReportFileBase64) {
+        statusEl.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px; background:#f0fff4; border:1px solid #9ae6b4; padding:6px 10px; border-radius:6px; margin-top:5px;">
+            <span style="color:#276749; font-weight:700;">✅ GMC एकत्रित अहवाल पत्र जोडले: ${mBatchReportFileName || 'Consolidated Report'}</span>
+            <button type="button" class="sheet-btn" style="padding:2px 8px; font-size:11px; background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;" onclick="viewBatchUploadedFile()">👁️ फाईल पाहा</button>
+          </div>
+        `;
+        if (clearBtn) clearBtn.style.display = 'inline-block';
+      } else {
+        statusEl.innerHTML = '<span style="color:#a0aec0; font-size:11.5px;">GMC चे एकत्रित पत्र किंवा यादी स्कॅन प्रत जोडा (PDF / JPG / PNG).</span>';
+        if (clearBtn) clearBtn.style.display = 'none';
+      }
+    }
+
+    function removeBatchFile() {
+      mBatchReportFileBase64 = null;
+      mBatchReportFileName = null;
+      const f = document.getElementById('dgBatchReportFile');
+      if (f) f.value = '';
+      updateBatchFileStatusDisplay();
+    }
+
+    function viewBatchUploadedFile() {
+      if (!mBatchReportFileBase64) return;
+      const titleEl = document.getElementById('dgFileViewerTitle');
+      const subEl = document.getElementById('dgFileViewerSubtitle');
+      const contentEl = document.getElementById('dgFileViewerContent');
+      const downloadBtn = document.getElementById('dgFileViewerDownloadBtn');
+
+      if (titleEl) titleEl.textContent = 'GMC लातूर एकत्रित प्रयोगशाळा अहवाल पत्र';
+      if (subEl) subEl.textContent = `संदर्भ क्र: ${document.getElementById('dgBatchReportRef')?.value || '-'} | फाईल: ${mBatchReportFileName || '-'}`;
+
+      if (downloadBtn) {
+        downloadBtn.href = mBatchReportFileBase64;
+        downloadBtn.download = mBatchReportFileName || 'GMC_Consolidated_Report.pdf';
+      }
+
+      if (contentEl) {
+        if (mBatchReportFileBase64.startsWith('data:application/pdf') || (mBatchReportFileName && mBatchReportFileName.endsWith('.pdf'))) {
+          contentEl.innerHTML = `<iframe src="${mBatchReportFileBase64}" style="width:100%; height:550px; border:none; border-radius:6px;"></iframe>`;
+        } else {
+          contentEl.innerHTML = `<img src="${mBatchReportFileBase64}" alt="Consolidated Report" style="max-width:100%; max-height:550px; object-fit:contain; border-radius:6px;">`;
+        }
+      }
+
+      const modal = document.getElementById('dengueFileViewModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function saveBatchLabReport() {
+      const selDate = document.getElementById('dgBatchSelectDate')?.value;
+      if (!selDate) {
+        alert('⚠️ कृपया प्रथम नमुना पाठवल्याचा दिनांक निवडा.');
+        return;
+      }
+
+      const reportRefNo = (document.getElementById('dgBatchReportRef')?.value || '').trim();
+      const reportDate = document.getElementById('dgBatchReportDate')?.value || '';
+      const testType = document.getElementById('dgBatchTestType')?.value || 'NS1 Ag & IgM ELISA';
+      const commonRemarks = (document.getElementById('dgBatchRemarks')?.value || '').trim();
+
+      if (!reportRefNo) {
+        alert('⚠️ कृपया GMC प्रयोगशाळा अहवाल संदर्भ क्रमांक (Report Ref No.) भरा.');
+        document.getElementById('dgBatchReportRef')?.focus();
+        return;
+      }
+      if (!reportDate) {
+        alert('⚠️ कृपया अहवाल प्राप्त दिनांक निवडा.');
+        document.getElementById('dgBatchReportDate')?.focus();
+        return;
+      }
+
+      // Collect rows
+      const rows = document.querySelectorAll('#tblDengueBatchBody tr[data-patient-id]');
+      if (rows.length === 0) {
+        alert('⚠️ या दिनांकासाठी कोणताही रुग्ण आढळला नाही.');
+        return;
+      }
+
+      const patientResults = [];
+      rows.forEach(r => {
+        const id = r.getAttribute('data-patient-id');
+        const dengueRes = r.querySelector('.batch-dengue-res')?.value || 'Pending';
+        const chikRes = r.querySelector('.batch-chik-res')?.value || 'Pending';
+        const rem = (r.querySelector('.batch-remarks')?.value || '').trim();
+
+        patientResults.push({
+          id: id,
+          dengueResult: dengueRes,
+          chikungunyaResult: chikRes,
+          remarks: rem
+        });
+      });
+
+      const payload = {
+        dateCollection: selDate,
+        targetDisease: mActiveBatchDisease,
+        reportRefNo: reportRefNo,
+        reportReceivedDate: reportDate,
+        testType: testType,
+        reportFile: mBatchReportFileBase64 || '',
+        reportFileName: mBatchReportFileName || '',
+        commonRemarks: commonRemarks,
+        patientResults: patientResults
+      };
+
+      const btnSave = document.getElementById('btnSaveBatchReport');
+      const statusMsg = document.getElementById('dgBatchSaveStatusMsg');
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = '⏳ अहवाल सेव्ह होत आहेत...';
+      }
+      if (statusMsg) statusMsg.textContent = 'सर्व रुग्णांचे अहवाल सेव्ह होत आहेत, कृपया थांबा...';
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = '💾 संपूर्ण बॅचचा एकत्रित अहवाल सेव्ह करा (Save Complete Batch Report)';
+          }
+          if (res && res.success) {
+            showToast('✅ ' + (res.message || 'एकत्रित अहवाल यशस्वीरित्या सेव्ह झाला!'));
+            if (statusMsg) statusMsg.textContent = '✅ ' + (res.message || 'यशस्वीरित्या सेव्ह झाले.');
+            loadDengueData();
+            setTimeout(() => {
+              switchDengueSubtab('register');
+            }, 1200);
+          } else {
+            alert('⚠️ ' + ((res && res.message) || 'अहवाल जतन करताना त्रुटी आली.'));
+            if (statusMsg) statusMsg.textContent = '⚠️ ' + ((res && res.message) || 'त्रुटी आली.');
+          }
+        })
+        .withFailureHandler(err => {
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = '💾 संपूर्ण बॅचचा एकत्रित अहवाल सेव्ह करा (Save Complete Batch Report)';
+          }
+          alert('⚠️ त्रुटी: ' + err.message);
+          if (statusMsg) statusMsg.textContent = '⚠️ ' + err.message;
+        })
+        .saveDengueBatchLabReport(payload);
     }
 
     function exportDengueCsvClient() {
