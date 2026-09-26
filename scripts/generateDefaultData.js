@@ -9,11 +9,7 @@ const rootDir = path.resolve(__dirname, '..');
 const dbPath = path.join(rootDir, 'data', 'db.json');
 const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
 
-// Generate self-contained defaultData.js for static GitHub Pages and standalone execution
-const code = `// PHC Bhada NVBDCP Client-side Database & Reporting Engine for Standalone / GitHub Pages Mode
-window.DEFAULT_DB_SNAPSHOT = ${JSON.stringify(db)};
-`;
-
-const outputPath = path.join(rootDir, 'defaultData.js');
-fs.writeFileSync(outputPath, code, 'utf8');
-console.log('Successfully generated defaultData.js! File size:', fs.statSync(outputPath).size);
+// Build defaultData.js
+const defaultDataJs = 'window.DEFAULT_DB_SNAPSHOT = ' + JSON.stringify(db) + ';\n';
+fs.writeFileSync(path.join(rootDir, 'defaultData.js'), defaultDataJs, 'utf8');
+console.log('✅ Generated defaultData.js with snapshot size:', defaultDataJs.length);

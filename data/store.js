@@ -2700,11 +2700,28 @@ export function getOpdBsVillagewiseSummary(monthName) {
     monthlyFemale += female;
 
     if (!monthlyVillagesMap[vName]) {
-      monthlyVillagesMap[vName] = { villageName: vName, count: 0, male: 0, female: 0, upkendra: upk };
+      monthlyVillagesMap[vName] = {
+        name: vName,
+        villageName: vName,
+        count: 0,
+        total: 0,
+        smears: 0,
+        monthlyTotal: 0,
+        male: 0,
+        monthlyMale: 0,
+        female: 0,
+        monthlyFemale: 0,
+        upkendra: upk
+      };
     }
     monthlyVillagesMap[vName].count += count;
+    monthlyVillagesMap[vName].total += count;
+    monthlyVillagesMap[vName].smears += count;
+    monthlyVillagesMap[vName].monthlyTotal += count;
     monthlyVillagesMap[vName].male += male;
+    monthlyVillagesMap[vName].monthlyMale += male;
     monthlyVillagesMap[vName].female += female;
+    monthlyVillagesMap[vName].monthlyFemale += female;
   });
 
   // Calculate YTD totals from Jan 1 up to end of selected month directly from bsDataEntry
