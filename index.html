@@ -125,7 +125,51 @@
       }
 
       function wrapReportPageLocal(title, bodyContent) {
-        return '<!DOCTYPE html>\n<html lang="mr">\n<head>\n  <meta charset="UTF-8">\n  <title>' + title + ' - प्रा.आ.केंद्र भादा</title>\n  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">\n  <style>\n    @page { size: A4; margin: 10mm; }\n    body { font-family: \'Poppins\', Arial, sans-serif; color: #1a202c; background: #f7fafc; margin: 0; padding: 15px; }\n    .print-actions { max-width: 900px; margin: 0 auto 15px auto; display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 10px 18px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }\n    .print-btn { background: #00796b; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; }\n    .print-btn:hover { background: #004d40; }\n    .close-btn { background: #e2e8f0; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13.5px; }\n    .report-sheet { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 25px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 8px; min-height: 900px; box-sizing: border-box; }\n    table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 16px; font-size: 12px; }\n    th, td { border: 1px solid #2d3748; padding: 6px 8px; text-align: center; }\n    th { background: #edf2f7; font-weight: 600; }\n    .text-left { text-align: left; }\n    .text-right { text-align: right; }\n    .header-box { text-align: center; border-bottom: 2px solid #2d3748; padding-bottom: 10px; margin-bottom: 16px; }\n    .main-title { font-size: 18px; font-weight: 700; color: #1a202c; margin: 0 0 3px 0; }\n    .sub-title { font-size: 14px; font-weight: 600; color: #4a5568; margin: 0; }\n    .subject { font-weight: 700; text-decoration: underline; margin: 12px 0 8px 0; font-size: 13.5px; }\n    .footer-sign { margin-top: 35px; text-align: right; line-height: 1.5; font-size: 13.5px; font-weight: 600; }\n    .page-break { page-break-after: always; }\n    @media print {\n      body { background: #ffffff; padding: 0; }\n      .print-actions { display: none !important; }\n      .report-sheet { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }\n    }\n  </style>\n</head>\n<body>\n  <div class="print-actions">\n    <div><strong>प्रा.आ.केंद्र भादा</strong> - अधिकृत अहवाल / पत्र</div>\n    <div style="display:flex; gap:10px;">\n      <button class="print-btn" onclick="window.print()">🖨️ प्रिंट करा / PDF सेव्ह करा</button>\n      <button class="close-btn" onclick="window.close()">बंद करा</button>\n    </div>\n  </div>\n  <div class="report-sheet">\n    ' + bodyContent + '\n  </div>\n</body>\n</html>';
+        return '<!DOCTYPE html>' +
+          '<html lang="mr">' +
+          '<head>' +
+          '<meta charset="UTF-8">' +
+          '<title>' + title + ' - प्रा.आ.केंद्र भादा<\/title>' +
+          '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+          '<style>' +
+          '@page { size: A4; margin: 10mm; }' +
+          'body { font-family: "Poppins", Arial, sans-serif; color: #1a202c; background: #f7fafc; margin: 0; padding: 15px; }' +
+          '.print-actions { max-width: 900px; margin: 0 auto 15px auto; display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 10px 18px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }' +
+          '.print-btn { background: #00796b; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; }' +
+          '.print-btn:hover { background: #004d40; }' +
+          '.close-btn { background: #e2e8f0; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13.5px; }' +
+          '.report-sheet { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 25px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 8px; min-height: 900px; box-sizing: border-box; }' +
+          'table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 16px; font-size: 12px; }' +
+          'th, td { border: 1px solid #2d3748; padding: 6px 8px; text-align: center; }' +
+          'th { background: #edf2f7; font-weight: 600; }' +
+          '.text-left { text-align: left; }' +
+          '.text-right { text-align: right; }' +
+          '.header-box { text-align: center; border-bottom: 2px solid #2d3748; padding-bottom: 10px; margin-bottom: 16px; }' +
+          '.main-title { font-size: 18px; font-weight: 700; color: #1a202c; margin: 0 0 3px 0; }' +
+          '.sub-title { font-size: 14px; font-weight: 600; color: #4a5568; margin: 0; }' +
+          '.subject { font-weight: 700; text-decoration: underline; margin: 12px 0 8px 0; font-size: 13.5px; }' +
+          '.footer-sign { margin-top: 35px; text-align: right; line-height: 1.5; font-size: 13.5px; font-weight: 600; }' +
+          '.page-break { page-break-after: always; }' +
+          '@media print {' +
+          '  body { background: #ffffff; padding: 0; }' +
+          '  .print-actions { display: none !important; }' +
+          '  .report-sheet { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }' +
+          '}' +
+          '<\/style>' +
+          '<\/head>' +
+          '<body>' +
+          '<div class="print-actions">' +
+          '  <div><strong>प्रा.आ.केंद्र भादा</strong> - अधिकृत अहवाल / पत्र</div>' +
+          '  <div style="display:flex; gap:10px;">' +
+          '    <button class="print-btn" onclick="window.print()">🖨️ प्रिंट करा / PDF सेव्ह करा</button>' +
+          '    <button class="close-btn" onclick="window.close()">बंद करा</button>' +
+          '  </div>' +
+          '</div>' +
+          '<div class="report-sheet">' +
+          bodyContent +
+          '</div>' +
+          '<\/body>' +
+          '<\/html>';
       }
 
       // Client-Side RPC Handler for Standalone Mode / GitHub Pages
@@ -337,12 +381,12 @@
                     monthlyFemale: 132,
                     priorTotal: 1702,
                     villages: [
-                      { name: "भादा", monthlyTotal: 65, monthlyMale: 33, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475 },
-                      { name: "आलमला", monthlyTotal: 52, monthlyMale: 27, monthlyFemale: 25, priorTotal: 330, ytdTotal: 382 },
-                      { name: "खडकउमरा", monthlyTotal: 44, monthlyMale: 23, monthlyFemale: 21, priorTotal: 280, ytdTotal: 324 },
-                      { name: "माकणी", monthlyTotal: 40, monthlyMale: 20, monthlyFemale: 20, priorTotal: 250, ytdTotal: 290 },
-                      { name: "तावशीगड", monthlyTotal: 38, monthlyMale: 19, monthlyFemale: 19, priorTotal: 235, ytdTotal: 273 },
-                      { name: "वडजी", monthlyTotal: 32, monthlyMale: 17, monthlyFemale: 15, priorTotal: 197, ytdTotal: 229 }
+                      { villageName: "भादा", name: "भादा", count: 65, monthlyTotal: 65, male: 33, monthlyMale: 33, female: 32, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475 },
+                      { villageName: "आलमला", name: "आलमला", count: 52, monthlyTotal: 52, male: 27, monthlyMale: 27, female: 25, monthlyFemale: 25, priorTotal: 330, ytdTotal: 382 },
+                      { villageName: "खडकउमरा", name: "खडकउमरा", count: 44, monthlyTotal: 44, male: 23, monthlyMale: 23, female: 21, monthlyFemale: 21, priorTotal: 280, ytdTotal: 324 },
+                      { villageName: "माकणी", name: "माकणी", count: 40, monthlyTotal: 40, male: 20, monthlyMale: 20, female: 20, monthlyFemale: 20, priorTotal: 250, ytdTotal: 290 },
+                      { villageName: "तावशीगड", name: "तावशीगड", count: 38, monthlyTotal: 38, male: 19, monthlyMale: 19, female: 19, monthlyFemale: 19, priorTotal: 235, ytdTotal: 273 },
+                      { villageName: "वडजी", name: "वडजी", count: 32, monthlyTotal: 32, male: 17, monthlyMale: 17, female: 15, monthlyFemale: 15, priorTotal: 197, ytdTotal: 229 }
                     ]
                   },
                   templateData: {
@@ -407,12 +451,12 @@
                   opdVillagewise: {
                     monthlyTotal: 271, ytdTotal: 1973, monthlyMale: 139, monthlyFemale: 132, priorTotal: 1702,
                     villages: [
-                      { name: "भादा", monthlyTotal: 65, monthlyMale: 33, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475 },
-                      { name: "आलमला", monthlyTotal: 52, monthlyMale: 27, monthlyFemale: 25, priorTotal: 330, ytdTotal: 382 },
-                      { name: "खडकउमरा", monthlyTotal: 44, monthlyMale: 23, monthlyFemale: 21, priorTotal: 280, ytdTotal: 324 },
-                      { name: "माकणी", monthlyTotal: 40, monthlyMale: 20, monthlyFemale: 20, priorTotal: 250, ytdTotal: 290 },
-                      { name: "तावशीगड", monthlyTotal: 38, monthlyMale: 19, monthlyFemale: 19, priorTotal: 235, ytdTotal: 273 },
-                      { name: "वडजी", monthlyTotal: 32, monthlyMale: 17, monthlyFemale: 15, priorTotal: 197, ytdTotal: 229 }
+                      { villageName: "भादा", name: "भादा", count: 65, monthlyTotal: 65, male: 33, monthlyMale: 33, female: 32, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475 },
+                      { villageName: "आलमला", name: "आलमला", count: 52, monthlyTotal: 52, male: 27, monthlyMale: 27, female: 25, monthlyFemale: 25, priorTotal: 330, ytdTotal: 382 },
+                      { villageName: "खडकउमरा", name: "खडकउमरा", count: 44, monthlyTotal: 44, male: 23, monthlyMale: 23, female: 21, monthlyFemale: 21, priorTotal: 280, ytdTotal: 324 },
+                      { villageName: "माकणी", name: "माकणी", count: 40, monthlyTotal: 40, male: 20, monthlyMale: 20, female: 20, monthlyFemale: 20, priorTotal: 250, ytdTotal: 290 },
+                      { villageName: "तावशीगड", name: "तावशीगड", count: 38, monthlyTotal: 38, male: 19, monthlyMale: 19, female: 19, monthlyFemale: 19, priorTotal: 235, ytdTotal: 273 },
+                      { villageName: "वडजी", name: "वडजी", count: 32, monthlyTotal: 32, male: 17, monthlyMale: 17, female: 15, monthlyFemale: 15, priorTotal: 197, ytdTotal: 229 }
                     ]
                   }
                 }
@@ -7795,9 +7839,18 @@
         if (tagEl) tagEl.textContent = '० नमुने';
         return;
       }
-      const vDetails = opd.villages.map(v => `<b>${v.villageName}</b>: ${v.count} (पु: ${v.male}, स्त्री: ${v.female})`).join(' | ');
-      listEl.innerHTML = `<div>📍 <b>गावनिहाय:</b> ${vDetails}</div><div style="font-size:11px; color:#276749; margin-top:2px;">(मागील बेरीज: ${opd.priorTotal} + चालू: ${opd.monthlyTotal} = एकूण प्रगत: ${opd.ytdTotal})</div>`;
-      if (tagEl) tagEl.textContent = `${opd.monthlyTotal} नमुने (auto-save)`;
+      const vDetails = opd.villages.map(v => {
+        const vName = v.villageName || v.name || v.village || 'गाव';
+        const count = (v.count !== undefined) ? v.count : (v.monthlyTotal !== undefined ? v.monthlyTotal : (v.total || 0));
+        const male = (v.male !== undefined) ? v.male : (v.monthlyMale !== undefined ? v.monthlyMale : (v.m || 0));
+        const female = (v.female !== undefined) ? v.female : (v.monthlyFemale !== undefined ? v.monthlyFemale : (v.f || 0));
+        return `<b>${vName}</b>: ${count} (पु: ${male}, स्त्री: ${female})`;
+      }).join(' | ');
+      const prior = (opd.priorTotal !== undefined) ? opd.priorTotal : 0;
+      const monthly = (opd.monthlyTotal !== undefined) ? opd.monthlyTotal : 0;
+      const ytd = (opd.ytdTotal !== undefined) ? opd.ytdTotal : (prior + monthly);
+      listEl.innerHTML = `<div>📍 <b>गावनिहाय:</b> ${vDetails}</div><div style="font-size:11px; color:#276749; margin-top:2px;">(मागील बेरीज: ${prior} + चालू: ${monthly} = एकूण प्रगत: ${ytd})</div>`;
+      if (tagEl) tagEl.textContent = `${monthly} नमुने (auto-save)`;
     }
 
     function syncWithOpdVillagewise() {
