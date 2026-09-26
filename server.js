@@ -857,6 +857,7 @@ app.post('/api/rpc', async (req, res) => {
               action: 'fetchAllData',
               spreadsheetId: googleSheetConfig.spreadsheetId
             }),
+            redirect: 'follow',
             signal: controller.signal
           });
           clearTimeout(timeout);
