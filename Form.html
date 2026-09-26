@@ -229,12 +229,24 @@
         case 'generateMonthlyReportWebApp':
         case 'generateEmployeeRegisterWebApp':
         case 'generateEmployeeNoticesWebApp':
-        case 'generateLowPerformanceReportWebApp': {
+        case 'generateLowPerformanceReportWebApp':
+        case 'generateEmployeeVillageMonthlyReportWebApp': {
           return {
             result: {
               success: true,
               message: 'अहवाल तयार झाला.',
               url: '#'
+            }
+          };
+        }
+
+        case 'getEmployeeVillageMonthlyData': {
+          return {
+            result: {
+              success: true,
+              summary: { totalEmployees: 65, totalVillages: 30, totalMale: 327, totalFemale: 374, totalSmears: 699, totalTarget: 1290, overallPct: 54 },
+              subcenterSummaries: [],
+              employees: []
             }
           };
         }
@@ -1665,66 +1677,66 @@
               <!-- Quick Edit Inputs Grid -->
               <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-bottom:14px;">
                 
-                <!-- New OPD -->
-                <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #3182ce;">
+                <!-- New OPD (ONLY MANUAL FIELD) -->
+                <div style="background:#f0f9ff; padding:10px 12px; border-radius:8px; border-left:4px solid #3182ce; box-shadow:0 0 0 1px #bee3f8;">
                   <label style="font-size:12px; font-weight:700; color:#2b6cb0; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>🏥 नवीन बाह्यरुग्ण (New OPD)</span>
-                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                    <span style="font-size:10px; color:#2b6cb0; font-weight:700; background:#ebf8ff; padding:1px 6px; border-radius:4px; border:1px solid #bee3f8;">✏️ एकमेव मॅन्युअल नोंद</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpOpdM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
+                    <input type="number" id="mrdInpOpdM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1.5px solid #3182ce; border-radius:4px; font-weight:700; background:#ffffff; color:#1a202c;" oninput="onMrdQuickEditFieldChange()">
                     <input type="number" id="mrdInpOpdP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
-                  <div id="mrdHintOpd" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
+                  <div id="mrdHintOpd" style="font-size:11px; color:#2b6cb0; font-weight:600; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
-                <!-- Fever Cases -->
+                <!-- Fever Cases (READONLY / AUTO) -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #dd6b20;">
                   <label style="font-size:12px; font-weight:700; color:#c05621; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>🌡️ तापाचे रुग्ण (Fever Cases)</span>
-                    <span style="font-size:10px; color:#c05621; font-weight:700;">(🔗 = रक्त नमुने)</span>
+                    <span style="font-size:10px; color:#c05621; font-weight:700;">(🔒 ऑटो = रक्त नमुने)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpFeverM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange('fever')">
+                    <input type="number" id="mrdInpFeverM" placeholder="मासिक" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="रक्त नमुन्यांनुसार आपोआप (Auto)">
                     <input type="number" id="mrdInpFeverP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintFever" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
-                <!-- Blood Smears -->
+                <!-- Blood Smears (READONLY / AUTO) -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #319795;">
                   <label style="font-size:12px; font-weight:700; color:#234e52; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>🩸 घेतलेले रक्त नमुणे (Blood Smears)</span>
-                    <span style="font-size:10px; color:#234e52; font-weight:700;">(🏥 OPD auto-save)</span>
+                    <span style="font-size:10px; color:#234e52; font-weight:700;">(🔒 OPD auto-save)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpSmearsM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange('smears')">
+                    <input type="number" id="mrdInpSmearsM" placeholder="मासिक" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="OPD नोंदींनुसार आपोआप (Auto from bsDataEntry)">
                     <input type="number" id="mrdInpSmearsP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintSmears" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
-                <!-- Treated Cases -->
+                <!-- Treated Cases (READONLY / AUTO) -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #38a169;">
                   <label style="font-size:12px; font-weight:700; color:#276749; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>💊 उपचारीत रुग्ण (Treated Cases)</span>
-                    <span style="font-size:10px; color:#276749; font-weight:700;">(🔗 = रक्त नमुने)</span>
+                    <span style="font-size:10px; color:#276749; font-weight:700;">(🔒 ऑटो = रक्त नमुने)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpTreatedM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange('treated')">
+                    <input type="number" id="mrdInpTreatedM" placeholder="मासिक" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="रक्त नमुन्यांनुसार आपोआप (Auto)">
                     <input type="number" id="mrdInpTreatedP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintTreated" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
                 </div>
 
-                <!-- Chloroquine Spent -->
+                <!-- Chloroquine Spent (READONLY / AUTO) -->
                 <div style="background:#f7fafc; padding:10px 12px; border-radius:8px; border-left:4px solid #805ad5;">
                   <label style="font-size:12px; font-weight:700; color:#553c9a; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span>⚪ क्लोरोक्वीन गोळया खर्च (Chloroquine)</span>
-                    <span style="font-size:10px; color:#718096; font-weight:normal;">(मासिक / 🔒प्रगत)</span>
+                    <span style="font-size:10px; color:#718096; font-weight:700;">(🔒 ऑटो प्रगत)</span>
                   </label>
                   <div style="display:flex; gap:6px;">
-                    <input type="number" id="mrdInpCqM" placeholder="मासिक" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:600;" oninput="onMrdQuickEditFieldChange()">
+                    <input type="number" id="mrdInpCqM" placeholder="मासिक" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="क्लोरोक्वीन खर्च">
                     <input type="number" id="mrdInpCqP" placeholder="🔒 प्रगत" readonly tabindex="-1" style="width:50%; padding:6px 8px; border:1px solid #cbd5e0; border-radius:4px; font-weight:700; background:#edf2f7; color:#4a5568; cursor:not-allowed;" title="प्रगत संख्या आपोआप काढली जाते">
                   </div>
                   <div id="mrdHintCq" style="font-size:11px; color:#718096; margin-top:4px;">मागील: ० + चालू: ०</div>
@@ -2285,6 +2297,7 @@
           <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;">उपलब्ध अहवालांची यादी</h3>
           <div class="report-menu-item" onclick="openReportForm('cardDaily')"><div class="rm-icon" style="color:#dd6b20;">🖨️</div><div class="rm-details"><span class="rm-title">दैनिक पत्र (Letter Print)</span><span class="rm-desc">विशिष्ट तारखेचे रक्त नमुने तपासणी पत्र.</span></div><div class="rm-arrow">➡️</div></div>
           <div class="report-menu-item" onclick="openReportForm('cardMonthly')"><div class="rm-icon" style="color:#2b6cb0;">📊</div><div class="rm-details"><span class="rm-title">मासिक अहवाल (Monthly PDF)</span><span class="rm-desc">गावनिहाय आणि उपकेंद्रनिहाय महिन्याचा अहवाल.</span></div><div class="rm-arrow">➡️</div></div>
+          <div class="report-menu-item" onclick="openReportForm('cardEmpVillageMonthly')"><div class="rm-icon" style="color:#0d9488;">👥</div><div class="rm-details"><span class="rm-title">कर्मचारी व गावनिहाय मासिक अहवाल (Emp & Village Wise BS)</span><span class="rm-desc">कर्मचारीनिहाय, गावनिहाय पुरुष व स्त्री रक्त नमुना संकलन, उद्दिष्ट आणि पूर्तता अहवाल.</span></div><div class="rm-arrow">➡️</div></div>
           <div class="report-menu-item" onclick="switchToMonthlyIndicatorsTab()"><div class="rm-icon" style="color:#00796b;">📋</div><div class="rm-details"><span class="rm-title">मासिक अहवाल डेटा नोंदणी (Template Data Entry)</span><span class="rm-desc">नवीन बाह्यरुग्ण, तापाचे रुग्ण, उपचारीत रुग्ण, क्लोरोक्वीन गोळ्या खर्च भरणे.</span></div><div class="rm-arrow">➡️</div></div>
           <div class="report-menu-item" onclick="openReportForm('cardRegister')"><div class="rm-icon" style="color:#2f855a;">📗</div><div class="rm-details"><span class="rm-title">कर्मचारी नोंदवही (Register)</span><span class="rm-desc">चालू वर्षातील कर्मचाऱ्यांचा वैयक्तिक अहवाल.</span></div><div class="rm-arrow">➡️</div></div>
           <div class="report-menu-item" onclick="openReportForm('cardNotice')"><div class="rm-icon" style="color:#c53030;">⚠️</div><div class="rm-details"><span class="rm-title">कारणे दाखवा नोटीस</span><span class="rm-desc">उद्दिष्ट पूर्ण न केलेल्या कर्मचाऱ्यांसाठी नोटीस.</span></div><div class="rm-arrow">➡️</div></div>
@@ -2335,6 +2348,62 @@
           <div id="cardRegister" class="report-card" style="border-left: 5px solid #38a169;"><h3 style="color:#2f855a; margin-top:0;">📗 कर्मचारी नोंदवही</h3><div class="filter-row"><div class="form-group"><label>उपकेंद्र</label><select id="regUpkendraSelect" onchange="filterRegEmps(this)"><option value="All">-- सर्व --</option></select></div><div class="form-group"><label>कर्मचारी</label><select id="regEmpSelect"><option value="All">-- सर्व --</option></select></div></div><button class="report-btn" style="background:#38a169;" onclick="generateEmployeeReg(this)">नोंदवही (PDF) तयार करा</button><div id="empRegStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
           <div id="cardNotice" class="report-card" style="border-left: 5px solid #e53e3e;"><h3 style="color:#c53030; margin-top:0;">⚠️ कारणे दाखवा नोटीस</h3><div class="form-group"><label>महिना निवडा</label><select id="noticeMonthSelect" onchange="loadDefaulters(this.value)"><option value="">लोड होत आहे...</option></select></div><div id="defaulterLoader" style="display:none; color:#c53030; font-weight:bold; text-align:center;">शोधत आहे... ⏳</div><div id="defaulterListContainer" class="checkbox-list"></div><button class="report-btn" style="background:#c53030;" onclick="generateNotices(this)">निवडलेल्यांची नोटीस (PDF)</button><div id="noticeStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
           <div id="cardLowPerf" class="report-card" style="border-left: 5px solid #805ad5;"><h3 style="color:#6b46c1; margin-top:0;">📉 कमी कामगिरी अहवाल</h3><div class="form-group"><label>महिना निवडा</label><select id="lowPerfMonthSelect"><option value="">लोड होत आहे...</option></select></div><button class="report-btn" style="background:#805ad5;" onclick="generateLowPerformanceReport(this)">अहवाल (PDF) तयार करा</button><div id="lowPerfStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
+
+          <!-- कर्मचारी व गावनिहाय मासिक रक्त नमुना संकलन अहवाल कार्ड (Employee & Village-wise Monthly BS Report) -->
+          <div id="cardEmpVillageMonthly" class="report-card" style="border-left: 5px solid #0d9488;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+              <h3 style="color:#0f766e; margin:0;">👥 कर्मचारी व गावनिहाय मासिक रक्त नमुना संकलन अहवाल</h3>
+              <span style="font-size:11px; background:#ccfbf1; color:#0f766e; border:1px solid #99f6e4; padding:3px 8px; border-radius:12px; font-weight:600;">
+                पुरुष / स्त्री वर्गीकरण व उद्दिष्ट पूर्तता
+              </span>
+            </div>
+
+            <div class="filter-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:15px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>महिना निवडा</label>
+                <select id="evMonthSelect">
+                  <option value="">लोड होत आहे...</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>उपकेंद्र निवडा</label>
+                <select id="evUpkendraSelect" onchange="onEvUpkendraChange(this.value)">
+                  <option value="All">-- सर्व उपकेंद्र --</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>संवर्ग (Post) निवडा</label>
+                <select id="evStaffTypeSelect" onchange="onEvStaffTypeChange(this.value)">
+                  <option value="All">-- सर्व संवर्ग (All Posts) --</option>
+                  <option value="MPW">आरोग्य सेवक (MPW)</option>
+                  <option value="ANM">आरोग्य सेविका (ANM)</option>
+                  <option value="ASHA">आशा स्वयंसेविका (ASHA)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>कर्मचारी निवडा</label>
+                <select id="evEmpSelect">
+                  <option value="All">-- सर्व कर्मचारी --</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+              <button class="report-btn" style="background:#0d9488; flex:1; min-width:220px;" onclick="generateEmpVillageMonthlyReport(this)">
+                🖨️ अहवाल (PDF/Print) तयार करा
+              </button>
+              <button type="button" class="sheet-btn" style="background:#0284c7; padding:12px 18px; display:inline-flex; align-items:center; gap:6px;" onclick="loadEmpVillageLivePreview()">
+                📊 थेट ऑन-स्क्रीन पूर्वावलोकन (Live Preview)
+              </button>
+            </div>
+
+            <div id="evReportStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div>
+
+            <!-- Live interactive preview container -->
+            <div id="evLivePreviewContainer" style="display:none; margin-top:20px; border-top:2px dashed #cbd5e0; padding-top:15px;">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
         </div>
       </div>
 
@@ -4284,6 +4353,12 @@
         regUpS.innerHTML = '<option value="All">-- सर्व --</option>';
         [...new Set(masterData.map(d => d.upkendra))].forEach(u => regUpS.add(new Option(u, u)));
       }
+      const evUpS = document.getElementById('evUpkendraSelect');
+      if (evUpS) {
+        evUpS.innerHTML = '<option value="All">-- सर्व उपकेंद्र --</option>';
+        [...new Set(masterData.map(d => d.upkendra))].forEach(u => evUpS.add(new Option(u, u)));
+      }
+      populateEvEmployees();
     }
 
     const fallbackMonths = ["जानेवारी २०२६", "फेब्रुवारी २०२६", "मार्च २०२६", "एप्रिल २०२६", "मे २०२६", "जून २०२६", "जुलै २०२६", "ऑगस्ट २०२६", "सप्टेंबर २०२६", "ऑक्टोबर २०२६", "नोव्हेंबर २०२६", "डिसेंबर २०२६"];
@@ -4297,6 +4372,20 @@
       const nSelect = document.getElementById('noticeMonthSelect'); 
       const lSelect = document.getElementById('lowPerfMonthSelect'); 
       const iSelect = document.getElementById('indicatorMonthSelect');
+      const evMonthS = document.getElementById('evMonthSelect');
+
+      if (evMonthS) {
+        const cur = evMonthS.value;
+        evMonthS.innerHTML = '<option value="">-- महिना निवडा --</option>';
+        list.forEach(m => evMonthS.add(new Option(m, m)));
+        if (cur && list.includes(cur)) {
+          evMonthS.value = cur;
+        } else if (list.includes("सप्टेंबर २०२६")) {
+          evMonthS.value = "सप्टेंबर २०२६";
+        } else if (list.length > 0) {
+          evMonthS.value = list[0];
+        }
+      }
 
       if (rSelect) {
         const cur = rSelect.value;
@@ -6149,29 +6238,19 @@ function getOrCreateSheet(ss, name, headers) {
       }
     }
 
-    function onMrdQuickEditFieldChange(source) {
-      let smearsM = parseInt(document.getElementById('mrdInpSmearsM').value) || 0;
-      if (source === 'fever') {
-        smearsM = parseInt(document.getElementById('mrdInpFeverM').value) || 0;
-        document.getElementById('mrdInpSmearsM').value = smearsM;
-      } else if (source === 'treated') {
-        smearsM = parseInt(document.getElementById('mrdInpTreatedM').value) || 0;
-        document.getElementById('mrdInpSmearsM').value = smearsM;
+    function onMrdQuickEditFieldChange() {
+      const opdM = parseInt(document.getElementById('mrdInpOpdM')?.value) || 0;
+      const smearsM = parseInt(document.getElementById('mrdInpSmearsM')?.value) || 0;
+      const cqM = parseInt(document.getElementById('mrdInpCqM')?.value) || 0;
+
+      if (document.getElementById('mrdInpOpdP')) {
+        document.getElementById('mrdInpOpdP').value = (mrdPriorCache.opd || 0) + opdM;
       }
-      // 🩸 घेतलेले रक्त नमुणे (Blood Smears) = 🌡️ तापाचे रुग्ण (Fever Cases) = 💊 उपचारीत रुग्ण (Treated Cases)
-      document.getElementById('mrdInpFeverM').value = smearsM;
-      document.getElementById('mrdInpTreatedM').value = smearsM;
-
-      const opdM = parseInt(document.getElementById('mrdInpOpdM').value) || 0;
-      const cqM = parseInt(document.getElementById('mrdInpCqM').value) || 0;
-
       const pSmears = (mrdPriorCache.bloodSmears || 0) + smearsM;
-
-      document.getElementById('mrdInpOpdP').value = (mrdPriorCache.opd || 0) + opdM;
-      document.getElementById('mrdInpFeverP').value = pSmears;
-      document.getElementById('mrdInpSmearsP').value = pSmears;
-      document.getElementById('mrdInpTreatedP').value = pSmears;
-      document.getElementById('mrdInpCqP').value = (mrdPriorCache.chloroquineSpent || 0) + cqM;
+      if (document.getElementById('mrdInpFeverP')) document.getElementById('mrdInpFeverP').value = pSmears;
+      if (document.getElementById('mrdInpSmearsP')) document.getElementById('mrdInpSmearsP').value = pSmears;
+      if (document.getElementById('mrdInpTreatedP')) document.getElementById('mrdInpTreatedP').value = pSmears;
+      if (document.getElementById('mrdInpCqP')) document.getElementById('mrdInpCqP').value = (mrdPriorCache.chloroquineSpent || 0) + cqM;
 
       updateMrdQuickEditHints();
     }
@@ -6611,6 +6690,309 @@ function getOrCreateSheet(ss, name, headers) {
     function generateEmployeeReg(btn) { const upkendra = document.getElementById('regUpkendraSelect').value; const employee = document.getElementById('regEmpSelect').value; btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('empRegStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#38a169"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "नोंदवही (PDF) तयार करा")).generateEmployeeRegisterWebApp(upkendra, employee); }
     function generateNotices(btn) { const month = document.getElementById('noticeMonthSelect').value; if (!month) { alert("महिना निवडा."); return; } const cbs = document.querySelectorAll('.defaulter-cb:checked'); if (cbs.length === 0) { alert("किमान एक कर्मचारी निवडा."); return; } const selectedEmpNames = Array.from(cbs).map(cb => cb.value); btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('noticeStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#e53e3e"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "निवडलेल्यांची नोटीस (PDF)")).generateEmployeeNoticesWebApp(month, selectedEmpNames); }
     function generateLowPerformanceReport(btn) { const month = document.getElementById('lowPerfMonthSelect').value; if (!month) { alert("महिना निवडा."); return; } btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('lowPerfStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#805ad5"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "अहवाल (PDF) तयार करा")).generateLowPerformanceReportWebApp(month); }
+
+    // --- EMPLOYEE & VILLAGE WISE MONTHLY BS REPORT HANDLERS ---
+    let currentEvReportData = null;
+
+    function populateEvEmployees() {
+      const upS = document.getElementById('evUpkendraSelect');
+      const stS = document.getElementById('evStaffTypeSelect');
+      const empS = document.getElementById('evEmpSelect');
+      if (!empS) return;
+
+      const upVal = upS ? upS.value : 'All';
+      const stVal = stS ? stS.value : 'All';
+
+      const cur = empS.value;
+      empS.innerHTML = '<option value="All">-- सर्व कर्मचारी --</option>';
+
+      let filtered = masterData || [];
+      if (upVal && upVal !== 'All' && upVal !== 'सर्व' && upVal !== 'सर्व उपकेंद्र') {
+        filtered = filtered.filter(d => d.upkendra === upVal);
+      }
+      if (stVal && stVal !== 'All' && stVal !== 'सर्व' && stVal !== 'सर्व संवर्ग') {
+        filtered = filtered.filter(d => {
+          if (stVal === 'MPW') return (d.designation && (d.designation.includes('सेवक') || d.designation.includes('MPW'))) || (d.bsCode && d.bsCode.startsWith('54S'));
+          if (stVal === 'ANM') return (d.designation && (d.designation.includes('सेविका') || d.designation.includes('ANM'))) && !d.designation.includes('आशा');
+          if (stVal === 'ASHA') return (d.designation && d.designation.includes('आशा')) || (d.bsCode && d.bsCode.includes('V'));
+          return true;
+        });
+      }
+
+      filtered.forEach(d => {
+        empS.add(new Option(`${d.employeeName} (${d.designation})`, d.employeeName));
+      });
+
+      if (cur && filtered.some(d => d.employeeName === cur)) {
+        empS.value = cur;
+      }
+    }
+
+    function onEvUpkendraChange(val) {
+      populateEvEmployees();
+    }
+
+    function onEvStaffTypeChange(val) {
+      populateEvEmployees();
+    }
+
+    function generateEmpVillageMonthlyReport(btn) {
+      const month = document.getElementById('evMonthSelect')?.value;
+      if (!month) { alert("कृपया महिना निवडा."); return; }
+      const upkendra = document.getElementById('evUpkendraSelect')?.value || 'All';
+      const staffType = document.getElementById('evStaffTypeSelect')?.value || 'All';
+      const employee = document.getElementById('evEmpSelect')?.value || 'All';
+
+      btn.disabled = true;
+      btn.textContent = "अहवाल तयार होत आहे... ⏳";
+      const statusDiv = document.getElementById('evReportStatus');
+      statusDiv.style.display = 'block';
+      statusDiv.innerHTML = "कृपया प्रतीक्षा करा, डेटा संकलित होत आहे...";
+      statusDiv.style.color = "#0d9488";
+
+      google.script.run
+        .withSuccessHandler(res => {
+          showDownload(res, statusDiv, btn, "🖨️ अहवाल (PDF/Print) तयार करा");
+          if (res && res.data) {
+            renderEmpVillageLivePreview(res.data);
+          }
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          btn.textContent = "🖨️ अहवाल (PDF/Print) तयार करा";
+          statusDiv.innerHTML = `<span style="color:#e53e3e;">⚠️ त्रुटी: ${err.message || err}</span>`;
+        })
+        .generateEmployeeVillageMonthlyReportWebApp(month, upkendra, employee, staffType);
+    }
+
+    function loadEmpVillageLivePreview() {
+      const month = document.getElementById('evMonthSelect')?.value;
+      if (!month) { alert("कृपया महिना निवडा."); return; }
+      const upkendra = document.getElementById('evUpkendraSelect')?.value || 'All';
+      const staffType = document.getElementById('evStaffTypeSelect')?.value || 'All';
+      const employee = document.getElementById('evEmpSelect')?.value || 'All';
+
+      const previewCont = document.getElementById('evLivePreviewContainer');
+      previewCont.style.display = 'block';
+      previewCont.innerHTML = `<div style="text-align:center; padding:20px; color:#0d9488; font-weight:700;">डेटा लोड होत आहे... ⏳</div>`;
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.success) {
+            renderEmpVillageLivePreview(res);
+          } else {
+            previewCont.innerHTML = `<div style="text-align:center; padding:15px; color:#e53e3e;">⚠️ डेटा लोड करता आला नाही: ${res ? res.message : ''}</div>`;
+          }
+        })
+        .withFailureHandler(err => {
+          previewCont.innerHTML = `<div style="text-align:center; padding:15px; color:#e53e3e;">⚠️ त्रुटी: ${err.message || err}</div>`;
+        })
+        .getEmployeeVillageMonthlyData(month, upkendra, employee, staffType);
+    }
+
+    function renderEmpVillageLivePreview(data) {
+      currentEvReportData = data;
+      const previewCont = document.getElementById('evLivePreviewContainer');
+      if (!previewCont) return;
+      previewCont.style.display = 'block';
+
+      const { month, summary, subcenterSummaries, employees } = data;
+
+      let subcenterCards = '';
+      subcenterSummaries.forEach(sc => {
+        subcenterCards += `
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:8px 10px; font-size:12px;">
+            <div style="font-weight:700; color:#0f766e; display:flex; justify-content:space-between;">
+              <span>📍 ${sc.upkendra}</span>
+              <span>${sc.total}/${sc.target} (${sc.achievementPct}%)</span>
+            </div>
+            <div style="color:#4a5568; margin-top:2px; font-size:11px;">
+              👨 पु: <b>${sc.male}</b> | 👩 स्त्री: <b>${sc.female}</b> | कर्म: <b>${sc.empCount}</b>
+            </div>
+          </div>
+        `;
+      });
+
+      let empRows = '';
+      let runningIdx = 0;
+      employees.forEach(emp => {
+        runningIdx++;
+        let statusBadgeColor = '#2f855a';
+        let statusBg = '#f0fff4';
+        if (emp.statusClass === 'zero') { statusBadgeColor = '#e53e3e'; statusBg = '#fff5f5'; }
+        else if (emp.statusClass === 'low') { statusBadgeColor = '#dd6b20'; statusBg = '#fffaf0'; }
+        else if (emp.statusClass === 'satisfactory') { statusBadgeColor = '#3182ce'; statusBg = '#ebf8ff'; }
+
+        emp.villages.forEach((v, vIdx) => {
+          empRows += `
+            <tr class="ev-data-row" data-emp="${emp.employeeName.toLowerCase()}" data-sc="${emp.upkendra.toLowerCase()}" data-vil="${v.village.toLowerCase()}">
+              ${vIdx === 0 ? `<td rowspan="${emp.villages.length}" style="vertical-align:middle; text-align:center; font-weight:700; background:#f8fafc;">${runningIdx}</td>` : ''}
+              ${vIdx === 0 ? `<td rowspan="${emp.villages.length}" style="vertical-align:middle; font-weight:700; background:#f8fafc;">${emp.upkendra}</td>` : ''}
+              ${vIdx === 0 ? `
+                <td rowspan="${emp.villages.length}" style="vertical-align:middle;">
+                  <div style="font-weight:700; color:#1a202c;">${emp.employeeName}</div>
+                  <div style="font-size:11px; color:#4a5568;">${emp.designation} (${emp.bsCode})</div>
+                </td>` : ''}
+              <td class="text-left"><b>${v.village}</b></td>
+              <td>${v.fn1Male}</td>
+              <td>${v.fn1Female}</td>
+              <td style="font-weight:600; background:#f0f9ff; color:#0369a1;">${v.fn1Total}</td>
+              <td>${v.fn2Male}</td>
+              <td>${v.fn2Female}</td>
+              <td style="font-weight:600; background:#fffbeb; color:#92400e;">${v.fn2Total}</td>
+              <td style="color:#2b6cb0; font-weight:700;">${v.male}</td>
+              <td style="color:#b83280; font-weight:700;">${v.female}</td>
+              <td style="font-weight:700; background:#dcfce7; color:#166534;">${v.total}</td>
+              ${vIdx === 0 ? `
+                <td rowspan="${emp.villages.length}" style="vertical-align:middle; text-align:center; font-weight:700; background:#f8fafc;">
+                  ${emp.target}
+                </td>
+                <td rowspan="${emp.villages.length}" style="vertical-align:middle; text-align:center;">
+                  <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px; background:${statusBg}; color:${statusBadgeColor}; border:1px solid ${statusBadgeColor}40; display:inline-block;">
+                    ${emp.statusBadge}
+                  </span>
+                </td>` : ''}
+            </tr>
+          `;
+        });
+      });
+
+      previewCont.innerHTML = `
+        <div style="background:#ffffff; border:1px solid #cbd5e0; border-radius:10px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <div>
+              <h4 style="margin:0; color:#0f766e; font-size:16px;">
+                📊 माहे ${month} चा थेट गावनिहाय व कर्मचारीनिहाय डेटा (Live Preview)
+              </h4>
+              <div style="font-size:12px; color:#4a5568; margin-top:2px;">
+                एकूण कर्मचारी: <b>${summary.totalEmployees}</b> | एकूण गावे: <b>${summary.totalVillages}</b> | नमुने: <b>${summary.totalSmears}</b> (👨 ${summary.totalMale} / 👩 ${summary.totalFemale})
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="text" placeholder="🔍 शोधा (गाव / कर्मचारी / उपकेंद्र)..." oninput="filterEvTable(this.value)" style="padding:6px 12px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; width:220px;">
+              <button type="button" class="sheet-btn sheet-btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="exportEmpVillageCsv()">
+                📥 Excel / CSV डाऊनलोड
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Summary Strip -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin-bottom:15px;">
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px; text-align:center;">
+              <div style="font-size:11px; color:#166534;">कर्मचारी</div>
+              <div style="font-size:16px; font-weight:700; color:#15803d;">${summary.totalEmployees}</div>
+            </div>
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px; text-align:center;">
+              <div style="font-size:11px; color:#1e40af;">गावे</div>
+              <div style="font-size:16px; font-weight:700; color:#1d4ed8;">${summary.totalVillages}</div>
+            </div>
+            <div style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:6px; padding:8px; text-align:center;">
+              <div style="font-size:11px; color:#3730a3;">👨 पुरुष</div>
+              <div style="font-size:16px; font-weight:700; color:#4338ca;">${summary.totalMale}</div>
+            </div>
+            <div style="background:#fdf2f8; border:1px solid #fbcfe8; border-radius:6px; padding:8px; text-align:center;">
+              <div style="font-size:11px; color:#9d174d;">👩 स्त्री</div>
+              <div style="font-size:16px; font-weight:700; color:#be185d;">${summary.totalFemale}</div>
+            </div>
+            <div style="background:#fefce8; border:1px solid #fef08a; border-radius:6px; padding:8px; text-align:center;">
+              <div style="font-size:11px; color:#854d0e;">🧪 एकूण नमुने</div>
+              <div style="font-size:16px; font-weight:700; color:#a16207;">${summary.totalSmears}</div>
+            </div>
+            <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:6px; padding:8px; text-align:center;">
+              <div style="font-size:11px; color:#6b21a8;">पूर्तता %</div>
+              <div style="font-size:16px; font-weight:700; color:#7e22ce;">${summary.overallPct}%</div>
+            </div>
+          </div>
+
+          <!-- Subcenter Strip -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:8px; margin-bottom:15px;">
+            ${subcenterCards}
+          </div>
+
+          <!-- Interactive Table -->
+          <div style="overflow-x:auto; max-height:550px; border:1px solid #cbd5e0; border-radius:8px;">
+            <table id="evPreviewTable" style="margin:0; width:100%; font-size:12px; border-collapse:collapse;">
+              <thead style="position:sticky; top:0; z-index:10; background:#edf2f7;">
+                <tr style="background:#f1f5f9;">
+                  <th rowspan="2" style="width:30px;">अ.क्र</th>
+                  <th rowspan="2">उपकेंद्र</th>
+                  <th rowspan="2">कर्मचारी व पद</th>
+                  <th rowspan="2" style="text-align:left;">गाव</th>
+                  <th colspan="3" style="background:#e0f2fe; color:#0369a1;">पंधरवडा १</th>
+                  <th colspan="3" style="background:#fef3c7; color:#92400e;">पंधरवडा २</th>
+                  <th colspan="3" style="background:#dcfce7; color:#15803d;">मासिक एकूण संकलन</th>
+                  <th rowspan="2">उद्दिष्ट</th>
+                  <th rowspan="2">कामगिरी %</th>
+                </tr>
+                <tr style="background:#f8fafc; font-size:11px;">
+                  <th style="background:#f0f9ff;">👨 पु</th>
+                  <th style="background:#f0f9ff;">👩 स्त्री</th>
+                  <th style="background:#e0f2fe; font-weight:700;">एकूण</th>
+                  <th style="background:#fffbeb;">👨 पु</th>
+                  <th style="background:#fffbeb;">👩 स्त्री</th>
+                  <th style="background:#fef3c7; font-weight:700;">एकूण</th>
+                  <th style="background:#f0fdf4; color:#2b6cb0;">👨 पु</th>
+                  <th style="background:#f0fdf4; color:#b83280;">👩 स्त्री</th>
+                  <th style="background:#dcfce7; font-weight:700;">एकूण</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${empRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function filterEvTable(query) {
+      const q = String(query || '').toLowerCase().trim();
+      const rows = document.querySelectorAll('.ev-data-row');
+      rows.forEach(r => {
+        if (!q) {
+          r.style.display = '';
+          return;
+        }
+        const emp = r.getAttribute('data-emp') || '';
+        const sc = r.getAttribute('data-sc') || '';
+        const vil = r.getAttribute('data-vil') || '';
+        if (emp.includes(q) || sc.includes(q) || vil.includes(q)) {
+          r.style.display = '';
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+
+    function exportEmpVillageCsv() {
+      if (!currentEvReportData || !currentEvReportData.employees) {
+        alert("डाउनलोड करण्यासाठी आधी अहवाल लोड करा.");
+        return;
+      }
+      const data = currentEvReportData;
+      let csv = '\uFEFF'; // UTF-8 BOM
+      csv += `प्राथमिक आरोग्य केंद्र भादा - कर्मचारीनिहाय व गावनिहाय मासिक रक्त नमुना संकलन अहवाल\n`;
+      csv += `माहे:,${data.month},उपकेंद्र:,${data.filterUpkendra},संवर्ग:,${data.filterStaffType}\n\n`;
+      csv += `अ.क्र.,उपकेंद्र,कर्मचाऱ्याचे नाव,पद,BS Code,गावाचे नाव,पंधरवडा १ पुरुष,पंधरवडा १ स्त्री,पंधरवडा १ एकूण,पंधरवडा २ पुरुष,पंधरवडा २ स्त्री,पंधरवडा २ एकूण,एकूण पुरुष,एकूण स्त्री,मासिक एकूण रक्त नमुने,मासिक उद्दिष्ट,उद्दिष्टपूर्ती %,शेरा\n`;
+
+      let idx = 0;
+      data.employees.forEach(emp => {
+        idx++;
+        emp.villages.forEach(v => {
+          csv += `"${idx}","${emp.upkendra}","${emp.employeeName}","${emp.designation}","${emp.bsCode}","${v.village}",${v.fn1Male},${v.fn1Female},${v.fn1Total},${v.fn2Male},${v.fn2Female},${v.fn2Total},${v.male},${v.female},${v.total},${emp.target},"${emp.achievementPct}%","${emp.statusBadge}"\n`;
+        });
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Emp_Village_BS_Report_${data.month.replace(/\s+/g, '_')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
     function handleDateChange() { document.getElementById('entriesContainer').innerHTML = ''; google.script.run.withSuccessHandler(num => { bundleStart = num; addEntry(); }).getLatestBundleNumber(document.getElementById('commonDate').value); }
     function addEntry() { const cont = document.getElementById('entriesContainer'); const clone = document.importNode(document.getElementById('entryTemplate').content, true); const id = cont.children.length + 1; const sec = clone.querySelector('.entry-section'); sec.setAttribute('data-id', id); clone.querySelector('.count').textContent = id; clone.querySelector('.bundle-input').value = "बंडल क्र-" + String(bundleStart + id).padStart(2, '0'); const upS = clone.querySelector('.upkendra-select'); [...new Set(masterData.map(d => d.upkendra))].forEach(u => upS.add(new Option(u, u))); cont.appendChild(clone); }

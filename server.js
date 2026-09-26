@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import {
@@ -46,7 +47,9 @@ import {
   generateEmployeeRegisterWebApp,
   getDefaulterListForMonth,
   generateEmployeeNoticesWebApp,
-  generateLowPerformanceReportWebApp
+  generateLowPerformanceReportWebApp,
+  generateEmployeeVillageMonthlyReportWebApp,
+  getEmployeeVillageMonthlyData
 } from './services/reports.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -225,10 +228,19 @@ app.get('/api/export/monthly-indicators.csv', (req, res) => {
     'उपचारीत रुग्ण मासिक (Treated Cases Monthly)',
     'उपचारीत रुग्ण प्रगत (Treated Cases Progressive)',
     'क्लोरोक्वीन गोळ्या खर्च मासिक (Chloroquine Monthly)',
-    'क्लोरोक्वीन गोळ्या खर्च प्रगत (Chloroquine Progressive)'
+    'क्लोरोक्वीन गोळ्या खर्च प्रगत (Chloroquine Progressive)',
+    'आरोग्य सेवक गृहभेटी १ ला पंधरवडा (MPW Fn 1)',
+    'आरोग्य सेवक गृहभेटी २ रा पंधरवडा (MPW Fn 2)',
+    'आरोग्य सेवक गृहभेटी एकूण मासिक (MPW Total)',
+    'आरोग्य सेवक गृहभेटी प्रगत (MPW Progressive)',
+    'आरोग्य सेविका गृहभेटी १ ला पंधरवडा (ANM Fn 1)',
+    'आरोग्य सेविका गृहभेटी २ रा पंधरवडा (ANM Fn 2)',
+    'आरोग्य सेविका गृहभेटी एकूण मासिक (ANM Total)',
+    'आरोग्य सेविका गृहभेटी प्रगत (ANM Progressive)'
   ];
 
   let priorOpd = 0, priorFever = 0, priorSmears = 0, priorTreated = 0, priorCq = 0;
+  let priorMpw = 0, priorAnm = 0;
   const rows = monthMaster.map(m => {
     const opdM = parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0;
     const opdP = m.progNewOpd != null ? parseInt(m.progNewOpd) : (priorOpd + opdM);
@@ -250,13 +262,27 @@ app.get('/api/export/monthly-indicators.csv', (req, res) => {
     const cqP = m.progChloroquineSpent != null ? parseInt(m.progChloroquineSpent) : (priorCq + cqM);
     priorCq = cqP;
 
+    const mpwFn1 = parseInt(m.mpwFn1) || 0;
+    const mpwFn2 = parseInt(m.mpwFn2) || 0;
+    const mpwTot = parseInt(m.mpwHomeVisits) || (mpwFn1 + mpwFn2);
+    const mpwProg = m.progMpwHomeVisits != null ? parseInt(m.progMpwHomeVisits) : (priorMpw + mpwTot);
+    priorMpw = mpwProg;
+
+    const anmFn1 = parseInt(m.anmFn1) || 0;
+    const anmFn2 = parseInt(m.anmFn2) || 0;
+    const anmTot = parseInt(m.anmHomeVisits) || (anmFn1 + anmFn2);
+    const anmProg = m.progAnmHomeVisits != null ? parseInt(m.progAnmHomeVisits) : (priorAnm + anmTot);
+    priorAnm = anmProg;
+
     return [
       `"${m.name}"`,
       opdM, opdP,
       feverM, feverP,
       smearM, smearP,
       treatedM, treatedP,
-      cqM, cqP
+      cqM, cqP,
+      mpwFn1, mpwFn2, mpwTot, mpwProg,
+      anmFn1, anmFn2, anmTot, anmProg
     ].join(',');
   });
 
@@ -276,9 +302,13 @@ app.get('/api/export/month-master.csv', (req, res) => {
     'पंधरवडा २ शेवट (FN2 End)',
     'नवीन बाह्यरुग्ण मासिक (New OPD Monthly)',
     'नवीन बाह्यरुग्ण प्रगत (New OPD Progressive)',
-    'MPW गृहभेटी मासिक (MPW Home Visits)',
+    'MPW पहिला पंधरवडा (MPW FN1)',
+    'MPW दुसरा पंधरवडा (MPW FN2)',
+    'MPW एकूण गृहभेटी (MPW Total Visits)',
     'MPW गृहभेटी प्रगत (MPW Visits Progressive)',
-    'ANM गृहभेटी मासिक (ANM Home Visits)',
+    'ANM पहिला पंधरवडा (ANM FN1)',
+    'ANM दुसरा पंधरवडा (ANM FN2)',
+    'ANM एकूण गृहभेटी (ANM Total Visits)',
     'ANM गृहभेटी प्रगत (ANM Visits Progressive)',
     'आशा गृहभेटी मासिक (ASHA Home Visits)',
     'आशा गृहभेटी प्रगत (ASHA Visits Progressive)',
@@ -303,8 +333,12 @@ app.get('/api/export/month-master.csv', (req, res) => {
       `"${fmtD(m.f2End)}"`,
       m.newOpd || 0,
       m.progNewOpd || 0,
+      m.mpwFn1 || 0,
+      m.mpwFn2 || 0,
       m.mpwHomeVisits || 0,
       m.progMpwHomeVisits || 0,
+      m.anmFn1 || 0,
+      m.anmFn2 || 0,
       m.anmHomeVisits || 0,
       m.progAnmHomeVisits || 0,
       m.ashaHomeVisits || 0,
@@ -346,9 +380,21 @@ app.get('/api/analytics/employee-village-distribution', (req, res) => {
   }
 });
 
+// Endpoint to view or copy Google Apps Script Code
+app.get('/api/google-apps-script-code', (req, res) => {
+  const scriptPath = path.join(__dirname, 'google-apps-script', 'Code.js');
+  if (fs.existsSync(scriptPath)) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.sendFile(scriptPath);
+  } else {
+    res.status(404).send('Google Apps Script code not found');
+  }
+});
+
 // Primary sync helper to send rows directly to Google Sheet Webhook
 async function triggerGoogleSheetSync(payload) {
   if (!googleSheetConfig.webhookUrl) {
+    googleSheetConfig.syncStatus = 'स्थानिक प्रणालीमध्ये सुरक्षित (गुगल वेबहुक URL सेट नाही)';
     return { success: false, message: 'गुगल शीट वेबहुक URL उपलब्ध नाही.' };
   }
   try {
@@ -364,19 +410,35 @@ async function triggerGoogleSheetSync(payload) {
     });
     clearTimeout(timeout);
     
+    const rawText = await response.text();
     let respData = null;
     try {
-      respData = await response.json();
+      respData = JSON.parse(rawText);
     } catch (_) {}
 
     googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-    googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
-    console.log(`[GoogleSheetSync] Success for action: ${payload.action}`);
-    return { success: true, data: respData };
+
+    if (response.ok && respData && respData.success) {
+      googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
+      console.log(`[GoogleSheetSync] Success for action: ${payload.action}`);
+      return { success: true, data: respData };
+    } else {
+      let errMsg = 'गुगल वेबहुक प्रतिसाद अवैध आहे';
+      if (rawText.includes('Page not found') || response.status === 404) {
+        errMsg = 'गुगल वेबहुक URL अमान्य किंवा बंद आहे (Google Apps Script कडून 404 Page not found एरर). कृपया नवीन Web app डिप्लॉय करा.';
+      } else if (respData && respData.message) {
+        errMsg = respData.message;
+      } else if (respData && respData.error) {
+        errMsg = respData.error;
+      }
+      googleSheetConfig.syncStatus = `स्थानिक डेटाबेसमध्ये सुरक्षित (गुगल शीट एरर: ${errMsg})`;
+      console.warn(`[GoogleSheetSync] Sync failed for action ${payload.action}:`, errMsg);
+      return { success: false, error: errMsg };
+    }
   } catch (err) {
     console.warn(`[GoogleSheetSync] Sync error for action ${payload.action}:`, err.message);
     googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-    googleSheetConfig.syncStatus = 'स्थानिक प्रणालीमध्ये सुरक्षित (Pending Webhook Response)';
+    googleSheetConfig.syncStatus = `स्थानिक डेटाबेसमध्ये सुरक्षित (कनेक्शन त्रुटी: ${err.message})`;
     return { success: false, error: err.message };
   }
 }
@@ -800,10 +862,10 @@ app.post('/api/rpc', async (req, res) => {
             const bsCode = String(row[5] || '').toLowerCase();
 
             const isOpd = (
-              upkendra.includes('opd') || upkendra.includes('दवाखाना') || upkendra.includes('बाह्य') ||
+              upkendra.includes('opd') || upkendra.includes('दवाखाना') || upkendra.includes('बाह्य') || upkendra.includes('प्रा.आ.केंद्र') ||
               employeeName.includes('opd') || employeeName.includes('ओपीडी') || employeeName.includes('बाह्य') || employeeName.includes('वैद्यकीय') ||
               desig.includes('opd') || desig.includes('ओपीडी') || desig.includes('बाह्य') || desig.includes('वैद्यकीय') ||
-              bsCode.includes('opd')
+              bsCode.includes('opd') || bsCode.includes('54p')
             );
 
             if (isOpd) {
@@ -853,6 +915,12 @@ app.post('/api/rpc', async (req, res) => {
         let priorSmearsSum = 0;
         let priorTreatedSum = 0;
         let priorCqSum = 0;
+        let priorMpwFn1Sum = 0;
+        let priorMpwFn2Sum = 0;
+        let priorMpwSum = 0;
+        let priorAnmFn1Sum = 0;
+        let priorAnmFn2Sum = 0;
+        let priorAnmSum = 0;
 
         for (let i = 0; i < targetIdx; i++) {
           const p = monthMaster[i];
@@ -861,6 +929,12 @@ app.post('/api/rpc', async (req, res) => {
           priorSmearsSum += parseInt(p.bloodSmears) || 0;
           priorTreatedSum += parseInt(p.treatedCases) || 0;
           priorCqSum += parseInt(p.chloroquineSpent) || 0;
+          priorMpwFn1Sum += parseInt(p.mpwFn1) || 0;
+          priorMpwFn2Sum += parseInt(p.mpwFn2) || 0;
+          priorMpwSum += parseInt(p.mpwHomeVisits) || ((parseInt(p.mpwFn1) || 0) + (parseInt(p.mpwFn2) || 0));
+          priorAnmFn1Sum += parseInt(p.anmFn1) || 0;
+          priorAnmFn2Sum += parseInt(p.anmFn2) || 0;
+          priorAnmSum += parseInt(p.anmHomeVisits) || ((parseInt(p.anmFn1) || 0) + (parseInt(p.anmFn2) || 0));
         }
 
         const opdSummary = getOpdBsVillagewiseSummary(monthObj.name);
@@ -890,6 +964,21 @@ app.post('/api/rpc', async (req, res) => {
 
         const chloroquineSpent = parseInt(monthObj.chloroquineSpent) || 0;
         const progChloroquineSpent = priorCqSum + chloroquineSpent;
+
+        // MPW & ANM Home Visits (पहिला व दुसरा पंधरवडा)
+        const mpwFn1 = parseInt(monthObj.mpwFn1) || 0;
+        const mpwFn2 = parseInt(monthObj.mpwFn2) || 0;
+        const mpwHomeVisits = parseInt(monthObj.mpwHomeVisits) || (mpwFn1 + mpwFn2);
+        const progMpwFn1 = monthObj.progMpwFn1 != null ? parseInt(monthObj.progMpwFn1) : (priorMpwFn1Sum + mpwFn1);
+        const progMpwFn2 = monthObj.progMpwFn2 != null ? parseInt(monthObj.progMpwFn2) : (priorMpwFn2Sum + mpwFn2);
+        const progMpwHomeVisits = monthObj.progMpwHomeVisits != null ? parseInt(monthObj.progMpwHomeVisits) : (priorMpwSum + mpwHomeVisits);
+
+        const anmFn1 = parseInt(monthObj.anmFn1) || 0;
+        const anmFn2 = parseInt(monthObj.anmFn2) || 0;
+        const anmHomeVisits = parseInt(monthObj.anmHomeVisits) || (anmFn1 + anmFn2);
+        const progAnmFn1 = monthObj.progAnmFn1 != null ? parseInt(monthObj.progAnmFn1) : (priorAnmFn1Sum + anmFn1);
+        const progAnmFn2 = monthObj.progAnmFn2 != null ? parseInt(monthObj.progAnmFn2) : (priorAnmFn2Sum + anmFn2);
+        const progAnmHomeVisits = monthObj.progAnmHomeVisits != null ? parseInt(monthObj.progAnmHomeVisits) : (priorAnmSum + anmHomeVisits);
 
         // Calculate field vs opd smears in this month from entries
         let fieldSmears = 0;
@@ -927,6 +1016,28 @@ app.post('/api/rpc', async (req, res) => {
             bloodSmears: { monthly: bloodSmears, progressive: progBloodSmears, prior: priorSmearsSum },
             treatedCases: { monthly: treatedCases, progressive: progTreatedCases, prior: priorTreatedSum },
             chloroquineSpent: { monthly: chloroquineSpent, progressive: progChloroquineSpent, prior: priorCqSum },
+            mpw: {
+              fn1: mpwFn1,
+              fn2: mpwFn2,
+              monthly: mpwHomeVisits,
+              progFn1: progMpwFn1,
+              progFn2: progMpwFn2,
+              progressive: progMpwHomeVisits,
+              priorFn1: priorMpwFn1Sum,
+              priorFn2: priorMpwFn2Sum,
+              prior: priorMpwSum
+            },
+            anm: {
+              fn1: anmFn1,
+              fn2: anmFn2,
+              monthly: anmHomeVisits,
+              progFn1: progAnmFn1,
+              progFn2: progAnmFn2,
+              progressive: progAnmHomeVisits,
+              priorFn1: priorAnmFn1Sum,
+              priorFn2: priorAnmFn2Sum,
+              prior: priorAnmSum
+            },
             fieldSmears,
             opdSmears,
             totalSmears,
@@ -945,7 +1056,19 @@ app.post('/api/rpc', async (req, res) => {
               treatedM: treatedCases,
               treatedP: progTreatedCases,
               cqM: chloroquineSpent,
-              cqP: progChloroquineSpent
+              cqP: progChloroquineSpent,
+              mpwFn1,
+              mpwFn2,
+              mpwTot: mpwHomeVisits,
+              progMpwFn1,
+              progMpwFn2,
+              progMpwTot: progMpwHomeVisits,
+              anmFn1,
+              anmFn2,
+              anmTot: anmHomeVisits,
+              progAnmFn1,
+              progAnmFn2,
+              progAnmTot: progAnmHomeVisits
             }
           }
         };
@@ -1058,6 +1181,18 @@ app.post('/api/rpc', async (req, res) => {
         break;
       }
 
+      case 'generateEmployeeVillageMonthlyReportWebApp': {
+        const [month, upkendra, employee, staffType] = args;
+        result = generateEmployeeVillageMonthlyReportWebApp(month, upkendra, employee, staffType);
+        break;
+      }
+
+      case 'getEmployeeVillageMonthlyData': {
+        const [month, upkendra, employee, staffType] = args;
+        result = getEmployeeVillageMonthlyData(month, upkendra, employee, staffType);
+        break;
+      }
+
       case 'getMonthIndicators': {
         const [monthName] = args;
         const clean = s => String(s || '').trim();
@@ -1101,6 +1236,20 @@ app.post('/api/rpc', async (req, res) => {
         const chloroquineSpent = parseInt(monthObj.chloroquineSpent) || 0;
         const progChloroquineSpent = monthObj.progChloroquineSpent != null ? parseInt(monthObj.progChloroquineSpent) : (priorCqSum + chloroquineSpent);
 
+        const mpwFn1 = parseInt(monthObj.mpwFn1) || 0;
+        const mpwFn2 = parseInt(monthObj.mpwFn2) || 0;
+        const mpwHomeVisits = parseInt(monthObj.mpwHomeVisits) || (mpwFn1 + mpwFn2);
+        const progMpwFn1 = monthObj.progMpwFn1 != null ? parseInt(monthObj.progMpwFn1) : ((monthObj.priorMpwFn1Sum || 0) + mpwFn1);
+        const progMpwFn2 = monthObj.progMpwFn2 != null ? parseInt(monthObj.progMpwFn2) : ((monthObj.priorMpwFn2Sum || 0) + mpwFn2);
+        const progMpwHomeVisits = monthObj.progMpwHomeVisits != null ? parseInt(monthObj.progMpwHomeVisits) : ((monthObj.priorMpwSum || 0) + mpwHomeVisits);
+
+        const anmFn1 = parseInt(monthObj.anmFn1) || 0;
+        const anmFn2 = parseInt(monthObj.anmFn2) || 0;
+        const anmHomeVisits = parseInt(monthObj.anmHomeVisits) || (anmFn1 + anmFn2);
+        const progAnmFn1 = monthObj.progAnmFn1 != null ? parseInt(monthObj.progAnmFn1) : ((monthObj.priorAnmFn1Sum || 0) + anmFn1);
+        const progAnmFn2 = monthObj.progAnmFn2 != null ? parseInt(monthObj.progAnmFn2) : ((monthObj.priorAnmFn2Sum || 0) + anmFn2);
+        const progAnmHomeVisits = monthObj.progAnmHomeVisits != null ? parseInt(monthObj.progAnmHomeVisits) : ((monthObj.priorAnmSum || 0) + anmHomeVisits);
+
         result = {
           success: true,
           data: {
@@ -1115,11 +1264,29 @@ app.post('/api/rpc', async (req, res) => {
             progTreatedCases,
             chloroquineSpent,
             progChloroquineSpent,
+            mpwFn1,
+            mpwFn2,
+            mpwHomeVisits,
+            progMpwFn1,
+            progMpwFn2,
+            progMpwHomeVisits,
+            anmFn1,
+            anmFn2,
+            anmHomeVisits,
+            progAnmFn1,
+            progAnmFn2,
+            progAnmHomeVisits,
             priorOpdSum,
             priorFeverSum,
             priorSmearsSum,
             priorTreatedSum,
             priorCqSum,
+            priorMpwFn1Sum: monthObj.priorMpwFn1Sum || 0,
+            priorMpwFn2Sum: monthObj.priorMpwFn2Sum || 0,
+            priorMpwSum: monthObj.priorMpwSum || 0,
+            priorAnmFn1Sum: monthObj.priorAnmFn1Sum || 0,
+            priorAnmFn2Sum: monthObj.priorAnmFn2Sum || 0,
+            priorAnmSum: monthObj.priorAnmSum || 0,
             opdVillagewise: {
               monthlyTotal: opdSummary.monthlyTotal,
               ytdTotal: opdSummary.ytdTotal,
@@ -1164,6 +1331,23 @@ app.post('/api/rpc', async (req, res) => {
         const cqIn = indicatorData.chloroquineSpent !== undefined ? indicatorData.chloroquineSpent : indicatorData.chloroquine;
         if (cqIn !== undefined) monthObj.chloroquineSpent = parseInt(cqIn) || 0;
 
+        // MPW & ANM गृहभेटी पहिला व दुसरा पंधरवडा
+        if (indicatorData.mpwFn1 !== undefined) monthObj.mpwFn1 = parseInt(indicatorData.mpwFn1) || 0;
+        if (indicatorData.mpwFn2 !== undefined) monthObj.mpwFn2 = parseInt(indicatorData.mpwFn2) || 0;
+        if (indicatorData.mpwHomeVisits !== undefined) {
+          monthObj.mpwHomeVisits = parseInt(indicatorData.mpwHomeVisits) || ((monthObj.mpwFn1 || 0) + (monthObj.mpwFn2 || 0));
+        } else {
+          monthObj.mpwHomeVisits = (monthObj.mpwFn1 || 0) + (monthObj.mpwFn2 || 0);
+        }
+
+        if (indicatorData.anmFn1 !== undefined) monthObj.anmFn1 = parseInt(indicatorData.anmFn1) || 0;
+        if (indicatorData.anmFn2 !== undefined) monthObj.anmFn2 = parseInt(indicatorData.anmFn2) || 0;
+        if (indicatorData.anmHomeVisits !== undefined) {
+          monthObj.anmHomeVisits = parseInt(indicatorData.anmHomeVisits) || ((monthObj.anmFn1 || 0) + (monthObj.anmFn2 || 0));
+        } else {
+          monthObj.anmHomeVisits = (monthObj.anmFn1 || 0) + (monthObj.anmFn2 || 0);
+        }
+
         // Automatically recalculate and lock progressive values for all months
         recalculateAllMonthProgressives();
         saveDbToDisk();
@@ -1186,7 +1370,15 @@ app.post('/api/rpc', async (req, res) => {
               treatedCases: monthObj.treatedCases,
               progTreatedCases: monthObj.progTreatedCases,
               chloroquineSpent: monthObj.chloroquineSpent,
-              progChloroquineSpent: monthObj.progChloroquineSpent
+              progChloroquineSpent: monthObj.progChloroquineSpent,
+              mpwFn1: monthObj.mpwFn1,
+              mpwFn2: monthObj.mpwFn2,
+              mpwHomeVisits: monthObj.mpwHomeVisits,
+              progMpwHomeVisits: monthObj.progMpwHomeVisits,
+              anmFn1: monthObj.anmFn1,
+              anmFn2: monthObj.anmFn2,
+              anmHomeVisits: monthObj.anmHomeVisits,
+              progAnmHomeVisits: monthObj.progAnmHomeVisits
             },
             timestamp: new Date().toISOString()
           });
@@ -1196,7 +1388,7 @@ app.post('/api/rpc', async (req, res) => {
           success: true,
           message: sheetSyncRes.success
             ? `✅ माहे ${monthObj.name} चे मासिक अहवाल निर्देशांक थेट गुगल शीटमध्ये सुरक्षित जतन झाले!`
-            : `माहे ${monthObj.name} चे मासिक अहवाल निर्देशांक (नवीन बाह्यरुग्ण, तापाचे रुग्ण, उपचारीत रुग्ण, क्लोरोक्वीन गोळ्या खर्च) यशस्वीरित्या जतन झाले!`,
+            : `माहे ${monthObj.name} चे मासिक अहवाल निर्देशांक (नवीन बाह्यरुग्ण, तापाचे रुग्ण, उपचारीत रुग्ण, क्लोरोक्वीन गोळ्या खर्च, MPW/ANM गृहभेटी पंधरवडा १ व २) यशस्वीरित्या जतन झाले!`,
           sheetSynced: sheetSyncRes.success,
           data: {
             name: monthObj.name,
@@ -1209,7 +1401,19 @@ app.post('/api/rpc', async (req, res) => {
             treatedCases: monthObj.treatedCases,
             progTreatedCases: monthObj.progTreatedCases,
             chloroquineSpent: monthObj.chloroquineSpent,
-            progChloroquineSpent: monthObj.progChloroquineSpent
+            progChloroquineSpent: monthObj.progChloroquineSpent,
+            mpwFn1: monthObj.mpwFn1,
+            mpwFn2: monthObj.mpwFn2,
+            mpwHomeVisits: monthObj.mpwHomeVisits,
+            progMpwFn1: monthObj.progMpwFn1,
+            progMpwFn2: monthObj.progMpwFn2,
+            progMpwHomeVisits: monthObj.progMpwHomeVisits,
+            anmFn1: monthObj.anmFn1,
+            anmFn2: monthObj.anmFn2,
+            anmHomeVisits: monthObj.anmHomeVisits,
+            progAnmFn1: monthObj.progAnmFn1,
+            progAnmFn2: monthObj.progAnmFn2,
+            progAnmHomeVisits: monthObj.progAnmHomeVisits
           }
         };
         break;

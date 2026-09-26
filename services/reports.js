@@ -228,7 +228,7 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     if (!monthObj) return { success: false, message: `महिना '${selectedMonthDisplay}' सापडला नाही.` };
 
     const mIdx = monthMaster.findIndex(m => cleanStr(m.name) === cleanStr(selectedMonthDisplay));
-    const priorMonths = monthMaster.slice(0, mIdx + 1);
+    const priorMonths = monthMaster.slice(0, mIdx);
 
     const startDate = monthObj.f1Start;
     const endDate = monthObj.f2End;
@@ -240,7 +240,7 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     // OPD calculations (मासिक व प्रगत)
     const D1 = monthObj.newOpd != null ? parseInt(monthObj.newOpd) : 0; // नवीन बाह्यरुग्ण मासिक
     const priorOpd = priorMonths.reduce((sum, m) => sum + (parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0), 0);
-    const D2 = priorOpd + D1; // नवीन बाह्यरुग्ण प्रगत (स्वयं-गणना: मागील बेरीज + चालू महिना)
+    const D2 = monthObj.progNewOpd != null && parseInt(monthObj.progNewOpd) > 0 ? parseInt(monthObj.progNewOpd) : (priorOpd + D1); // नवीन बाह्यरुग्ण प्रगत (स्वयं-गणना: मागील बेरीज + चालू महिना)
 
     // Dynamic OPD BS from villagewise entries (villageDetails & bsDataEntry)
     const opdSummary = getOpdBsVillagewiseSummary(selectedMonthDisplay);
@@ -270,13 +270,17 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     // Helper to check if an entry is OPD / Passive (अप्रत्यक्ष सर्वेक्षण: बाह्य रुग्ण विभाग)
     function isOpd(employeeName, designation, upkendra, villageName, bsCode) {
       const combined = `${employeeName || ''} ${designation || ''} ${upkendra || ''} ${villageName || ''} ${bsCode || ''}`.toLowerCase();
+      const code = String(bsCode || '').toUpperCase().trim();
       return (
+        code === '54P' ||
+        code.startsWith('54P') ||
         combined.includes('बाह्य') ||
         combined.includes('opd') ||
         combined.includes('ओपीडी') ||
         combined.includes('वैद्यकीय अधिकारी') ||
         combined.includes('दवाखाना') ||
-        combined.includes('mo')
+        combined.includes('mo') ||
+        combined.includes('प्रा.आ.केंद्र')
       );
     }
 
@@ -286,65 +290,33 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
         return 'PASSIVE';
       }
       const desig = `${designation || ''} ${employeeName || ''}`.toLowerCase();
-      const code = String(bsCode || '').toUpperCase();
+      const code = String(bsCode || '').toUpperCase().trim();
 
+      // 1. ASHA Worker
       if (desig.includes('आशा') || desig.includes('asha') || code.includes('V')) {
         return 'ASHA';
       }
+      // 2. MPW / आरोग्य सेवक (Priority before ANM so codes like 54S1A1, 54S1A2, 54S7A1 are correctly identified as MPW)
+      if (desig.includes('आरोग्य सेवक') || desig.includes('mpw') || code.startsWith('54S') || code.includes('54S') || code.includes('S')) {
+        const d = new Date(dateVal);
+        const day = d.getDate();
+        if (day <= 15) return 'MPW_FN1';
+        return 'MPW_FN2';
+      }
+      // 3. ANM / आरोग्य सेविका
       if (
         desig.includes('आरोग्य सेविका') ||
         desig.includes('anm') ||
         desig.includes('आरोग्य सहायिका') ||
         desig.includes('सहायिका') ||
         desig.includes('पर्यवेक्षक') ||
+        code.startsWith('54F') ||
+        code.includes('54F') ||
+        code.includes('F') ||
         code.includes('A') ||
         code.includes('B')
       ) {
         return 'ANM';
-      }
-      if (desig.includes('आरोग्य सेवक') || desig.includes('mpw') || code.includes('S')) {
-        const d = new Date(dateVal);
-        if (d >= monthObj.f1Start && d <= monthObj.f1End) return 'MPW_FN1';
-        return 'MPW_FN2';
-      }
-
-      // Default field active staff fallback: field workers are always active
-      const empClean = String(employeeName || '').trim();
-      if (empClean.startsWith('श्रीमती') || empClean.startsWith('कु.') || desig.includes('महिला') || desig.includes('स्त्री')) {
-        return 'ANM';
-      }
-      const d = new Date(dateVal);
-      if (d >= monthObj.f1Start && d <= monthObj.f1End) return 'MPW_FN1';
-      return 'MPW_FN2';
-    }
-
-    // Helper for YTD category
-    function getYtdStaffCategory(employeeName, designation, upkendra, villageName, bsCode, dateVal) {
-      if (isOpd(employeeName, designation, upkendra, villageName, bsCode)) {
-        return 'PASSIVE';
-      }
-      const desig = `${designation || ''} ${employeeName || ''}`.toLowerCase();
-      const code = String(bsCode || '').toUpperCase();
-
-      if (desig.includes('आशा') || desig.includes('asha') || code.includes('V')) {
-        return 'ASHA';
-      }
-      if (
-        desig.includes('आरोग्य सेविका') ||
-        desig.includes('anm') ||
-        desig.includes('आरोग्य सहायिका') ||
-        desig.includes('सहायिका') ||
-        desig.includes('पर्यवेक्षक') ||
-        code.includes('A') ||
-        code.includes('B')
-      ) {
-        return 'ANM';
-      }
-      if (desig.includes('आरोग्य सेवक') || desig.includes('mpw') || code.includes('S')) {
-        const d = new Date(dateVal);
-        const m = monthMaster.find(mo => d >= mo.f1Start && d <= mo.f2End);
-        if (m && d >= m.f1Start && d <= m.f1End) return 'MPW_FN1';
-        return 'MPW_FN2';
       }
 
       // Default field active staff fallback
@@ -353,94 +325,107 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
         return 'ANM';
       }
       const d = new Date(dateVal);
-      const m = monthMaster.find(mo => d >= mo.f1Start && d <= mo.f2End);
-      if (m && d >= m.f1Start && d <= m.f1End) return 'MPW_FN1';
+      const day = d.getDate();
+      if (day <= 15) return 'MPW_FN1';
       return 'MPW_FN2';
     }
 
-    // Accumulators for Active survey
+    // Helper for YTD category
+    function getYtdStaffCategory(employeeName, designation, upkendra, villageName, bsCode, dateVal) {
+      return getStaffCategory(employeeName, designation, upkendra, villageName, bsCode, dateVal);
+    }
+
+    // Accumulators for Active and Passive survey from bsDataEntry (Single Source of Truth)
     let mpwFn1M = 0, mpwFn1F = 0, mpwFn1Total = 0;
     let mpwFn2M = 0, mpwFn2F = 0, mpwFn2Total = 0;
     let anmM = 0, anmF = 0, anmTotal = 0;
     let ashaM = 0, ashaF = 0, ashaTotal = 0;
     let passiveM = 0, passiveF = 0, passiveTotal = 0;
 
-    // Calculate monthly gender counts from villageDetails
-    monthVillageRows.forEach(v => {
-      const bsRow = bsDataEntry.find(r => r[0] === v[0]);
-      const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(v[1])) || {};
-      const employeeName = v[1] || (bsRow ? bsRow[3] : emp.employeeName);
-      const designation = (bsRow ? bsRow[4] : '') || emp.designation || '';
-      const bsCode = (bsRow ? bsRow[5] : '') || emp.bsCode || '';
-      const upkendra = v[7] || (bsRow ? bsRow[2] : '') || emp.upkendra || '';
-      const villageName = v[3] || '';
-
-      const cat = getStaffCategory(employeeName, designation, upkendra, villageName, bsCode, v[2]);
-      const mCount = parseInt(v[5]) || 0;
-      const fCount = parseInt(v[6]) || 0;
-      const sCount = parseInt(v[4]) || (mCount + fCount);
-
-      if (cat === 'MPW_FN1') { mpwFn1M += mCount; mpwFn1F += fCount; mpwFn1Total += sCount; }
-      else if (cat === 'MPW_FN2') { mpwFn2M += mCount; mpwFn2F += fCount; mpwFn2Total += sCount; }
-      else if (cat === 'ANM') { anmM += mCount; anmF += fCount; anmTotal += sCount; }
-      else if (cat === 'ASHA') { ashaM += mCount; ashaF += fCount; ashaTotal += sCount; }
-      else { passiveM += mCount; passiveF += fCount; passiveTotal += sCount; }
-    });
-
-    // Also include any bsDataEntry rows that may not have village details
     monthBsRows.forEach(r => {
-      const hasVillage = monthVillageRows.some(v => v[0] === r[0]);
-      if (!hasVillage) {
-        const cat = getStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
-        const total = parseInt(r[9]) || 0;
-        const mPart = Math.floor(total * 0.52);
-        const fPart = total - mPart;
-        if (cat === 'MPW_FN1') { mpwFn1M += mPart; mpwFn1F += fPart; mpwFn1Total += total; }
-        else if (cat === 'MPW_FN2') { mpwFn2M += mPart; mpwFn2F += fPart; mpwFn2Total += total; }
-        else if (cat === 'ANM') { anmM += mPart; anmF += fPart; anmTotal += total; }
-        else if (cat === 'ASHA') { ashaM += mPart; ashaF += fPart; ashaTotal += total; }
-        else { passiveM += mPart; passiveF += fPart; passiveTotal += total; }
+      const cat = getStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
+      const total = parseInt(r[9]) || 0;
+      if (total <= 0) return;
+
+      const matchingVils = monthVillageRows.filter(v => v[0] === r[0]);
+      let mCount = 0;
+      let fCount = 0;
+
+      if (matchingVils.length > 0) {
+        let vMale = 0;
+        let vFemale = 0;
+        let vTot = 0;
+        matchingVils.forEach(v => {
+          const m = parseInt(v[5]) || 0;
+          const f = parseInt(v[6]) || 0;
+          const s = parseInt(v[4]) || (m + f);
+          vMale += m;
+          vFemale += f;
+          vTot += s;
+        });
+
+        if (vTot > 0) {
+          mCount = Math.round((vMale / vTot) * total);
+          fCount = total - mCount;
+        } else {
+          mCount = Math.floor(total * 0.52);
+          fCount = total - mCount;
+        }
+      } else {
+        mCount = Math.floor(total * 0.52);
+        fCount = total - mCount;
       }
+
+      if (cat === 'MPW_FN1') { mpwFn1M += mCount; mpwFn1F += fCount; mpwFn1Total += total; }
+      else if (cat === 'MPW_FN2') { mpwFn2M += mCount; mpwFn2F += fCount; mpwFn2Total += total; }
+      else if (cat === 'ANM') { anmM += mCount; anmF += fCount; anmTotal += total; }
+      else if (cat === 'ASHA') { ashaM += mCount; ashaF += fCount; ashaTotal += total; }
+      else { passiveM += mCount; passiveF += fCount; passiveTotal += total; }
     });
 
-    // YTD Accumulators
+    // YTD Accumulators from bsDataEntry
     let ytdMpwFn1Total = 0, ytdMpwFn2Total = 0, ytdAnmTotal = 0, ytdAshaTotal = 0, ytdPassiveTotal = 0;
     let ytdActiveM = 0, ytdActiveF = 0, ytdPassiveM = 0, ytdPassiveF = 0;
 
-    ytdVillageRows.forEach(v => {
-      const bsRow = bsDataEntry.find(r => r[0] === v[0]);
-      const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(v[1])) || {};
-      const employeeName = v[1] || (bsRow ? bsRow[3] : emp.employeeName);
-      const designation = (bsRow ? bsRow[4] : '') || emp.designation || '';
-      const bsCode = (bsRow ? bsRow[5] : '') || emp.bsCode || '';
-      const upkendra = v[7] || (bsRow ? bsRow[2] : '') || emp.upkendra || '';
-      const villageName = v[3] || '';
-
-      const cat = getYtdStaffCategory(employeeName, designation, upkendra, villageName, bsCode, v[2]);
-      const mCount = parseInt(v[5]) || 0;
-      const fCount = parseInt(v[6]) || 0;
-      const sCount = parseInt(v[4]) || (mCount + fCount);
-
-      if (cat === 'MPW_FN1') { ytdMpwFn1Total += sCount; ytdActiveM += mCount; ytdActiveF += fCount; }
-      else if (cat === 'MPW_FN2') { ytdMpwFn2Total += sCount; ytdActiveM += mCount; ytdActiveF += fCount; }
-      else if (cat === 'ANM') { ytdAnmTotal += sCount; ytdActiveM += mCount; ytdActiveF += fCount; }
-      else if (cat === 'ASHA') { ytdAshaTotal += sCount; ytdActiveM += mCount; ytdActiveF += fCount; }
-      else { ytdPassiveTotal += sCount; ytdPassiveM += mCount; ytdPassiveF += fCount; }
-    });
-
     ytdBsRows.forEach(r => {
-      const hasVillage = ytdVillageRows.some(v => v[0] === r[0]);
-      if (!hasVillage) {
-        const cat = getYtdStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
-        const total = parseInt(r[9]) || 0;
-        const mPart = Math.floor(total * 0.52);
-        const fPart = total - mPart;
-        if (cat === 'MPW_FN1') { ytdMpwFn1Total += total; ytdActiveM += mPart; ytdActiveF += fPart; }
-        else if (cat === 'MPW_FN2') { ytdMpwFn2Total += total; ytdActiveM += mPart; ytdActiveF += fPart; }
-        else if (cat === 'ANM') { ytdAnmTotal += total; ytdActiveM += mPart; ytdActiveF += fPart; }
-        else if (cat === 'ASHA') { ytdAshaTotal += total; ytdActiveM += mPart; ytdActiveF += fPart; }
-        else { ytdPassiveTotal += total; ytdPassiveM += mPart; ytdPassiveF += fPart; }
+      const cat = getYtdStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
+      const total = parseInt(r[9]) || 0;
+      if (total <= 0) return;
+
+      const matchingVils = ytdVillageRows.filter(v => v[0] === r[0]);
+      let mCount = 0;
+      let fCount = 0;
+
+      if (matchingVils.length > 0) {
+        let vMale = 0;
+        let vFemale = 0;
+        let vTot = 0;
+        matchingVils.forEach(v => {
+          const m = parseInt(v[5]) || 0;
+          const f = parseInt(v[6]) || 0;
+          const s = parseInt(v[4]) || (m + f);
+          vMale += m;
+          vFemale += f;
+          vTot += s;
+        });
+
+        if (vTot > 0) {
+          mCount = Math.round((vMale / vTot) * total);
+          fCount = total - mCount;
+        } else {
+          mCount = Math.floor(total * 0.52);
+          fCount = total - mCount;
+        }
+      } else {
+        mCount = Math.floor(total * 0.52);
+        fCount = total - mCount;
       }
+
+      if (cat === 'MPW_FN1') { ytdMpwFn1Total += total; ytdActiveM += mCount; ytdActiveF += fCount; }
+      else if (cat === 'MPW_FN2') { ytdMpwFn2Total += total; ytdActiveM += mCount; ytdActiveF += fCount; }
+      else if (cat === 'ANM') { ytdAnmTotal += total; ytdActiveM += mCount; ytdActiveF += fCount; }
+      else if (cat === 'ASHA') { ytdAshaTotal += total; ytdActiveM += mCount; ytdActiveF += fCount; }
+      else { ytdPassiveTotal += total; ytdPassiveM += mCount; ytdPassiveF += fCount; }
     });
 
     // Metric Variables according to user template:
@@ -456,33 +441,20 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     const D9 = ytdActiveF; // प्रत्यक्ष स्त्री प्रगत
     const D10 = D8 + D9; // प्रत्यक्ष एकूण प्रगत
 
-    // ३१ अप्रत्यक्ष सर्वेक्षण (फक्त बाह्य रुग्ण विभाग / OPD)
-    const D11 = passiveM; // अप्रत्यक्ष पुरुष मासिक
-    const D12 = passiveF; // अप्रत्यक्ष स्त्री मासिक
-    const D13 = D11 + D12; // अप्रत्यक्ष एकूण मासिक
-
-    const D14 = ytdPassiveM; // अप्रत्यक्ष पुरुष प्रगत
-    const D15 = ytdPassiveF; // अप्रत्यक्ष स्त्री प्रगत
-    const D16 = D14 + D15; // अप्रत्यक्ष एकूण प्रगत
-
-    // ३२ प्रत्यक्ष + अप्रत्यक्ष सर्वेक्षण
-    const D17 = D5 + D11; // एकूण पुरुष मासिक
-    const D18 = D6 + D12; // एकूण स्त्री मासिक
-    const D19 = D7 + D13; // एकूण रक्त नमुने मासिक
-
-    const D20 = D8 + D14; // एकूण पुरुष प्रगत
-    const D21 = D9 + D15; // एकूण स्त्री प्रगत
-    const D22 = D10 + D16; // एकूण रक्त नमुने प्रगत
-
     // बाह्यरुग्ण विभाग (OPD / अप्रत्यक्ष) रक्त नमुने, तापाचे रुग्ण व उपचारीत रुग्ण
     // टीप: या तक्त्यात सर्व कर्मचाऱ्यांचे (D19) नव्हे तर फक्त बाह्यरुग्ण विभाग (OPD) रक्त नमुने येतात
     let smearsM = passiveTotal;
+    if (smearsM === 0 && opdSummary && opdSummary.monthlyTotal > 0) {
+      smearsM = opdSummary.monthlyTotal;
+    }
     if (smearsM === 0 && monthObj.bloodSmears != null && parseInt(monthObj.bloodSmears) > 0) {
       smearsM = parseInt(monthObj.bloodSmears);
     }
+
     const priorSmears = priorMonths.reduce((sum, m) => sum + (parseInt(m.bloodSmears) || 0), 0);
-    const priorPassiveSmears = Math.max(0, ytdPassiveTotal - passiveTotal);
-    const smearsProg = Math.max(priorSmears, priorPassiveSmears) + smearsM; // घेतलेले रक्त नमुणे प्रगत (स्वयं-गणना)
+    const calcProgFromMonthMaster = priorSmears + smearsM;
+    const calcProgFromEntries = Math.max(ytdPassiveTotal, opdSummary ? opdSummary.ytdTotal : 0);
+    const smearsProg = Math.max(calcProgFromEntries, calcProgFromMonthMaster, monthObj.progBloodSmears != null ? parseInt(monthObj.progBloodSmears) : 0);
 
     // तापाचे रुग्ण (OPD Fever cases) = घेतलेले रक्त नमुणे (OPD Blood Smears) = उपचारीत रुग्ण (OPD Treated cases)
     const feverM = smearsM;
@@ -495,7 +467,36 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     // क्लोरोक्वीन गोळया खर्च (Chloroquine tablets consumed: मासिक व प्रगत)
     const cqM = parseInt(monthObj.chloroquineSpent) || 0;
     const priorCq = priorMonths.reduce((sum, m) => sum + (parseInt(m.chloroquineSpent) || 0), 0);
-    const cqProg = priorCq + cqM; // क्लोरोक्वीन खर्च प्रगत (स्वयं-गणना)
+    const cqProg = monthObj.progChloroquineSpent != null && parseInt(monthObj.progChloroquineSpent) > 0 ? parseInt(monthObj.progChloroquineSpent) : (priorCq + cqM); // क्लोरोक्वीन खर्च प्रगत
+
+    // ३१ अप्रत्यक्ष सर्वेक्षण (फक्त बाह्य रुग्ण विभाग / OPD)
+    let D11 = passiveM; // अप्रत्यक्ष पुरुष मासिक
+    let D12 = passiveF; // अप्रत्यक्ष स्त्री मासिक
+    let D13 = D11 + D12; // अप्रत्यक्ष एकूण मासिक
+
+    let D14 = ytdPassiveM; // अप्रत्यक्ष पुरुष प्रगत
+    let D15 = ytdPassiveF; // अप्रत्यक्ष स्त्री प्रगत
+    let D16 = D14 + D15; // अप्रत्यक्ष एकूण प्रगत
+
+    if (D13 === 0 && smearsM > 0) {
+      D11 = Math.floor(smearsM * 0.52);
+      D12 = smearsM - D11;
+      D13 = smearsM;
+    }
+    if (D16 < smearsProg) {
+      D14 = Math.floor(smearsProg * 0.52);
+      D15 = smearsProg - D14;
+      D16 = smearsProg;
+    }
+
+    // ३२ प्रत्यक्ष + अप्रत्यक्ष सर्वेक्षण
+    const D17 = D5 + D11; // एकूण पुरुष मासिक
+    const D18 = D6 + D12; // एकूण स्त्री मासिक
+    const D19 = D7 + D13; // एकूण रक्त नमुने मासिक
+
+    const D20 = D8 + D14; // एकूण पुरुष प्रगत
+    const D21 = D9 + D15; // एकूण स्त्री प्रगत
+    const D22 = D10 + D16; // एकूण रक्त नमुने प्रगत
 
     // १०.२ सर्वेक्षण
     const D23 = mpwFn1Total; // आरोग्य सेवक पहिला मासिक
@@ -509,19 +510,51 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     const D31 = D23 + D25 + D27 + D29; // एकूण सर्वेक्षण मासिक
     const D32 = D24 + D26 + D28 + D30; // एकूण सर्वेक्षण प्रगत
 
-    // १०.१४ घरावरील स्टेन्सिलिंग / गृहभेटी
-    const D35 = Math.max(680, D23 * 22);
-    const D36 = Math.max(720, D25 * 24);
+    // १०.१४ घरावरील स्टेन्सिलिंग / गृहभेटी (आरोग्य सेवक व आरोग्य सेविका पहिला व दुसरा पंधरवडा)
+    // १. आरोग्य सेवक गृहभेटी (MPW Home Visits)
+    const hasMpwFn1 = monthObj.mpwFn1 !== undefined && monthObj.mpwFn1 !== null && monthObj.mpwFn1 !== '';
+    const hasMpwFn2 = monthObj.mpwFn2 !== undefined && monthObj.mpwFn2 !== null && monthObj.mpwFn2 !== '';
+    let D35 = 0;
+    let D36 = 0;
+    if (hasMpwFn1 || hasMpwFn2) {
+      D35 = parseInt(monthObj.mpwFn1) || 0;
+      D36 = parseInt(monthObj.mpwFn2) || 0;
+    } else if (monthObj.mpwHomeVisits != null && parseInt(monthObj.mpwHomeVisits) > 0) {
+      D35 = Math.floor(parseInt(monthObj.mpwHomeVisits) / 2);
+      D36 = parseInt(monthObj.mpwHomeVisits) - D35;
+    } else {
+      D35 = Math.max(680, D23 * 22);
+      D36 = Math.max(720, D25 * 24);
+    }
     const D37 = D35 + D36;
-    const D38 = Math.max(2850, D24 * 22);
-    const D39 = Math.max(3120, D26 * 24);
+
+    const priorMpwFn1 = monthObj.priorMpwFn1Sum != null ? monthObj.priorMpwFn1Sum : priorMonths.reduce((s, m) => s + (parseInt(m.mpwFn1) || 0), 0);
+    const priorMpwFn2 = monthObj.priorMpwFn2Sum != null ? monthObj.priorMpwFn2Sum : priorMonths.reduce((s, m) => s + (parseInt(m.mpwFn2) || 0), 0);
+    const D38 = monthObj.progMpwFn1 != null ? parseInt(monthObj.progMpwFn1) : (priorMpwFn1 + D35);
+    const D39 = monthObj.progMpwFn2 != null ? parseInt(monthObj.progMpwFn2) : (priorMpwFn2 + D36);
     const D40 = D38 + D39;
 
-    const D41 = Math.max(490, D27 * 15);
-    const D42 = Math.max(530, D27 * 16);
+    // २. आरोग्य सेविका गृहभेटी (ANM Home Visits)
+    const hasAnmFn1 = monthObj.anmFn1 !== undefined && monthObj.anmFn1 !== null && monthObj.anmFn1 !== '';
+    const hasAnmFn2 = monthObj.anmFn2 !== undefined && monthObj.anmFn2 !== null && monthObj.anmFn2 !== '';
+    let D41 = 0;
+    let D42 = 0;
+    if (hasAnmFn1 || hasAnmFn2) {
+      D41 = parseInt(monthObj.anmFn1) || 0;
+      D42 = parseInt(monthObj.anmFn2) || 0;
+    } else if (monthObj.anmHomeVisits != null && parseInt(monthObj.anmHomeVisits) > 0) {
+      D41 = Math.floor(parseInt(monthObj.anmHomeVisits) / 2);
+      D42 = parseInt(monthObj.anmHomeVisits) - D41;
+    } else {
+      D41 = Math.max(490, Math.round(D27 * 15));
+      D42 = Math.max(530, Math.round(D27 * 16));
+    }
     const D43 = D41 + D42;
-    const D44 = Math.max(2100, D28 * 15);
-    const D45 = Math.max(2250, D28 * 16);
+
+    const priorAnmFn1 = monthObj.priorAnmFn1Sum != null ? monthObj.priorAnmFn1Sum : priorMonths.reduce((s, m) => s + (parseInt(m.anmFn1) || 0), 0);
+    const priorAnmFn2 = monthObj.priorAnmFn2Sum != null ? monthObj.priorAnmFn2Sum : priorMonths.reduce((s, m) => s + (parseInt(m.anmFn2) || 0), 0);
+    const D44 = monthObj.progAnmFn1 != null ? parseInt(monthObj.progAnmFn1) : (priorAnmFn1 + D41);
+    const D45 = monthObj.progAnmFn2 != null ? parseInt(monthObj.progAnmFn2) : (priorAnmFn2 + D42);
     const D46 = D44 + D45;
 
     // १०.१५.१ प्रयोगशाळा कालावधी
@@ -530,21 +563,32 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     const D67 = Math.max(0, D19 - D65 - D66); // १५ दिवसाच्यावर
 
     // --- गावनिहाय रक्त नमुना संकलन तक्ता (Page 1) ---
+    const normalizeVillageName = (name) => {
+      const s = String(name || '').trim();
+      if (s === 'बोरगाव' || s === 'बोरगांव') return 'बोरगांव';
+      if (s === 'लखनगाव' || s === 'लखनगांव') return 'लखनगांव';
+      if (s === 'उंबडगा बु' || s === 'उंबडगा बु.' || s === 'उंबडगा बू' || s === 'उंबडगा बू.') return 'उंबडगा बू';
+      if (s === 'उंबडगा खु' || s === 'उंबडगा खु.' || s === 'उंबडगा खू' || s === 'उंबडगा खू.') return 'उंबडगा खू';
+      if (s === 'उटी बु' || s === 'उटी बु.' || s === 'उटी बू' || s === 'उटी बू.') return 'उटी बु.';
+      return s;
+    };
+
     // Build unique subcenter + village list
     const villageListMap = [];
     masterData.forEach(m => {
       (m.villageList || []).forEach(vName => {
-        if (!villageListMap.some(x => x.upkendra === m.upkendra && x.village === vName)) {
-          villageListMap.push({ upkendra: m.upkendra, village: vName });
+        const normV = normalizeVillageName(vName);
+        if (normV && !normV.includes('Phc') && !villageListMap.some(x => x.upkendra === m.upkendra && x.village === normV)) {
+          villageListMap.push({ upkendra: m.upkendra, village: normV });
         }
       });
     });
 
     // Also include any villages from villageDetails
     monthVillageRows.forEach(v => {
-      const vName = v[3];
+      const vName = normalizeVillageName(v[3]);
       const scName = v[7] || '';
-      if (vName && !villageListMap.some(x => x.village === vName)) {
+      if (vName && !vName.includes('Phc') && !villageListMap.some(x => x.village === vName)) {
         villageListMap.push({ upkendra: scName || 'भादा', village: vName });
       }
     });
@@ -558,33 +602,134 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
     let totG_D59 = 0, totG_D60 = 0, totG_D61 = 0;
     let totG_D62 = 0, totG_D63 = 0, totG_D64 = 0;
 
+    // Initialize map for all villages
+    const villageDataMap = {};
     villageListMap.forEach(item => {
-      const vRows = monthVillageRows.filter(v => cleanStr(v[3]) === cleanStr(item.village));
+      villageDataMap[item.village] = {
+        upkendra: item.upkendra,
+        village: item.village,
+        d50: 0, d51: 0, d52: 0, // MPW FN1
+        d53: 0, d54: 0, d55: 0, // MPW FN2
+        d56: 0, d57: 0, d58: 0, // ANM
+        d59: 0, d60: 0, d61: 0  // ASHA
+      };
+    });
 
-      let d50 = 0, d51 = 0, d52 = 0; // MPW FN1
-      let d53 = 0, d54 = 0, d55 = 0; // MPW FN2
-      let d56 = 0, d57 = 0, d58 = 0; // ANM
-      let d59 = 0, d60 = 0, d61 = 0; // ASHA
+    const findVillageObj = (vName, upk, fallbackList) => {
+      const norm = normalizeVillageName(vName);
+      if (villageDataMap[norm]) return villageDataMap[norm];
+      if (villageDataMap[vName]) return villageDataMap[vName];
+      const cleanNorm = norm.replace(/[.\s]/g, '');
+      const key = Object.keys(villageDataMap).find(k => normalizeVillageName(k).replace(/[.\s]/g, '') === cleanNorm);
+      if (key) return villageDataMap[key];
+      if (fallbackList && fallbackList.length > 0) {
+        const fNorm = normalizeVillageName(fallbackList[0]);
+        if (villageDataMap[fNorm]) return villageDataMap[fNorm];
+      }
+      const subItem = villageListMap.find(x => x.upkendra === upk);
+      return subItem ? villageDataMap[subItem.village] : Object.values(villageDataMap)[0];
+    };
 
-      vRows.forEach(v => {
-        const bsRow = bsDataEntry.find(r => r[0] === v[0]);
-        const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(v[1])) || {};
-        const employeeName = v[1] || (bsRow ? bsRow[3] : emp.employeeName);
-        const designation = (bsRow ? bsRow[4] : '') || emp.designation || '';
-        const bsCode = (bsRow ? bsRow[5] : '') || emp.bsCode || '';
-        const upkendra = v[7] || (bsRow ? bsRow[2] : '') || emp.upkendra || '';
-        const villageName = v[3] || '';
+    // Populate each active BS record from bsDataEntry into the appropriate village
+    monthBsRows.forEach(r => {
+      if (isOpd(r[3], r[4], r[2], '', r[5])) return;
+      const total = parseInt(r[9]) || 0;
+      if (total <= 0) return;
 
-        const cat = getStaffCategory(employeeName, designation, upkendra, villageName, bsCode, v[2]);
-        const mCount = parseInt(v[5]) || 0;
-        const fCount = parseInt(v[6]) || 0;
-        const count = parseInt(v[4]) || (mCount + fCount);
+      const cat = getStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
+      const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(r[3])) || {};
+      const empVillages = (emp.villageList && emp.villageList.length > 0) 
+        ? emp.villageList.map(normalizeVillageName) 
+        : (villageListMap.filter(x => x.upkendra === r[2]).map(x => x.village));
 
-        if (cat === 'MPW_FN1') { d50 += mCount; d51 += fCount; d52 += count; }
-        else if (cat === 'MPW_FN2') { d53 += mCount; d54 += fCount; d55 += count; }
-        else if (cat === 'ANM') { d56 += mCount; d57 += fCount; d58 += count; }
-        else if (cat === 'ASHA') { d59 += mCount; d60 += fCount; d61 += count; }
-      });
+      let matchingVils = monthVillageRows.filter(v => v[0] === r[0]);
+      if (matchingVils.length === 0) {
+        matchingVils = monthVillageRows.filter(v => cleanStr(v[1]) === cleanStr(r[3]) && Math.abs(new Date(v[2]) - new Date(r[1])) < 86400000);
+      }
+
+      if (matchingVils.length > 0) {
+        const sumVils = matchingVils.reduce((s, v) => s + (parseInt(v[4]) || (parseInt(v[5]) || 0) + (parseInt(v[6]) || 0)), 0);
+
+        if (sumVils > 0) {
+          let allocated = 0;
+          let allocatedM = 0;
+          let allocatedF = 0;
+          const totalM = Math.floor(total * 0.52);
+          const totalF = total - totalM;
+
+          matchingVils.forEach((v, idx) => {
+            const vName = v[3];
+            const vTotalRow = parseInt(v[4]) || ((parseInt(v[5]) || 0) + (parseInt(v[6]) || 0));
+            const vMaleRow = parseInt(v[5]) || 0;
+            const vFemaleRow = parseInt(v[6]) || 0;
+
+            let vTotAlloc = 0;
+            let vMAlloc = 0;
+            let vFAlloc = 0;
+
+            if (idx === matchingVils.length - 1) {
+              vTotAlloc = total - allocated;
+              vMAlloc = Math.max(0, totalM - allocatedM);
+              vFAlloc = Math.max(0, vTotAlloc - vMAlloc);
+            } else {
+              vTotAlloc = Math.round((vTotalRow / sumVils) * total);
+              allocated += vTotAlloc;
+              vMAlloc = (vMaleRow + vFemaleRow > 0) ? Math.round((vMaleRow / (vMaleRow + vFemaleRow)) * vTotAlloc) : Math.floor(vTotAlloc * 0.52);
+              vFAlloc = vTotAlloc - vMAlloc;
+              allocatedM += vMAlloc;
+              allocatedF += vFAlloc;
+            }
+
+            const vObj = findVillageObj(vName, r[2], empVillages);
+            if (vObj) {
+              if (cat === 'MPW_FN1') { vObj.d50 += vMAlloc; vObj.d51 += vFAlloc; vObj.d52 += vTotAlloc; }
+              else if (cat === 'MPW_FN2') { vObj.d53 += vMAlloc; vObj.d54 += vFAlloc; vObj.d55 += vTotAlloc; }
+              else if (cat === 'ANM') { vObj.d56 += vMAlloc; vObj.d57 += vFAlloc; vObj.d58 += vTotAlloc; }
+              else if (cat === 'ASHA') { vObj.d59 += vMAlloc; vObj.d60 += vFAlloc; vObj.d61 += vTotAlloc; }
+            }
+          });
+        } else {
+          const share = Math.floor(total / empVillages.length);
+          let rem = total % empVillages.length;
+          empVillages.forEach(vName => {
+            const vTotAlloc = share + (rem > 0 ? 1 : 0);
+            if (rem > 0) rem--;
+            const vMAlloc = Math.floor(vTotAlloc * 0.52);
+            const vFAlloc = vTotAlloc - vMAlloc;
+            const vObj = findVillageObj(vName, r[2], empVillages);
+            if (vObj) {
+              if (cat === 'MPW_FN1') { vObj.d50 += vMAlloc; vObj.d51 += vFAlloc; vObj.d52 += vTotAlloc; }
+              else if (cat === 'MPW_FN2') { vObj.d53 += vMAlloc; vObj.d54 += vFAlloc; vObj.d55 += vTotAlloc; }
+              else if (cat === 'ANM') { vObj.d56 += vMAlloc; vObj.d57 += vFAlloc; vObj.d58 += vTotAlloc; }
+              else if (cat === 'ASHA') { vObj.d59 += vMAlloc; vObj.d60 += vFAlloc; vObj.d61 += vTotAlloc; }
+            }
+          });
+        }
+      } else {
+        const share = Math.floor(total / empVillages.length);
+        let rem = total % empVillages.length;
+        empVillages.forEach(vName => {
+          const vTotAlloc = share + (rem > 0 ? 1 : 0);
+          if (rem > 0) rem--;
+          const vMAlloc = Math.floor(vTotAlloc * 0.52);
+          const vFAlloc = vTotAlloc - vMAlloc;
+          const vObj = findVillageObj(vName, r[2], empVillages);
+          if (vObj) {
+            if (cat === 'MPW_FN1') { vObj.d50 += vMAlloc; vObj.d51 += vFAlloc; vObj.d52 += vTotAlloc; }
+            else if (cat === 'MPW_FN2') { vObj.d53 += vMAlloc; vObj.d54 += vFAlloc; vObj.d55 += vTotAlloc; }
+            else if (cat === 'ANM') { vObj.d56 += vMAlloc; vObj.d57 += vFAlloc; vObj.d58 += vTotAlloc; }
+            else if (cat === 'ASHA') { vObj.d59 += vMAlloc; vObj.d60 += vFAlloc; vObj.d61 += vTotAlloc; }
+          }
+        });
+      }
+    });
+
+    villageListMap.forEach(item => {
+      const vObj = villageDataMap[item.village] || { d50: 0, d51: 0, d52: 0, d53: 0, d54: 0, d55: 0, d56: 0, d57: 0, d58: 0, d59: 0, d60: 0, d61: 0 };
+      const d50 = vObj.d50, d51 = vObj.d51, d52 = vObj.d52;
+      const d53 = vObj.d53, d54 = vObj.d54, d55 = vObj.d55;
+      const d56 = vObj.d56, d57 = vObj.d57, d58 = vObj.d58;
+      const d59 = vObj.d59, d60 = vObj.d60, d61 = vObj.d61;
 
       const d62 = d50 + d53 + d56 + d59; // एकूण पुरुष
       const d63 = d51 + d54 + d57 + d60; // एकूण स्त्री
@@ -610,6 +755,82 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
           <td style="font-weight:bold; background:#e6fffa; color:#234e52;">${d64}</td>
         </tr>`;
     });
+
+    // Helper to check if employee is ASHA
+    function isAsha(employeeName, designation, bsCode) {
+      const des = String(designation || '').toLowerCase();
+      const emp = String(employeeName || '').toLowerCase();
+      const code = String(bsCode || '').toUpperCase();
+      return des.includes('आशा') || des.includes('asha') || code.includes('V') || emp.includes('आशा');
+    }
+
+    // ================= १०.१५.२ कमी रक्त नमुने गोळा केलेल्या कर्मचाऱ्यांची व गावांची स्वयंचलित गणना =================
+    // (टीप: NVBDCP नियमानुसार फक्त नियमित क्षेत्रीय कर्मचारी - MPW व ANM यांची गणना, आशा स्वयंसेविका वगळून)
+    const empPerformance = masterData.map(emp => {
+      const isEmpOpd = isOpd(emp.employeeName, emp.designation, emp.upkendra, '', emp.bsCode);
+      const empIsAsha = isAsha(emp.employeeName, emp.designation, emp.bsCode);
+      if (isEmpOpd || empIsAsha) return null;
+
+      const empRows = monthBsRows.filter(r => cleanStr(r[3]) === cleanStr(emp.employeeName));
+      const totalCount = empRows.reduce((sum, r) => sum + (parseInt(r[9]) || 0), 0);
+      const entryCount = empRows.length;
+
+      // Monthly Target based on designation: MPW=50, ANM=40
+      const des = String(emp.designation || '').toLowerCase();
+      let target = 40;
+      if (des.includes('आरोग्य सेवक') || des.includes('mpw')) target = 50;
+      else if (des.includes('आरोग्य सेविका') || des.includes('anm')) target = 40;
+
+      const percent = target > 0 ? Math.round((totalCount / target) * 100) : 0;
+      const isZero = totalCount === 0;
+      const isLow = totalCount > 0 && percent < 50;
+      const isIrregular = totalCount > 0 && (percent < 50 || (target === 50 && entryCount === 1));
+
+      return {
+        upkendra: emp.upkendra,
+        employeeName: emp.employeeName,
+        designation: emp.designation,
+        bsCode: emp.bsCode,
+        villages: (emp.villageList || []).join(', ') || emp.upkendra,
+        totalCount,
+        entryCount,
+        target,
+        percent,
+        isZero,
+        isLow,
+        isIrregular
+      };
+    }).filter(Boolean);
+
+    const zeroBsEmployees = empPerformance.filter(e => e.isZero);
+    const lowBsEmployees = empPerformance.filter(e => e.isLow);
+    const irregularBsEmployees = empPerformance.filter(e => e.isIrregular);
+
+    const zeroEmpCount = zeroBsEmployees.length;
+    const irregularEmpCount = irregularBsEmployees.length;
+    const lowEmpCount = lowBsEmployees.length;
+
+    // Zero collection villages
+    const zeroVillages = villageListMap.filter(item => {
+      const vObj = villageDataMap[item.village];
+      const tot = vObj ? (vObj.d52 + vObj.d55 + vObj.d58 + vObj.d61) : 0;
+      return tot === 0;
+    });
+    const zeroVillageCount = zeroVillages.length;
+
+    // Subcenters with < 50% target
+    const subcenterList = [...new Set(masterData.map(m => m.upkendra).filter(u => u && !u.includes('प्रा.आ.केंद्र')))];
+    const lowSubcenters = [];
+    subcenterList.forEach(scName => {
+      const scEmps = empPerformance.filter(e => e.upkendra === scName);
+      const scTarget = scEmps.reduce((s, e) => s + e.target, 0);
+      const scActual = scEmps.reduce((s, e) => s + e.totalCount, 0);
+      const scPercent = scTarget > 0 ? Math.round((scActual / scTarget) * 100) : 0;
+      if (scPercent < 50) {
+        lowSubcenters.push({ upkendra: scName, target: scTarget, actual: scActual, percent: scPercent });
+      }
+    });
+    const lowSubcenterCount = lowSubcenters.length;
 
     const bodyHtml = `
       <!-- Report Header -->
@@ -1213,15 +1434,148 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
         <h4 style="font-size:14px; margin:10px 0 6px 0; font-weight:700;">१०.१५.२ कमी रक्त नमूने गोळा केलेल्या कर्मचा-यांची माहिती</h4>
         <table style="width:100%; font-size:12px; margin-bottom:20px;">
           <tbody>
-            <tr><td style="width:6%;">1</td><td class="text-left">एकही रक्त नमूना न घेणा-या कर्मचा-यांची संख्या</td><td style="width:15%;">0</td></tr>
-            <tr><td>2</td><td class="text-left">नियमित रक्त नमूने न घेणा-या कर्मचा-याची संख्या</td><td>0</td></tr>
-            <tr><td>3</td><td class="text-left">५० टक्के पेक्षा कमी रक्त नमूने घेणा-या कर्मचा-याची संख्या</td><td>0</td></tr>
-            <tr><td>4</td><td class="text-left">एकही रक्त नमूना गोळा न केलेल्या गावाची संख्या</td><td>0</td></tr>
-            <tr><td>5</td><td class="text-left">५० टक्के पेक्षा कमी रक्त नमूने गोळा केलेल्या सेक्टरची संख्या यादी सोबत जोडावी.</td><td>0</td></tr>
+            <tr><td style="width:6%;">1</td><td class="text-left">एकही रक्त नमूना न घेणा-या कर्मचा-यांची संख्या</td><td style="width:15%; font-weight:bold; color:#c53030;">${zeroEmpCount}</td></tr>
+            <tr><td>2</td><td class="text-left">नियमित रक्त नमूने न घेणा-या कर्मचा-याची संख्या</td><td style="width:15%; font-weight:bold; color:#dd6b20;">${irregularEmpCount}</td></tr>
+            <tr><td>3</td><td class="text-left">५० टक्के पेक्षा कमी रक्त नमूने घेणा-या कर्मचा-याची संख्या</td><td style="width:15%; font-weight:bold; color:#dd6b20;">${lowEmpCount}</td></tr>
+            <tr><td>4</td><td class="text-left">एकही रक्त नमूना गोळा न केलेल्या गावाची संख्या</td><td style="width:15%; font-weight:bold; color:#c53030;">${zeroVillageCount}</td></tr>
+            <tr><td>5</td><td class="text-left">५० टक्के पेक्षा कमी रक्त नमूने गोळा केलेल्या सेक्टरची संख्या यादी सोबत जोडावी.</td><td style="width:15%; font-weight:bold;">${lowSubcenterCount}</td></tr>
           </tbody>
         </table>
 
         <div class="footer-sign">
+          <b>वैद्यकीय अधिकारी</b><br>
+          प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर
+        </div>
+      </div>
+
+      <!-- ================= SECTION 4: परिशिष्ट - शून्य व अनियमित रक्त नमुना संकलन यादी ================= -->
+      <div class="report-page" style="page-break-before: always; margin-top: 30px;">
+        <div style="text-align:center; margin-bottom:16px;">
+          <h3 style="font-size:17px; margin:0 0 4px 0; font-weight:700; color:#1a202c;">प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर</h3>
+          <h4 style="font-size:15px; margin:0 0 4px 0; font-weight:700; color:#c53030;">माहे ${D47} - शून्य, अनियमित व ५०% पेक्षा कमी रक्त नमुना संकलन अहवाल</h4>
+          <div style="font-size:13px; color:#4a5568; font-weight:600;">(१०.१५.२ अंतर्गत जोडपत्र / परिशिष्ट यादी)</div>
+          <hr style="border:0; border-top:1.5px solid #2d3748; margin:10px 0 16px 0;">
+        </div>
+
+        <!-- Table 1: Zero BS Employees -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:13.5px; margin:0; font-weight:700; color:#c53030;">
+              १. एकही रक्त नमुना न घेणाऱ्या कर्मचाऱ्यांची यादी (आरोग्य सेवक / सेविका - शून्य संकलन):
+            </h4>
+            <span style="background:#fed7d7; color:#9b2c2c; font-size:11.5px; font-weight:bold; padding:2px 8px; border-radius:10px;">
+              एकूण: ${zeroEmpCount} कर्मचारी (आशा वगळून)
+            </span>
+          </div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:10px;">
+            <thead>
+              <tr style="background:#edf2f7;">
+                <th style="width:5%;">अ.क्र.</th>
+                <th style="width:12%;">उपकेंद्र</th>
+                <th style="width:25%;" class="text-left">कर्मचाऱ्याचे नाव</th>
+                <th style="width:18%;">पदनाम</th>
+                <th style="width:10%;">BS Code</th>
+                <th style="width:18%;" class="text-left">नेमून दिलेली गावे</th>
+                <th style="width:12%; background:#fed7d7; color:#9b2c2c;">घेतलेले नमुने</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${zeroBsEmployees.map((e, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><b>${e.upkendra}</b></td>
+                  <td class="text-left font-semibold">${e.employeeName}</td>
+                  <td>${e.designation}</td>
+                  <td><code>${e.bsCode}</code></td>
+                  <td class="text-left">${e.villages}</td>
+                  <td style="font-weight:bold; color:#e53e3e; background:#fff5f5;">० (Zero)</td>
+                </tr>
+              `).join('')}
+              ${zeroBsEmployees.length === 0 ? '<tr><td colspan="7" style="color:#38a169; font-weight:bold; padding:10px;">सर्व आरोग्य सेवक व सेविकांनी रक्त नमुने घेतले आहेत (शून्य संकलन नाही).</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table 2: Low / Irregular Employees -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:13.5px; margin:0; font-weight:700; color:#dd6b20;">
+              २. ५०% पेक्षा कमी / अनियमित रक्त नमुने घेणाऱ्या कर्मचाऱ्यांची यादी (आरोग्य सेवक / सेविका):
+            </h4>
+            <span style="background:#feebc8; color:#7b341e; font-size:11.5px; font-weight:bold; padding:2px 8px; border-radius:10px;">
+              एकूण: ${lowEmpCount} कर्मचारी (आशा वगळून)
+            </span>
+          </div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:10px;">
+            <thead>
+              <tr style="background:#edf2f7;">
+                <th style="width:5%;">अ.क्र.</th>
+                <th style="width:12%;">उपकेंद्र</th>
+                <th style="width:25%;" class="text-left">कर्मचाऱ्याचे नाव</th>
+                <th style="width:18%;">पदनाम</th>
+                <th style="width:10%;">BS Code</th>
+                <th style="width:10%;">उद्दिष्ट</th>
+                <th style="width:10%;">प्रत्यक्ष नमुने</th>
+                <th style="width:10%; background:#feebc8; color:#7b341e;">साध्य (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lowBsEmployees.map((e, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><b>${e.upkendra}</b></td>
+                  <td class="text-left font-semibold">${e.employeeName}</td>
+                  <td>${e.designation}</td>
+                  <td><code>${e.bsCode}</code></td>
+                  <td>${e.target}</td>
+                  <td style="font-weight:bold; color:#dd6b20;">${e.totalCount}</td>
+                  <td style="font-weight:bold; background:#fffaf0; color:#c05621;">${e.percent}%</td>
+                </tr>
+              `).join('')}
+              ${lowBsEmployees.length === 0 ? '<tr><td colspan="8" style="color:#38a169; font-weight:bold; padding:10px;">सर्व कर्मचाऱ्यांचे संकलन ५०% पेक्षा जास्त आहे.</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table 3: Zero Collection Villages -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:13.5px; margin:0; font-weight:700; color:#4a5568;">
+              ३. एकही रक्त नमुना गोळा न झालेल्या गावांची यादी (सर्व कर्मचारी मिळून - MPW, ANM व आशा सर्व एकत्रित):
+            </h4>
+            <span style="background:#edf2f7; color:#4a5568; font-size:11.5px; font-weight:bold; padding:2px 8px; border-radius:10px;">
+              एकूण: ${zeroVillageCount} गावे (सर्व कर्मचारी मिळून शून्य संकलन)
+            </span>
+          </div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:15px;">
+            <thead>
+              <tr style="background:#edf2f7;">
+                <th style="width:6%;">अ.क्र.</th>
+                <th style="width:18%;">उपकेंद्र</th>
+                <th style="width:28%;" class="text-left">गावाचे नाव</th>
+                <th style="width:32%;" class="text-left">संबंधित नेमून दिलेले कर्मचारी</th>
+                <th style="width:16%; background:#fed7d7; color:#9b2c2c;">एकूण संकलन (सर्व मिळून)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${zeroVillages.map((item, idx) => {
+                const emps = masterData.filter(m => (m.villageList || []).includes(item.village)).map(m => m.employeeName).join(', ') || '-';
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td><b>${item.upkendra}</b></td>
+                    <td class="text-left font-semibold">${item.village}</td>
+                    <td class="text-left">${emps}</td>
+                    <td style="font-weight:bold; color:#e53e3e; background:#fff5f5;">० (Zero)</td>
+                  </tr>
+                `;
+              }).join('')}
+              ${zeroVillages.length === 0 ? '<tr><td colspan="5" style="color:#38a169; font-weight:bold; padding:10px;">सर्व गावांतून रक्त नमुने संकलित झाले आहेत (शून्य संकलन असलेले एकही गाव नाही).</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer-sign" style="margin-top:25px;">
           <b>वैद्यकीय अधिकारी</b><br>
           प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर
         </div>
@@ -1246,11 +1600,13 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
 export function generateEmployeeRegisterWebApp(filterUpkendra, filterEmployee) {
   try {
     const currentYear = new Date().getFullYear();
+    const isAllSubcenter = !filterUpkendra || filterUpkendra === 'All' || filterUpkendra === 'सर्व' || filterUpkendra === 'सर्व उपकेंद्र';
+    const isAllEmployee = !filterEmployee || filterEmployee === 'All' || filterEmployee === 'सर्व' || filterEmployee === 'सर्व कर्मचारी';
     const filtered = bsDataEntry.filter(row => {
       const rowDate = new Date(row[1]);
       if (isNaN(rowDate.getTime()) || rowDate.getFullYear() !== currentYear) return false;
-      if (filterUpkendra && filterUpkendra !== 'All' && row[2] !== filterUpkendra) return false;
-      if (filterEmployee && filterEmployee !== 'All' && row[3] !== filterEmployee) return false;
+      if (!isAllSubcenter && row[2] !== filterUpkendra) return false;
+      if (!isAllEmployee && row[3] !== filterEmployee) return false;
       return true;
     });
 
@@ -1356,7 +1712,6 @@ export function generateEmployeeRegisterWebApp(filterUpkendra, filterEmployee) {
 // 4. कारणे दाखवा नोटीस (Show Cause Notices)
 export function getDefaulterListForMonth(selectedMonthDisplay) {
   try {
-    const MONTHLY_TARGET = 50;
     const monthObj = monthMaster.find(m => cleanStr(m.name) === cleanStr(selectedMonthDisplay));
     if (!monthObj) return { success: false, message: 'महिना सापडला नाही.' };
 
@@ -1366,25 +1721,30 @@ export function getDefaulterListForMonth(selectedMonthDisplay) {
     const defaulters = [];
     masterData.forEach(emp => {
       const post = emp.designation || '';
-      if (post.includes('आशा') || post.includes('वैद्यकीय अधिकारी') || post.includes('औषध')) return;
+      if (post.includes('आशा') || post.includes('वैद्यकीय अधिकारी') || post.includes('औषध') || emp.bsCode === '54P') return;
+
+      const isAnm = post.includes('आरोग्य सेविका') || post.includes('anm') || post.includes('सहायिका');
+      const target = isAnm ? 40 : 50;
 
       let total = 0;
       const days = new Set();
       bsDataEntry.forEach(r => {
         const rDate = new Date(r[1]);
-        if (r[5] === emp.bsCode && rDate >= startDate && rDate <= endDate) {
+        if ((cleanStr(r[3]) === cleanStr(emp.employeeName) || r[5] === emp.bsCode) && rDate >= startDate && rDate <= endDate) {
           total += (parseInt(r[9]) || 0);
           days.add(formatDateDisplay(rDate));
         }
       });
 
-      if (total < MONTHLY_TARGET) {
+      if (total < target) {
         defaulters.push({
           name: emp.employeeName,
           post: emp.designation,
           sc: emp.upkendra,
           daysCount: days.size,
-          samplesCount: total
+          samplesCount: total,
+          target,
+          deficit: target - total
         });
       }
     });
@@ -1577,3 +1937,547 @@ export function generateLowPerformanceReportWebApp(selectedMonthDisplay) {
     return { success: false, message: e.toString() };
   }
 }
+
+// 6. कर्मचारीनिहाय व गावनिहाय मासिक रक्त नमुना संकलन अहवाल (Employee-wise & Village-wise Monthly BS Report)
+export function getEmployeeVillageMonthlyData(selectedMonthDisplay, filterUpkendra = 'All', filterEmployee = 'All', filterStaffType = 'All') {
+  try {
+    const cleanStr = s => String(s || '').trim().toLowerCase();
+    const cleanNorm = s => String(s || '').replace(/[\s\.\-_]/g, '').toLowerCase();
+
+    const monthObj = monthMaster.find(m => cleanStr(m.name) === cleanStr(selectedMonthDisplay)) || monthMaster[monthMaster.length - 1];
+    const monthName = monthObj ? monthObj.name : selectedMonthDisplay;
+
+    const dStart = monthObj && monthObj.f1Start ? new Date(monthObj.f1Start) : new Date(2026, 8, 1);
+    const dEnd = monthObj && monthObj.f2End ? new Date(monthObj.f2End) : new Date(2026, 8, 30, 23, 59, 59);
+    const f1End = monthObj && monthObj.f1End ? new Date(monthObj.f1End) : new Date(2026, 8, 15, 23, 59, 59);
+
+    const isAllSc = !filterUpkendra || filterUpkendra === 'All' || filterUpkendra === 'सर्व' || filterUpkendra === 'सर्व उपकेंद्र';
+    const isAllEmp = !filterEmployee || filterEmployee === 'All' || filterEmployee === 'सर्व' || filterEmployee === 'सर्व कर्मचारी';
+    const isAllType = !filterStaffType || filterStaffType === 'All' || filterStaffType === 'सर्व' || filterStaffType === 'सर्व संवर्ग';
+
+    const monthBsRows = bsDataEntry.filter(r => {
+      const d = new Date(r[1]);
+      return !isNaN(d.getTime()) && d >= dStart && d <= dEnd;
+    });
+
+    const monthVillageRows = villageDetails.filter(v => {
+      const d = new Date(v[2]);
+      return !isNaN(d.getTime()) && d >= dStart && d <= dEnd;
+    });
+
+    // Process all employees from masterData
+    const employees = [];
+    const subcenterMap = {};
+
+    masterData.forEach(emp => {
+      const isASHA = (emp.designation && emp.designation.includes('आशा')) || (emp.bsCode && emp.bsCode.includes('V'));
+      const isMPW = (emp.designation && (emp.designation.includes('सेवक') || emp.designation.includes('MPW'))) || (emp.bsCode && emp.bsCode.startsWith('54S'));
+      const isANM = !isASHA && !isMPW;
+      const staffType = isMPW ? 'MPW' : (isANM ? 'ANM' : 'ASHA');
+      const target = isMPW ? 50 : (isANM ? 40 : 10);
+
+      if (!isAllSc && emp.upkendra !== filterUpkendra) return;
+      if (!isAllEmp && emp.employeeName !== filterEmployee) return;
+      if (!isAllType && staffType !== filterStaffType && !emp.designation.includes(filterStaffType)) return;
+
+      const empBsRows = monthBsRows.filter(r => cleanNorm(r[3]) === cleanNorm(emp.employeeName) || (emp.bsCode && r[5] === emp.bsCode));
+
+      const villageMap = {};
+      (emp.villageList || []).forEach(v => {
+        villageMap[v] = {
+          village: v,
+          fn1Male: 0, fn1Female: 0, fn1Total: 0,
+          fn2Male: 0, fn2Female: 0, fn2Total: 0,
+          male: 0, female: 0, total: 0
+        };
+      });
+
+      empBsRows.forEach(r => {
+        const isOpd = cleanNorm(r[3]).includes('बाह्य') || cleanNorm(r[4]).includes('opd');
+        if (isOpd) return;
+
+        const rDate = new Date(r[1]);
+        const isFn1 = rDate <= f1End;
+        const rTotal = parseInt(r[9]) || 0;
+        if (rTotal <= 0) return;
+
+        let matchingVils = monthVillageRows.filter(v => v[0] === r[0]);
+        if (matchingVils.length === 0) {
+          matchingVils = monthVillageRows.filter(v => cleanNorm(v[1]) === cleanNorm(r[3]) && Math.abs(new Date(v[2]) - rDate) < 86400000);
+        }
+
+        if (matchingVils.length > 0) {
+          const sumVils = matchingVils.reduce((s, v) => s + (parseInt(v[4]) || (parseInt(v[5]) || 0) + (parseInt(v[6]) || 0)), 0);
+          let allocatedTot = 0, allocatedM = 0, allocatedF = 0;
+          const totalM = Math.floor(rTotal * 0.52);
+          const totalF = rTotal - totalM;
+
+          matchingVils.forEach((v, idx) => {
+            const vName = v[3];
+            if (!villageMap[vName]) {
+              villageMap[vName] = {
+                village: vName,
+                fn1Male: 0, fn1Female: 0, fn1Total: 0,
+                fn2Male: 0, fn2Female: 0, fn2Total: 0,
+                male: 0, female: 0, total: 0
+              };
+            }
+            const vRowTot = parseInt(v[4]) || ((parseInt(v[5]) || 0) + (parseInt(v[6]) || 0));
+            const vRowM = parseInt(v[5]) || 0;
+            const vRowF = parseInt(v[6]) || 0;
+
+            let vTotAlloc = 0, vMAlloc = 0, vFAlloc = 0;
+            if (idx === matchingVils.length - 1) {
+              vTotAlloc = rTotal - allocatedTot;
+              vMAlloc = Math.max(0, totalM - allocatedM);
+              vFAlloc = Math.max(0, vTotAlloc - vMAlloc);
+            } else {
+              vTotAlloc = sumVils > 0 ? Math.round((vRowTot / sumVils) * rTotal) : Math.floor(rTotal / matchingVils.length);
+              allocatedTot += vTotAlloc;
+              vMAlloc = (vRowM + vRowF > 0) ? Math.round((vRowM / (vRowM + vRowF)) * vTotAlloc) : Math.floor(vTotAlloc * 0.52);
+              vFAlloc = vTotAlloc - vMAlloc;
+              allocatedM += vMAlloc;
+              allocatedF += vFAlloc;
+            }
+
+            const targetVil = villageMap[vName];
+            if (isFn1) {
+              targetVil.fn1Male += vMAlloc; targetVil.fn1Female += vFAlloc; targetVil.fn1Total += vTotAlloc;
+            } else {
+              targetVil.fn2Male += vMAlloc; targetVil.fn2Female += vFAlloc; targetVil.fn2Total += vTotAlloc;
+            }
+            targetVil.male += vMAlloc;
+            targetVil.female += vFAlloc;
+            targetVil.total += vTotAlloc;
+          });
+        } else {
+          const vList = (emp.villageList && emp.villageList.length > 0) ? emp.villageList : ['उपकेंद्र मुख्यालय'];
+          const share = Math.floor(rTotal / vList.length);
+          let rem = rTotal % vList.length;
+
+          vList.forEach(vName => {
+            if (!villageMap[vName]) {
+              villageMap[vName] = {
+                village: vName,
+                fn1Male: 0, fn1Female: 0, fn1Total: 0,
+                fn2Male: 0, fn2Female: 0, fn2Total: 0,
+                male: 0, female: 0, total: 0
+              };
+            }
+            const vTotAlloc = share + (rem > 0 ? 1 : 0);
+            if (rem > 0) rem--;
+            const vMAlloc = Math.floor(vTotAlloc * 0.52);
+            const vFAlloc = vTotAlloc - vMAlloc;
+
+            const targetVil = villageMap[vName];
+            if (isFn1) {
+              targetVil.fn1Male += vMAlloc; targetVil.fn1Female += vFAlloc; targetVil.fn1Total += vTotAlloc;
+            } else {
+              targetVil.fn2Male += vMAlloc; targetVil.fn2Female += vFAlloc; targetVil.fn2Total += vTotAlloc;
+            }
+            targetVil.male += vMAlloc;
+            targetVil.female += vFAlloc;
+            targetVil.total += vTotAlloc;
+          });
+        }
+      });
+
+      const villages = Object.values(villageMap);
+      const empTotal = villages.reduce((s, v) => s + v.total, 0);
+      const empMale = villages.reduce((s, v) => s + v.male, 0);
+      const empFemale = villages.reduce((s, v) => s + v.female, 0);
+      const empFn1Male = villages.reduce((s, v) => s + v.fn1Male, 0);
+      const empFn1Female = villages.reduce((s, v) => s + v.fn1Female, 0);
+      const empFn1Total = villages.reduce((s, v) => s + v.fn1Total, 0);
+      const empFn2Male = villages.reduce((s, v) => s + v.fn2Male, 0);
+      const empFn2Female = villages.reduce((s, v) => s + v.fn2Female, 0);
+      const empFn2Total = villages.reduce((s, v) => s + v.fn2Total, 0);
+      const achievementPct = target > 0 ? Math.round((empTotal / target) * 100) : 100;
+
+      let statusBadge = 'उत्कृष्ट';
+      let statusClass = 'excellent';
+      if (empTotal === 0) {
+        statusBadge = 'निरंक (० नमुने)';
+        statusClass = 'zero';
+      } else if (achievementPct < 75) {
+        statusBadge = `कमी कामगिरी (${achievementPct}%)`;
+        statusClass = 'low';
+      } else if (achievementPct < 100) {
+        statusBadge = `समाधानकारक (${achievementPct}%)`;
+        statusClass = 'satisfactory';
+      } else {
+        statusBadge = `उत्कृष्ट (${achievementPct}%)`;
+        statusClass = 'excellent';
+      }
+
+      const empRecord = {
+        upkendra: emp.upkendra,
+        employeeName: emp.employeeName,
+        designation: emp.designation,
+        staffType,
+        bsCode: emp.bsCode || '-',
+        target,
+        empTotal,
+        empMale,
+        empFemale,
+        empFn1Male,
+        empFn1Female,
+        empFn1Total,
+        empFn2Male,
+        empFn2Female,
+        empFn2Total,
+        achievementPct,
+        statusBadge,
+        statusClass,
+        villages
+      };
+
+      employees.push(empRecord);
+
+      // Subcenter aggregator
+      if (!subcenterMap[emp.upkendra]) {
+        subcenterMap[emp.upkendra] = {
+          upkendra: emp.upkendra,
+          empCount: 0,
+          target: 0,
+          fn1Male: 0, fn1Female: 0, fn1Total: 0,
+          fn2Male: 0, fn2Female: 0, fn2Total: 0,
+          male: 0, female: 0, total: 0
+        };
+      }
+      const sc = subcenterMap[emp.upkendra];
+      sc.empCount++;
+      sc.target += target;
+      sc.fn1Male += empFn1Male;
+      sc.fn1Female += empFn1Female;
+      sc.fn1Total += empFn1Total;
+      sc.fn2Male += empFn2Male;
+      sc.fn2Female += empFn2Female;
+      sc.fn2Total += empFn2Total;
+      sc.male += empMale;
+      sc.female += empFemale;
+      sc.total += empTotal;
+    });
+
+    // Subcenters list
+    const subcenterSummaries = Object.values(subcenterMap).map(sc => ({
+      ...sc,
+      achievementPct: sc.target > 0 ? Math.round((sc.total / sc.target) * 100) : 100
+    }));
+
+    // Overall summary calculations
+    const totalEmployees = employees.length;
+    const totalVillages = new Set(employees.flatMap(e => e.villages.map(v => v.village))).size;
+    const totalMale = employees.reduce((s, e) => s + e.empMale, 0);
+    const totalFemale = employees.reduce((s, e) => s + e.empFemale, 0);
+    const totalSmears = employees.reduce((s, e) => s + e.empTotal, 0);
+    const totalTarget = employees.reduce((s, e) => s + e.target, 0);
+    const overallPct = totalTarget > 0 ? Math.round((totalSmears / totalTarget) * 100) : 100;
+
+    const excellentCount = employees.filter(e => e.statusClass === 'excellent').length;
+    const satisfactoryCount = employees.filter(e => e.statusClass === 'satisfactory').length;
+    const lowCount = employees.filter(e => e.statusClass === 'low').length;
+    const zeroCount = employees.filter(e => e.statusClass === 'zero').length;
+
+    return {
+      success: true,
+      month: monthName,
+      filterUpkendra: isAllSc ? 'सर्व उपकेंद्र' : filterUpkendra,
+      filterEmployee: isAllEmp ? 'सर्व कर्मचारी' : filterEmployee,
+      filterStaffType: isAllType ? 'सर्व संवर्ग' : filterStaffType,
+      summary: {
+        totalEmployees,
+        totalVillages,
+        totalMale,
+        totalFemale,
+        totalSmears,
+        totalTarget,
+        overallPct,
+        excellentCount,
+        satisfactoryCount,
+        lowCount,
+        zeroCount
+      },
+      subcenterSummaries,
+      employees
+    };
+  } catch (err) {
+    return { success: false, message: err.toString(), employees: [], subcenterSummaries: [] };
+  }
+}
+
+export function generateEmployeeVillageMonthlyReportWebApp(selectedMonthDisplay, filterUpkendra = 'All', filterEmployee = 'All', filterStaffType = 'All') {
+  try {
+    const data = getEmployeeVillageMonthlyData(selectedMonthDisplay, filterUpkendra, filterEmployee, filterStaffType);
+    if (!data.success) {
+      return { success: false, message: data.message || 'अहवाल तयार करता आला नाही.' };
+    }
+
+    const { month, summary, subcenterSummaries, employees } = data;
+    const reportDate = formatDateDisplay(new Date());
+
+    // Subcenter table rows
+    const subcenterRowsHtml = subcenterSummaries.map((sc, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td class="text-left"><b>${sc.upkendra}</b></td>
+        <td>${sc.empCount}</td>
+        <td><b>${sc.fn1Total}</b></td>
+        <td><b>${sc.fn2Total}</b></td>
+        <td style="color:#2b6cb0;">${sc.male}</td>
+        <td style="color:#b83280;">${sc.female}</td>
+        <td style="background:#edf2f7; font-weight:700;">${sc.total}</td>
+        <td>${sc.target}</td>
+        <td>
+          <span style="font-weight:700; color:${sc.achievementPct >= 100 ? '#276749' : (sc.achievementPct >= 75 ? '#2b6cb0' : '#c53030')};">
+            ${sc.achievementPct}%
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    // Detailed employee cards grouped by subcenter
+    const groupedBySc = {};
+    employees.forEach(emp => {
+      if (!groupedBySc[emp.upkendra]) groupedBySc[emp.upkendra] = [];
+      groupedBySc[emp.upkendra].push(emp);
+    });
+
+    let detailedHtml = '';
+    let globalEmpIdx = 0;
+
+    Object.keys(groupedBySc).sort().forEach(scName => {
+      const empList = groupedBySc[scName];
+      const scTotalSmears = empList.reduce((s, e) => s + e.empTotal, 0);
+      const scTotalMale = empList.reduce((s, e) => s + e.empMale, 0);
+      const scTotalFemale = empList.reduce((s, e) => s + e.empFemale, 0);
+
+      detailedHtml += `
+        <div style="margin-top:25px; margin-bottom:15px; border-left:4px solid #00796b; padding-left:10px; background:#f0fdf4; padding:8px 12px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="margin:0; font-size:16px; color:#065f46;">📍 उपकेंद्र: ${scName} (कर्मचारी: ${empList.length})</h3>
+          <span style="font-size:13px; font-weight:700; color:#047857;">
+            एकूण नमुने: ${scTotalSmears} (👨 पु: ${scTotalMale} | 👩 स्त्री: ${scTotalFemale})
+          </span>
+        </div>
+      `;
+
+      empList.forEach(emp => {
+        globalEmpIdx++;
+        let statusBadgeColor = '#2f855a';
+        let statusBg = '#f0fff4';
+        if (emp.statusClass === 'zero') { statusBadgeColor = '#e53e3e'; statusBg = '#fff5f5'; }
+        else if (emp.statusClass === 'low') { statusBadgeColor = '#dd6b20'; statusBg = '#fffaf0'; }
+        else if (emp.statusClass === 'satisfactory') { statusBadgeColor = '#3182ce'; statusBg = '#ebf8ff'; }
+
+        const villageRows = emp.villages.map((v, vIdx) => `
+          <tr>
+            <td>${vIdx + 1}</td>
+            <td class="text-left"><b>${v.village}</b></td>
+            <td>${v.fn1Male}</td>
+            <td>${v.fn1Female}</td>
+            <td style="font-weight:600; background:#f8fafc;">${v.fn1Total}</td>
+            <td>${v.fn2Male}</td>
+            <td>${v.fn2Female}</td>
+            <td style="font-weight:600; background:#f8fafc;">${v.fn2Total}</td>
+            <td style="color:#2b6cb0; font-weight:600;">${v.male}</td>
+            <td style="color:#b83280; font-weight:600;">${v.female}</td>
+            <td style="font-weight:700; background:#edf2f7; color:#1a202c;">${v.total}</td>
+          </tr>
+        `).join('');
+
+        detailedHtml += `
+          <div style="margin-bottom:18px; border:1px solid #cbd5e0; border-radius:8px; overflow:hidden; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.05); page-break-inside:avoid;">
+            <div style="background:#f7fafc; border-bottom:1px solid #e2e8f0; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <span style="font-weight:700; font-size:14px; color:#1a202c;">${globalEmpIdx}. ${emp.employeeName}</span>
+                <span style="font-size:12px; color:#4a5568; margin-left:8px;">(${emp.designation})</span>
+                <span style="font-size:11.5px; background:#edf2f7; color:#4a5568; padding:2px 6px; border-radius:4px; margin-left:6px; font-family:monospace;">BS Code: ${emp.bsCode}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:12px; color:#4a5568;">उद्दिष्ट: <b>${emp.target}</b></span>
+                <span style="font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:12px; background:${statusBg}; color:${statusBadgeColor}; border:1px solid ${statusBadgeColor}40;">
+                  ${emp.statusBadge}
+                </span>
+              </div>
+            </div>
+
+            <div style="padding:10px 12px; overflow-x:auto;">
+              <table style="margin:0; width:100%; font-size:12.5px;">
+                <thead>
+                  <tr style="background:#f1f5f9;">
+                    <th rowspan="2" style="width:35px;">अ.क्र</th>
+                    <th rowspan="2" style="text-align:left;">गावाचे नाव</th>
+                    <th colspan="3" style="background:#e0f2fe; color:#0369a1;">पंधरवडा १</th>
+                    <th colspan="3" style="background:#fef3c7; color:#92400e;">पंधरवडा २</th>
+                    <th colspan="3" style="background:#dcfce7; color:#15803d;">मासिक एकूण संकलन</th>
+                  </tr>
+                  <tr style="background:#f8fafc; font-size:11.5px;">
+                    <th style="background:#f0f9ff;">👨 पु</th>
+                    <th style="background:#f0f9ff;">👩 स्त्री</th>
+                    <th style="background:#e0f2fe; font-weight:700;">एकूण</th>
+                    <th style="background:#fffbeb;">👨 पु</th>
+                    <th style="background:#fffbeb;">👩 स्त्री</th>
+                    <th style="background:#fef3c7; font-weight:700;">एकूण</th>
+                    <th style="background:#f0fdf4; color:#2b6cb0;">👨 पु</th>
+                    <th style="background:#f0fdf4; color:#b83280;">👩 स्त्री</th>
+                    <th style="background:#dcfce7; font-weight:700;">एकूण</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${villageRows}
+                  <tr style="background:#f1f5f9; font-weight:700; border-top:2px solid #cbd5e0;">
+                    <td colspan="2" class="text-right">कर्मचारी एकूण (Total):</td>
+                    <td>${emp.empFn1Male}</td>
+                    <td>${emp.empFn1Female}</td>
+                    <td style="background:#e0f2fe; color:#0369a1;">${emp.empFn1Total}</td>
+                    <td>${emp.empFn2Male}</td>
+                    <td>${emp.empFn2Female}</td>
+                    <td style="background:#fef3c7; color:#92400e;">${emp.empFn2Total}</td>
+                    <td style="color:#2b6cb0;">${emp.empMale}</td>
+                    <td style="color:#b83280;">${emp.empFemale}</td>
+                    <td style="background:#dcfce7; color:#166534; font-size:13.5px;">${emp.empTotal}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    const bodyHtml = `
+      <div class="header-box" style="border-bottom: 2px solid #00796b; padding-bottom: 12px; margin-bottom: 18px;">
+        <div style="font-size:12px; font-weight:600; color:#4a5568; letter-spacing:0.5px;">महाराष्ट्र शासन | सार्वजनिक आरोग्य विभाग | NVBDCP</div>
+        <h1 class="main-title" style="color:#00796b; margin:4px 0 2px 0;">प्राथमिक आरोग्य केंद्र भादा, ता. औसा, जि. लातूर</h1>
+        <h2 class="sub-title" style="color:#2d3748; font-size:15px; margin:0 0 6px 0;">
+          कर्मचारीनिहाय व गावनिहाय मासिक रक्त नमुना संकलन अहवाल (Employee & Village-wise Monthly BS Report)
+        </h2>
+        <div style="display:flex; justify-content:center; gap:20px; font-size:12.5px; color:#4a5568; flex-wrap:wrap; margin-top:6px; font-weight:600;">
+          <span>🗓️ माहे: <b style="color:#00796b;">${month}</b></span>
+          <span>📍 उपकेंद्र: <b>${data.filterUpkendra}</b></span>
+          <span>👥 संवर्ग: <b>${data.filterStaffType}</b></span>
+          <span>👤 कर्मचारी: <b>${data.filterEmployee}</b></span>
+          <span>📅 अहवाल दिनांक: <b>${reportDate}</b></span>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:20px;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:11.5px; color:#166534; font-weight:600;">एकूण कर्मचारी</div>
+          <div style="font-size:20px; font-weight:700; color:#15803d; margin-top:2px;">${summary.totalEmployees}</div>
+        </div>
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:11.5px; color:#1e40af; font-weight:600;">एकूण गावे</div>
+          <div style="font-size:20px; font-weight:700; color:#1d4ed8; margin-top:2px;">${summary.totalVillages}</div>
+        </div>
+        <div style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:11.5px; color:#3730a3; font-weight:600;">👨 पुरुष नमुने</div>
+          <div style="font-size:20px; font-weight:700; color:#4338ca; margin-top:2px;">${summary.totalMale}</div>
+        </div>
+        <div style="background:#fdf2f8; border:1px solid #fbcfe8; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:11.5px; color:#9d174d; font-weight:600;">👩 स्त्री नमुने</div>
+          <div style="font-size:20px; font-weight:700; color:#be185d; margin-top:2px;">${summary.totalFemale}</div>
+        </div>
+        <div style="background:#fefce8; border:1px solid #fef08a; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:11.5px; color:#854d0e; font-weight:600;">🧪 एकूण संकलन</div>
+          <div style="font-size:20px; font-weight:700; color:#a16207; margin-top:2px;">${summary.totalSmears}</div>
+        </div>
+        <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:8px; padding:10px; text-align:center;">
+          <div style="font-size:11.5px; color:#6b21a8; font-weight:600;">📈 उद्दिष्टपूर्ती %</div>
+          <div style="font-size:20px; font-weight:700; color:#7e22ce; margin-top:2px;">${summary.overallPct}%</div>
+        </div>
+      </div>
+
+      <!-- Performance Category Badges -->
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 14px; font-size:12px; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
+        <span style="font-weight:700; color:#4a5568;">कामगिरी वर्गवारी:</span>
+        <span style="color:#15803d; font-weight:600;">🟢 उत्कृष्ट (100%+): <b>${summary.excellentCount}</b></span>
+        <span style="color:#2563eb; font-weight:600;">🔵 समाधानकारक (75-99%): <b>${summary.satisfactoryCount}</b></span>
+        <span style="color:#d97706; font-weight:600;">🟠 कमी कामगिरी (<75%): <b>${summary.lowCount}</b></span>
+        <span style="color:#dc2626; font-weight:600;">🔴 निरंक (० नमुने): <b>${summary.zeroCount}</b></span>
+      </div>
+
+      <!-- Subcenter Summary Table -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:14.5px; color:#0f766e; margin-bottom:8px; border-bottom:1.5px solid #0f766e; padding-bottom:4px;">
+          📊 भाग १: उपकेंद्रनिहाय रक्त नमुना संकलन सारांश (Subcenter Summary)
+        </h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:35px;">अ.क्र</th>
+              <th style="text-align:left;">उपकेंद्र</th>
+              <th>कर्मचारी</th>
+              <th>पंधरवडा १</th>
+              <th>पंधरवडा २</th>
+              <th>👨 पुरुष</th>
+              <th>👩 स्त्री</th>
+              <th style="background:#e6fffa;">एकूण रक्त नमुने</th>
+              <th>मासिक उद्दिष्ट</th>
+              <th>पूर्तता %</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${subcenterRowsHtml}
+            <tr style="background:#f0fdf4; font-weight:800; border-top:2px solid #2d3748;">
+              <td colspan="2" class="text-right">एकूण (Grand Total):</td>
+              <td>${summary.totalEmployees}</td>
+              <td>${employees.reduce((s, e) => s + e.empFn1Total, 0)}</td>
+              <td>${employees.reduce((s, e) => s + e.empFn2Total, 0)}</td>
+              <td style="color:#2b6cb0;">${summary.totalMale}</td>
+              <td style="color:#b83280;">${summary.totalFemale}</td>
+              <td style="background:#bbf7d0; color:#166534; font-size:14px;">${summary.totalSmears}</td>
+              <td>${summary.totalTarget}</td>
+              <td style="font-size:14px; color:${summary.overallPct >= 75 ? '#15803d' : '#b91c1c'};">${summary.overallPct}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detailed Employee & Village Breakdown Section -->
+      <div>
+        <h3 style="font-size:14.5px; color:#0f766e; margin-bottom:12px; border-bottom:1.5px solid #0f766e; padding-bottom:4px;">
+          📋 भाग २: सविस्तर कर्मचारीनिहाय व गावनिहाय मासिक रक्त नमुना संकलन तक्ता (Village-wise Breakdown)
+        </h3>
+        ${detailedHtml}
+      </div>
+
+      <!-- Footer Signatures -->
+      <div style="margin-top:40px; display:flex; justify-content:space-between; text-align:center; font-size:13px; font-weight:600; color:#2d3748; page-break-inside:avoid;">
+        <div style="width:30%;">
+          <br><br>
+          ________________________<br>
+          <b>आरोग्य सेवक / सेविका</b><br>
+          प्रा.आ.केंद्र भादा
+        </div>
+        <div style="width:30%;">
+          <br><br>
+          ________________________<br>
+          <b>आरोग्य पर्यवेक्षक</b><br>
+          प्रा.आ.केंद्र भादा
+        </div>
+        <div style="width:30%;">
+          <br><br>
+          ________________________<br>
+          <b>वैद्यकीय अधिकारी</b><br>
+          प्रा.आ.केंद्र भादा, ता. औसा जि. लातूर
+        </div>
+      </div>
+    `;
+
+    const reportId = `emp_vil_monthly_${Date.now()}`;
+    const reportHtml = wrapReportPage(`कर्मचारी व गावनिहाय मासिक अहवाल - ${month}`, bodyHtml);
+    generatedReports.set(reportId, reportHtml);
+
+    return {
+      success: true,
+      message: `माहे ${month} चा कर्मचारी व गावनिहाय अहवाल यशस्वीरित्या तयार झाला. (${employees.length} कर्मचारी, ${summary.totalSmears} नमुने)`,
+      url: `/api/reports/${reportId}`,
+      data
+    };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+

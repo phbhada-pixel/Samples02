@@ -99,7 +99,7 @@ function doPost(e) {
         var ind = data.indicators || {};
         var monthName = data.monthName || ind.name;
         var mSheet = getOrCreateSheet(ss, "MonthMaster", [
-          "महिना (Month)", "नवीन बाह्यरुग्ण (OPD)", "प्रगतीपर बाह्यरुग्ण (Prog OPD)", "तापाचे रुग्ण (Fever)", "प्रगतीपर तापाचे (Prog Fever)", "रक्त नमुने (Smears)", "प्रगतीपर रक्त नमुने (Prog Smears)", "उपचारीत रुग्ण (Treated)", "प्रगतीपर उपचारीत (Prog Treated)", "क्लोरोक्वीन खर्च (CQ)", "प्रगतीपर क्लोरोक्वीन (Prog CQ)", "अद्ययावत दिनांक (Updated Date)"
+          "महिना (Month)", "नवीन बाह्यरुग्ण (OPD)", "प्रगतीपर बाह्यरुग्ण (Prog OPD)", "तापाचे रुग्ण (Fever)", "प्रगतीपर तापाचे (Prog Fever)", "रक्त नमुने (Smears)", "प्रगतीपर रक्त नमुने (Prog Smears)", "उपचारीत रुग्ण (Treated)", "प्रगतीपर उपचारीत (Prog Treated)", "क्लोरोक्वीन खर्च (CQ)", "प्रगतीपर क्लोरोक्वीन (Prog CQ)", "MPW गृहभेटी पंध १", "MPW गृहभेटी पंध २", "MPW गृहभेटी एकूण", "MPW प्रगतीपर", "ANM गृहभेटी पंध १", "ANM गृहभेटी पंध २", "ANM गृहभेटी एकूण", "ANM प्रगतीपर", "अद्ययावत दिनांक (Updated Date)"
         ]);
 
         var allRows = mSheet.getDataRange().getValues();
@@ -123,6 +123,14 @@ function doPost(e) {
           ind.progTreatedCases || 0,
           ind.chloroquineSpent || 0,
           ind.progChloroquineSpent || 0,
+          ind.mpwFn1 || 0,
+          ind.mpwFn2 || 0,
+          ind.mpwHomeVisits || 0,
+          ind.progMpwHomeVisits || 0,
+          ind.anmFn1 || 0,
+          ind.anmFn2 || 0,
+          ind.anmHomeVisits || 0,
+          ind.progAnmHomeVisits || 0,
           new Date()
         ];
 

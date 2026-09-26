@@ -2589,9 +2589,17 @@ export const monthMaster = MONTH_SPECS_2026.map((m, idx) => ({
   f2End: new Date(2026, idx, m.days, 23, 59, 59),
   newOpd: 0,
   progNewOpd: 0,
+  mpwFn1: 0,
+  mpwFn2: 0,
   mpwHomeVisits: 0,
+  progMpwFn1: 0,
+  progMpwFn2: 0,
   progMpwHomeVisits: 0,
+  anmFn1: 0,
+  anmFn2: 0,
   anmHomeVisits: 0,
+  progAnmFn1: 0,
+  progAnmFn2: 0,
   progAnmHomeVisits: 0,
   ashaHomeVisits: 0,
   progAshaHomeVisits: 0,
@@ -2614,36 +2622,38 @@ export function getOpdBsVillagewiseSummary(monthName) {
   const endDate = monthObj.f2End;
   const yearStart = monthMaster[0].f1Start;
 
-  function isOpdEntry(upkendra, employeeName, designation) {
+  function isOpdEntry(upkendra, employeeName, designation, bsCode) {
+    const code = String(bsCode || '').toUpperCase().trim();
     const up = String(upkendra || '').toLowerCase();
     const emp = String(employeeName || '').toLowerCase();
     const des = String(designation || '').toLowerCase();
     return (
-      up.includes('opd') || up.includes('दवाखाना') || up.includes('बाह्य') ||
-      emp.includes('opd') || emp.includes('वैद्यकीय') || emp.includes('mo') ||
-      des.includes('वैद्यकीय') || des.includes('mo') || des.includes('opd')
+      code === '54P' ||
+      code.startsWith('54P') ||
+      code.includes('54P') ||
+      up.includes('opd') || up.includes('दवाखाना') || up.includes('बाह्य') || up.includes('प्रा.आ.केंद्र') ||
+      emp.includes('opd') || emp.includes('ओपीडी') || emp.includes('वैद्यकीय') || emp.includes('mo') || emp.includes('बाह्य') ||
+      des.includes('वैद्यकीय') || des.includes('mo') || des.includes('opd') || des.includes('ओपीडी') || des.includes('बाह्य') || des.includes('प्रा.आ.केंद्र')
     );
   }
 
-  // Filter villageDetails for current month
+  // Filter villageDetails for current month and YTD
   const monthVillageRows = villageDetails.filter(v => {
     const d = new Date(v[2]);
     return d >= startDate && d <= endDate;
   });
 
-  // Filter villageDetails for YTD (from Jan 1 to end of current month)
   const ytdVillageRows = villageDetails.filter(v => {
     const d = new Date(v[2]);
     return d >= yearStart && d <= endDate;
   });
 
-  // Filter bsDataEntry for current month
+  // Filter bsDataEntry for current month and YTD
   const monthBsRows = bsDataEntry.filter(r => {
     const d = new Date(r[1]);
     return d >= startDate && d <= endDate;
   });
 
-  // Filter bsDataEntry for YTD
   const ytdBsRows = bsDataEntry.filter(r => {
     const d = new Date(r[1]);
     return d >= yearStart && d <= endDate;
@@ -2654,85 +2664,82 @@ export function getOpdBsVillagewiseSummary(monthName) {
   let monthlyFemale = 0;
   const monthlyVillagesMap = {};
 
-  monthVillageRows.forEach(v => {
-    // v: [uniqueId, employeeName, dateObj, villageName, sampleCount, maleCount, femaleCount, upkendra]
-    const upkendra = v[7];
-    const employeeName = v[1];
-    const empData = (typeof employeeMaster !== 'undefined' ? employeeMaster.find(e => e.employeeName === employeeName || e.name === employeeName) : null) ||
-                    (typeof masterData !== 'undefined' ? masterData.find(m => m.employeeName === employeeName) : null) || {};
-    const designation = empData.designation || '';
-
-    if (isOpdEntry(upkendra, employeeName, designation)) {
-      const count = parseInt(v[4]) || 0;
-      const male = parseInt(v[5]) || 0;
-      const female = parseInt(v[6]) || 0;
-      monthlyTotal += count;
-      monthlyMale += male;
-      monthlyFemale += female;
-
-      const vName = v[3] || 'भादा (OPD)';
-      if (!monthlyVillagesMap[vName]) {
-        monthlyVillagesMap[vName] = { villageName: vName, count: 0, male: 0, female: 0, upkendra: upkendra || 'भादा (OPD)' };
-      }
-      monthlyVillagesMap[vName].count += count;
-      monthlyVillagesMap[vName].male += male;
-      monthlyVillagesMap[vName].female += female;
-    }
-  });
-
-  // Check any bsDataEntry rows not already covered by villageDetails
+  // Primary calculation directly from bsDataEntry
   monthBsRows.forEach(r => {
-    const hasVil = monthVillageRows.some(v => v[0] === r[0]);
-    if (!hasVil && isOpdEntry(r[2], r[3], r[4])) {
-      const count = parseInt(r[9]) || 0;
-      const m = Math.floor(count * 0.52);
-      const f = count - m;
-      monthlyTotal += count;
-      monthlyMale += m;
-      monthlyFemale += f;
+    if (!isOpdEntry(r[2], r[3], r[4], r[5])) return;
+    const count = parseInt(r[9]) || 0;
+    if (count <= 0) return;
 
-      const vName = 'भादा (OPD)';
-      if (!monthlyVillagesMap[vName]) {
-        monthlyVillagesMap[vName] = { villageName: vName, count: 0, male: 0, female: 0, upkendra: r[2] || 'भादा (OPD)' };
+    // Check if there is a matching village detail row for gender distribution & village name
+    const matchVil = monthVillageRows.find(v => v[0] === r[0]);
+    let male = 0;
+    let female = 0;
+    let vName = 'Phc भादा';
+    let upk = r[2] || 'प्रा.आ.केंद्र';
+
+    if (matchVil) {
+      const vM = parseInt(matchVil[5]) || 0;
+      const vF = parseInt(matchVil[6]) || 0;
+      const vTot = parseInt(matchVil[4]) || (vM + vF);
+      if (vTot > 0) {
+        male = Math.round((vM / vTot) * count);
+        female = count - male;
+      } else {
+        male = Math.floor(count * 0.52);
+        female = count - male;
       }
-      monthlyVillagesMap[vName].count += count;
-      monthlyVillagesMap[vName].male += m;
-      monthlyVillagesMap[vName].female += f;
+      vName = matchVil[3] || vName;
+      upk = matchVil[7] || upk;
+    } else {
+      male = Math.floor(count * 0.52);
+      female = count - male;
     }
+
+    monthlyTotal += count;
+    monthlyMale += male;
+    monthlyFemale += female;
+
+    if (!monthlyVillagesMap[vName]) {
+      monthlyVillagesMap[vName] = { villageName: vName, count: 0, male: 0, female: 0, upkendra: upk };
+    }
+    monthlyVillagesMap[vName].count += count;
+    monthlyVillagesMap[vName].male += male;
+    monthlyVillagesMap[vName].female += female;
   });
 
-  // Calculate YTD totals from Jan 1 up to end of selected month
+  // Calculate YTD totals from Jan 1 up to end of selected month directly from bsDataEntry
   let ytdTotal = 0;
   let ytdMale = 0;
   let ytdFemale = 0;
 
-  ytdVillageRows.forEach(v => {
-    const upkendra = v[7];
-    const employeeName = v[1];
-    const empData = (typeof employeeMaster !== 'undefined' ? employeeMaster.find(e => e.employeeName === employeeName || e.name === employeeName) : null) ||
-                    (typeof masterData !== 'undefined' ? masterData.find(m => m.employeeName === employeeName) : null) || {};
-    const designation = empData.designation || '';
-
-    if (isOpdEntry(upkendra, employeeName, designation)) {
-      const count = parseInt(v[4]) || 0;
-      const male = parseInt(v[5]) || 0;
-      const female = parseInt(v[6]) || 0;
-      ytdTotal += count;
-      ytdMale += male;
-      ytdFemale += female;
-    }
-  });
-
   ytdBsRows.forEach(r => {
-    const hasVil = ytdVillageRows.some(v => v[0] === r[0]);
-    if (!hasVil && isOpdEntry(r[2], r[3], r[4])) {
-      const count = parseInt(r[9]) || 0;
-      const m = Math.floor(count * 0.52);
-      const f = count - m;
-      ytdTotal += count;
-      ytdMale += m;
-      ytdFemale += f;
+    if (!isOpdEntry(r[2], r[3], r[4], r[5])) return;
+    const count = parseInt(r[9]) || 0;
+    if (count <= 0) return;
+
+    const matchVil = ytdVillageRows.find(v => v[0] === r[0]);
+    let male = 0;
+    let female = 0;
+
+    if (matchVil) {
+      const vM = parseInt(matchVil[5]) || 0;
+      const vF = parseInt(matchVil[6]) || 0;
+      const vTot = parseInt(matchVil[4]) || (vM + vF);
+      if (vTot > 0) {
+        male = Math.round((vM / vTot) * count);
+        female = count - male;
+      } else {
+        male = Math.floor(count * 0.52);
+        female = count - male;
+      }
+    } else {
+      male = Math.floor(count * 0.52);
+      female = count - male;
     }
+
+    ytdTotal += count;
+    ytdMale += male;
+    ytdFemale += female;
   });
 
   const priorTotal = Math.max(0, ytdTotal - monthlyTotal);
@@ -2771,9 +2778,17 @@ export function clearAllTransactionData() {
   monthMaster.forEach(m => {
     m.newOpd = 0;
     m.progNewOpd = 0;
+    m.mpwFn1 = 0;
+    m.mpwFn2 = 0;
     m.mpwHomeVisits = 0;
+    m.progMpwFn1 = 0;
+    m.progMpwFn2 = 0;
     m.progMpwHomeVisits = 0;
+    m.anmFn1 = 0;
+    m.anmFn2 = 0;
     m.anmHomeVisits = 0;
+    m.progAnmFn1 = 0;
+    m.progAnmFn2 = 0;
     m.progAnmHomeVisits = 0;
     m.ashaHomeVisits = 0;
     m.progAshaHomeVisits = 0;
@@ -3612,17 +3627,20 @@ export function recalculateAllMonthProgressives() {
   let runOpd = 0;
   let runSmears = 0;
   let runCq = 0;
+  let runMpwFn1 = 0;
+  let runMpwFn2 = 0;
   let runMpw = 0;
+  let runAnmFn1 = 0;
+  let runAnmFn2 = 0;
   let runAnm = 0;
   let runAsha = 0;
 
   for (let i = 0; i < monthMaster.length; i++) {
     const m = monthMaster[i];
 
-    // Auto-populate Blood Smears from OPD section (बाह्यरुग्ण विभाग रक्त नमुने) for this month
-    // "monthly report data entry madhye ghetlele raktnamuna he tya mahinyat bahyrugn vibhag rakt namune auto save vhave"
+    // Auto-populate Blood Smears from OPD section (बाह्यरुग्ण विभाग रक्त नमुने) for this month from bsDataEntry
     const opdSummary = getOpdBsVillagewiseSummary(m.name);
-    if (opdSummary && opdSummary.monthlyTotal > 0 && (!m.bloodSmears || m.bloodSmears === 0 || !m.bloodSmearsManual)) {
+    if (opdSummary && opdSummary.monthlyTotal > 0) {
       m.bloodSmears = opdSummary.monthlyTotal;
     }
 
@@ -3634,8 +3652,25 @@ export function recalculateAllMonthProgressives() {
 
     const mOpd = parseInt(m.newOpd != null ? m.newOpd : (m.opd || 0)) || 0;
     const mCq = parseInt(m.chloroquineSpent) || 0;
-    const mMpw = parseInt(m.mpwHomeVisits) || 0;
-    const mAnm = parseInt(m.anmHomeVisits) || 0;
+
+    const mMpwFn1 = parseInt(m.mpwFn1) || 0;
+    const mMpwFn2 = parseInt(m.mpwFn2) || 0;
+    const mMpw = (m.mpwHomeVisits != null && m.mpwHomeVisits > 0 && mMpwFn1 + mMpwFn2 === 0)
+      ? parseInt(m.mpwHomeVisits)
+      : (mMpwFn1 + mMpwFn2);
+    m.mpwFn1 = mMpwFn1;
+    m.mpwFn2 = mMpwFn2;
+    m.mpwHomeVisits = mMpw;
+
+    const mAnmFn1 = parseInt(m.anmFn1) || 0;
+    const mAnmFn2 = parseInt(m.anmFn2) || 0;
+    const mAnm = (m.anmHomeVisits != null && m.anmHomeVisits > 0 && mAnmFn1 + mAnmFn2 === 0)
+      ? parseInt(m.anmHomeVisits)
+      : (mAnmFn1 + mAnmFn2);
+    m.anmFn1 = mAnmFn1;
+    m.anmFn2 = mAnmFn2;
+    m.anmHomeVisits = mAnm;
+
     const mAsha = parseInt(m.ashaHomeVisits) || 0;
 
     m.priorOpdSum = runOpd;
@@ -3643,14 +3678,22 @@ export function recalculateAllMonthProgressives() {
     m.priorSmearsSum = runSmears;
     m.priorTreatedSum = runSmears;
     m.priorCqSum = runCq;
+    m.priorMpwFn1Sum = runMpwFn1;
+    m.priorMpwFn2Sum = runMpwFn2;
     m.priorMpwSum = runMpw;
+    m.priorAnmFn1Sum = runAnmFn1;
+    m.priorAnmFn2Sum = runAnmFn2;
     m.priorAnmSum = runAnm;
     m.priorAshaSum = runAsha;
 
     runOpd += mOpd;
     runSmears += mSmears;
     runCq += mCq;
+    runMpwFn1 += mMpwFn1;
+    runMpwFn2 += mMpwFn2;
     runMpw += mMpw;
+    runAnmFn1 += mAnmFn1;
+    runAnmFn2 += mAnmFn2;
     runAnm += mAnm;
     runAsha += mAsha;
 
@@ -3659,7 +3702,11 @@ export function recalculateAllMonthProgressives() {
     m.progBloodSmears = runSmears;
     m.progTreatedCases = runSmears;
     m.progChloroquineSpent = runCq;
+    m.progMpwFn1 = runMpwFn1;
+    m.progMpwFn2 = runMpwFn2;
     m.progMpwHomeVisits = runMpw;
+    m.progAnmFn1 = runAnmFn1;
+    m.progAnmFn2 = runAnmFn2;
     m.progAnmHomeVisits = runAnm;
     m.progAshaHomeVisits = runAsha;
   }
@@ -3668,6 +3715,7 @@ export function recalculateAllMonthProgressives() {
 // Auto-load existing database from disk upon startup
 loadDbFromDisk();
 recalculateAllMonthProgressives();
+saveDbToDisk();
 
 
 
