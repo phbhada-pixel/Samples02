@@ -223,6 +223,7 @@ function doPost(e) {
         var bsSheet = ss.getSheetByName("BsDataEntry");
         var vilSheet = ss.getSheetByName("VillageDetails");
         var mSheet = ss.getSheetByName("MonthMaster");
+        var dgSheet = ss.getSheetByName("DengueChikungunya");
 
         var bsData = [];
         if (bsSheet && bsSheet.getLastRow() > 1) {
@@ -264,11 +265,81 @@ function doPost(e) {
           }
         }
 
+        var dgData = [];
+        if (dgSheet && dgSheet.getLastRow() > 1) {
+          var dgValues = dgSheet.getDataRange().getValues();
+          for (var g = 1; g < dgValues.length; g++) {
+            var gRow = dgValues[g];
+            if (!gRow[0] && !gRow[2]) continue;
+            dgData.push({
+              id: String(gRow[0]),
+              patientRegNo: String(gRow[1] || ""),
+              patientName: String(gRow[2] || ""),
+              village: String(gRow[3] || ""),
+              age: parseInt(gRow[4]) || 0,
+              sex: String(gRow[5] || ""),
+              mobile: String(gRow[6] || ""),
+              houseNo: String(gRow[7] || ""),
+              dateCollection: gRow[8] instanceof Date ? gRow[8].toISOString().slice(0, 10) : String(gRow[8] || ""),
+              dateOnset: gRow[9] instanceof Date ? gRow[9].toISOString().slice(0, 10) : String(gRow[9] || ""),
+              clinicalFever: parseInt(gRow[10]) || 1,
+              clinicalHeadache: parseInt(gRow[11]) || 0,
+              clinicalJointPain: parseInt(gRow[12]) || 0,
+              dengueResult: String(gRow[13] || "Pending"),
+              dengueReportRef: String(gRow[14] || ""),
+              dengueReportDate: String(gRow[15] || ""),
+              chikungunyaResult: String(gRow[16] || "Pending"),
+              chikungunyaReportRef: String(gRow[17] || ""),
+              chikungunyaReportDate: String(gRow[18] || ""),
+              testResult: String(gRow[13] || "Pending")
+            });
+          }
+        }
+
         result.bsData = bsData;
         result.villageDetails = vilData;
+        result.dengueData = dgData;
         result.bsCount = bsData.length;
         result.vilCount = vilData.length;
+        result.dengueCount = dgData.length;
         result.message = "Google Sheet मधून रिअल-टाईम डेटा यशस्वीरित्या प्राप्त झाला!";
+        break;
+      }
+
+      case 'saveDengueEntry':
+      case 'appendDengueEntries': {
+        var dEntries = data.dengueEntries || (data.entry ? [data.entry] : []);
+        if (dEntries.length > 0) {
+          var dgSheet = getOrCreateSheet(ss, "DengueChikungunya", [
+            "ID", "नोंदणी क्र.", "रुग्णाचे नाव", "गाव", "वय", "लिंग", "मोबाईल", "घर क्र.", "नमुना दिनांक", "लक्षणे सुरू", "ताप", "डोकेदुखी", "सांधेदुखी", "डेंगी निकाल", "डेंगी संदर्भ क्र.", "डेंगी अहवाल दिनांक", "चिकनगुनिया निकाल", "चिकनगुनिया संदर्भ क्र.", "चिकनगुनिया अहवाल दिनांक", "नोंद वेळ (Timestamp)"
+          ]);
+          var dgRows = dEntries.map(function(d) {
+            return [
+              d.id || "",
+              d.patientRegNo || "",
+              d.patientName || "",
+              d.village || "",
+              d.age || "",
+              d.sex || "",
+              d.mobile || "",
+              d.houseNo || "",
+              d.dateCollection || "",
+              d.dateOnset || "",
+              d.clinicalFever || 1,
+              d.clinicalHeadache || 0,
+              d.clinicalJointPain || 0,
+              d.dengueResult || "Pending",
+              d.dengueReportRef || "",
+              d.dengueReportDate || "",
+              d.chikungunyaResult || "Pending",
+              d.chikungunyaReportRef || "",
+              d.chikungunyaReportDate || "",
+              new Date()
+            ];
+          });
+          appendRowsInBatch(dgSheet, dgRows);
+        }
+        result.message = "Dengue & Chikungunya entries stored in Google Sheet!";
         break;
       }
 

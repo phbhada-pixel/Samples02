@@ -1227,6 +1227,72 @@
             return { result: { success: true, count: count, message: `एकूण ${count} नोंदी यशस्वीरित्या आयात झाल्या.` } };
           }
 
+          case 'fetchRealtimeFromGoogleSheet':
+          case 'fetchDataFromGoogleSheet': {
+            if (!clientGoogleSheetConfig.webhookUrl) {
+              return { result: { success: false, message: 'गुगल शीट वेबहुक URL सेट केलेले नाही.' } };
+            }
+            try {
+              const resp = await fetch(clientGoogleSheetConfig.webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'fetchAllData',
+                  spreadsheetId: clientGoogleSheetConfig.spreadsheetId
+                })
+              });
+              if (!resp.ok) throw new Error('HTTP ' + resp.status);
+              const data = await resp.json();
+              let bCount = 0;
+              let vCount = 0;
+              let dCount = 0;
+              if (Array.isArray(data.bsData) && data.bsData.length > 0) {
+                clientBsData.length = 0;
+                data.bsData.forEach(r => {
+                  clientBsData.push([r.id, r.date, r.upkendra, r.name, r.designation, r.bsCode, r.bundleNumber, r.pasun, r.paraynt, r.total]);
+                  bCount++;
+                });
+                setLocalStore('bsDataEntry', clientBsData);
+              }
+              if (Array.isArray(data.villageDetails) && data.villageDetails.length > 0) {
+                clientVillageDetails.length = 0;
+                data.villageDetails.forEach(v => {
+                  clientVillageDetails.push([v.id, v.employeeName, v.date, v.villageName, v.sampleCount, v.maleCount, v.femaleCount, v.upkendra]);
+                  vCount++;
+                });
+                setLocalStore('villageDetails', clientVillageDetails);
+              }
+              if (Array.isArray(data.dengueData) && data.dengueData.length > 0) {
+                clientDengueEntries.length = 0;
+                data.dengueData.forEach(d => {
+                  clientDengueEntries.push(d);
+                  dCount++;
+                });
+                setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+              }
+              clientGoogleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
+              clientGoogleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
+              setLocalStore('googleSheetConfig', clientGoogleSheetConfig);
+              const parts = [];
+              if (bCount > 0) parts.push(`${bCount} रक्त नमुने`);
+              if (vCount > 0) parts.push(`${vCount} गाव तपशील`);
+              if (dCount > 0) parts.push(`${dCount} डेंगी नोंदी`);
+              return {
+                result: {
+                  success: true,
+                  importedBs: bCount,
+                  importedVil: vCount,
+                  importedDengue: dCount,
+                  message: parts.length > 0
+                    ? `गुगल शीटमधून ${parts.join(', ')} यशस्वीरित्या थेट लोड झाल्या!`
+                    : `गुगल शीटशी यशस्वी संपर्क झाला! (सध्या सर्व डेटा अद्ययावत आहे).`
+                }
+              };
+            } catch (err) {
+              return { result: { success: false, message: 'गुगल शीटवरून डेटा फेच करताना त्रुटी: ' + err.message } };
+            }
+          }
+
           case 'clearDengueEntries': {
             clientDengueEntries.length = 0;
             setLocalStore('dengueChikungunyaEntries', []);
@@ -2784,7 +2850,10 @@
       <div class="header-badges">
         <span class="header-chip">🏛️ ६ उपकेंद्रे | ३७ गावे</span>
         <span class="header-chip">👥 ६५ कर्मचारी</span>
-        <span class="header-chip" style="background:#38a169;">🟢 Google Sheet सिंक</span>
+        <button type="button" class="header-chip" id="btnTopHeaderSyncSheet" onclick="triggerSeamlessGoogleSheetSync(true)" style="background:#1b4332; border:1.5px solid #52b788; color:#d8f3dc; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(0,0,0,0.18); transition:all 0.2s ease;">
+          <span id="topHeaderSyncSpinner" style="display:inline-block;">🔄</span>
+          <span id="topHeaderSyncLabel">गुगल शीट लोड करा (Live Sync)</span>
+        </button>
         <button type="button" class="header-chip" id="btnHeaderGithub" onclick="openGithubModal(event)" style="background:#24292e; color:#ffffff; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; transition:transform 0.15s ease;" title="GitHub रिपॉझिटरी व सोर्स कोड">
           <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor" style="display:inline-block;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
           <span>GitHub</span>
@@ -2817,6 +2886,49 @@
     <div class="main-content">
       
       <div id="dashboardTab" class="tab-pane active">
+        <!-- REAL-TIME GOOGLE SHEET SYNC BANNER -->
+        <div style="background:linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color:#ffffff; border-radius:14px; padding:18px 22px; margin-bottom:22px; box-shadow:0 8px 20px -4px rgba(6, 78, 59, 0.35); border:1px solid #10b981;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:52px; height:52px; background:rgba(255,255,255,0.18); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; border:1px solid rgba(255,255,255,0.3); flex-shrink:0;">
+                ⚡
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff; letter-spacing:0.2px;">
+                    गुगल शीट रिअल-टाईम सिंक व डेटा लोड केंद्र (Google Sheet Live Sync)
+                  </h3>
+                  <span id="dashSheetLiveBadge" style="background:#22c55e; color:#052e16; font-size:11px; font-weight:800; padding:2px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
+                    🟢 रिअल-टाईम सक्रिय
+                  </span>
+                </div>
+                <div style="font-size:13px; color:#d1fae5; margin-top:4px; font-weight:500;">
+                  कोणत्याही कटकटीशिवाय (No Hassle) थेट तुमच्या गुगल शीटमधून संपूर्ण डेटा ॲपमध्ये लोड करा आणि नवीन नोंदी रिअल-टाईम शीटमध्ये जतन ठेवा.
+                </div>
+                <div style="font-size:11.5px; color:#a7f3d0; margin-top:4px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <span>📄 <b>Sheet ID:</b> 1rYpDm...38EKM</span>
+                  <span>•</span>
+                  <span>🕒 <b>शेवटचे सिंक:</b> <span id="dashSyncLastTime" style="font-weight:700; color:#ffffff;">सक्रिय सज्ज</span></span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <button type="button" id="btnDashFetchSheet" class="sheet-btn" style="background:#ffffff; color:#065f46; font-weight:800; font-size:13.5px; padding:10px 20px; box-shadow:0 4px 10px rgba(0,0,0,0.15); border:none; display:flex; align-items:center; gap:8px;" onclick="triggerSeamlessGoogleSheetSync(true)">
+                <span id="dashSyncBtnIcon">📥</span>
+                <span id="dashSyncBtnText">गुगल शीटवरून थेट डेटा लोड करा</span>
+              </button>
+              <button type="button" class="sheet-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); font-weight:700; font-size:12.5px; padding:9px 14px;" onclick="syncDataToGoogleSheet(this)">
+                ⬆️ गुगल शीटमध्ये पाठवा (Push)
+              </button>
+              <a href="https://docs.google.com/spreadsheets/d/1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM/edit" target="_blank" class="sheet-btn" style="background:rgba(255,255,255,0.12); color:#ffffff; border:1px solid rgba(255,255,255,0.25); font-weight:700; font-size:12.5px; padding:9px 14px; text-decoration:none;">
+                🌐 शीट उघडा ↗️
+              </a>
+            </div>
+          </div>
+        </div>
+
         
         <!-- Dashboard Top Navigation Subtabs -->
         <div class="table-subtabs" style="margin-bottom:18px;">
@@ -4493,6 +4605,12 @@
             </div>
             
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="sheet-btn" style="background:#6b46c1; color:#fff; font-weight:700;" onclick="switchDengueSubtab('upload')">
+                📂 जुना डेटा आयात
+              </button>
+              <button type="button" class="sheet-btn" style="background:#276749; color:#fff; font-weight:700;" onclick="downloadDengueCsvTemplate()">
+                📥 नमुना CSV डाऊनलोड
+              </button>
               <button type="button" class="sheet-btn" style="background:#c05621; color:#fff; font-weight:700;" onclick="switchDengueSubtab('letter')">
                 📄 GMC लातूर पत्र
               </button>
@@ -4500,7 +4618,7 @@
                 📑 NIV केस शीट्स
               </button>
               <button type="button" class="sheet-btn" style="background:#24292e; color:#fff; font-weight:700;" onclick="exportDengueCsvClient()">
-                📥 Excel / CSV डाऊनलोड
+                📊 Excel / CSV डाऊनलोड
               </button>
             </div>
           </div>
@@ -5076,6 +5194,9 @@
                 </button>
                 <button type="button" class="sheet-btn" style="background:#6b46c1; color:#fff; font-weight:700;" onclick="switchDengueSubtab('upload')">
                   📂 जुना डेटा आयात करा (Import CSV)
+                </button>
+                <button type="button" class="sheet-btn" style="background:#1b4332; color:#fff; font-weight:700; border:1px solid #52b788;" onclick="triggerSeamlessGoogleSheetSync(true)">
+                  🔄 गुगल शीटवरून डेटा लोड करा
                 </button>
                 <button type="button" class="sheet-btn" style="background:#fff; color:#e53e3e; border:1.5px solid #feb2b2; font-weight:700;" onclick="promptClearDengueData()">
                   🗑️ डमी / चाचणी डेटा साफ करा
@@ -6984,6 +7105,12 @@
       document.getElementById('commonDate').valueAsDate = new Date();
       document.getElementById('dailyReportDate').valueAsDate = new Date(); 
       loadDashboard();
+      // Auto-fetch latest data from Google Sheet without user hassle
+      setTimeout(() => {
+        if (typeof triggerSeamlessGoogleSheetSync === 'function') {
+          triggerSeamlessGoogleSheetSync(false);
+        }
+      }, 1200);
       loadMonthList(() => {
         // Pre-load default month indicators
         loadSelectedMonthIndicators("सप्टेंबर २०२६");
@@ -7337,6 +7464,97 @@
         }
         alert('एरर: ' + err.message);
       }).syncAllToGoogleSheet();
+    }
+
+
+    // ================= SEAMLESS REAL-TIME GOOGLE SHEET SYNC =================
+    let mIsSyncingSheet = false;
+
+    function triggerSeamlessGoogleSheetSync(showNotification = true) {
+      if (mIsSyncingSheet) {
+        showToast('⏳ गुगल शीट सिंक आधीच चालू आहे, कृपया थांबा...');
+        return;
+      }
+      mIsSyncingSheet = true;
+
+      // Update UI spinners and buttons
+      const btnHeader = document.getElementById('btnTopHeaderSyncSheet');
+      const spinnerHeader = document.getElementById('topHeaderSyncSpinner');
+      const labelHeader = document.getElementById('topHeaderSyncLabel');
+      if (spinnerHeader) spinnerHeader.style.animation = 'spin 1s linear infinite';
+      if (labelHeader) labelHeader.textContent = 'गुगल शीट लोड होत आहे...';
+
+      const btnDash = document.getElementById('btnDashFetchSheet');
+      const iconDash = document.getElementById('dashSyncBtnIcon');
+      const textDash = document.getElementById('dashSyncBtnText');
+      if (btnDash) btnDash.disabled = true;
+      if (iconDash) iconDash.textContent = '⏳';
+      if (textDash) textDash.textContent = 'गुगल शीटवरून डेटा फेच होत आहे...';
+
+      const btnLive = document.getElementById('btnFetchLiveSheet');
+      if (btnLive) {
+        btnLive.disabled = true;
+        btnLive.textContent = 'फेच होत आहे... ⏳';
+      }
+
+      if (showNotification) {
+        showToast('⚡ गुगल शीटवरून थेट डेटा लोड होत आहे... कृपया थांबा...');
+      }
+
+      google.script.run
+        .withSuccessHandler(res => {
+          mIsSyncingSheet = false;
+          // Restore header
+          if (spinnerHeader) spinnerHeader.style.animation = 'none';
+          if (labelHeader) labelHeader.textContent = 'गुगल शीट लोड करा (Live Sync)';
+          // Restore dash button
+          if (btnDash) btnDash.disabled = false;
+          if (iconDash) iconDash.textContent = '📥';
+          if (textDash) textDash.textContent = 'गुगल शीटवरून थेट डेटा लोड करा';
+          // Restore table tab button
+          if (btnLive) {
+            btnLive.disabled = false;
+            btnLive.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
+          }
+
+          if (res && res.success) {
+            const timeStr = new Date().toLocaleString('mr-IN');
+            const lastTimeEl = document.getElementById('dashSyncLastTime');
+            if (lastTimeEl) lastTimeEl.textContent = timeStr;
+            const lblSync = document.getElementById('lblLastSyncTime');
+            if (lblSync) lblSync.textContent = timeStr;
+
+            if (showNotification) {
+              showToast('✅ ' + (res.message || 'गुगल शीटवरून सर्व डेटा यशस्वीरित्या लोड झाला!'), 'success');
+            }
+
+            // Refresh app state seamlessly
+            if (typeof loadDashboard === 'function') loadDashboard();
+            if (typeof loadTablesData === 'function') loadTablesData();
+            if (typeof loadDengueData === 'function') loadDengueData();
+            const curM = document.getElementById('selIndicatorMonth') ? document.getElementById('selIndicatorMonth').value : '';
+            if (curM && typeof loadMonthlyIndicators === 'function') loadMonthlyIndicators(curM);
+          } else {
+            const errMsg = (res && res.message) || 'गुगल शीटशी संपर्क होऊ शकला नाही.';
+            if (showNotification) showToast('⚠️ ' + errMsg, 'warning');
+          }
+        })
+        .withFailureHandler(err => {
+          mIsSyncingSheet = false;
+          if (spinnerHeader) spinnerHeader.style.animation = 'none';
+          if (labelHeader) labelHeader.textContent = 'गुगल शीट लोड करा (Live Sync)';
+          if (btnDash) btnDash.disabled = false;
+          if (iconDash) iconDash.textContent = '📥';
+          if (textDash) textDash.textContent = 'गुगल शीटवरून थेट डेटा लोड करा';
+          if (btnLive) {
+            btnLive.disabled = false;
+            btnLive.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
+          }
+          if (showNotification) {
+            showToast('⚠️ त्रुटी: ' + err.message, 'error');
+          }
+        })
+        .fetchRealtimeFromGoogleSheet();
     }
 
     function fetchRealtimeFromGoogleSheet() {
@@ -12447,7 +12665,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
 
     function switchDengueSubtab(subtab) {
       document.querySelectorAll('#dengueTab .subtab-btn').forEach(b => b.classList.remove('active'));
-      const panes = ['subpaneDengueEntry', 'subpaneDengueBatch', 'subpaneDengueRegister', 'subpaneDengueLetter', 'subpaneDengueSheets'];
+      const panes = ['subpaneDengueEntry', 'subpaneDengueBatch', 'subpaneDengueUpload', 'subpaneDengueRegister', 'subpaneDengueLetter', 'subpaneDengueSheets'];
       panes.forEach(p => {
         const el = document.getElementById(p);
         if (el) el.style.display = 'none';
@@ -12463,6 +12681,10 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         if (p) p.style.display = 'block';
         populateBatchDateSelector();
         loadBatchDatePatients();
+      } else if (subtab === 'upload') {
+        document.getElementById('dengueSubtabBtnUpload')?.classList.add('active');
+        const p = document.getElementById('subpaneDengueUpload');
+        if (p) p.style.display = 'block';
       } else if (subtab === 'register') {
         document.getElementById('dengueSubtabBtnRegister')?.classList.add('active');
         const p = document.getElementById('subpaneDengueRegister');

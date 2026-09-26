@@ -499,7 +499,7 @@ async function triggerGoogleSheetSync(payload) {
   try {
     console.log(`[GoogleSheetSync] Sending real-time sync action: ${payload.action}`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 35000);
     const response = await fetch(googleSheetConfig.webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -812,14 +812,18 @@ app.post('/api/rpc', async (req, res) => {
 
         try {
           console.log('[Server] Fetching live data from Google Sheet webhook...');
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 35000);
           const fetchRes = await fetch(googleSheetConfig.webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'fetchAllData',
               spreadsheetId: googleSheetConfig.spreadsheetId
-            })
+            }),
+            signal: controller.signal
           });
+          clearTimeout(timeout);
 
           if (!fetchRes.ok) {
             throw new Error(`HTTP Error ${fetchRes.status}: ${fetchRes.statusText}`);
@@ -828,6 +832,7 @@ app.post('/api/rpc', async (req, res) => {
           const fetchedData = await fetchRes.json();
           let importedBs = 0;
           let importedVil = 0;
+          let importedDengue = 0;
 
           if (Array.isArray(fetchedData.bsData) && fetchedData.bsData.length > 0) {
             bsDataEntry.length = 0;
@@ -865,21 +870,35 @@ app.post('/api/rpc', async (req, res) => {
             });
           }
 
-          if (importedBs > 0 || importedVil > 0) {
+          if (Array.isArray(fetchedData.dengueData) && fetchedData.dengueData.length > 0) {
+            dengueChikungunyaEntries.length = 0;
+            fetchedData.dengueData.forEach(d => {
+              dengueChikungunyaEntries.push(d);
+              importedDengue++;
+            });
+          }
+
+          if (importedBs > 0 || importedVil > 0 || importedDengue > 0) {
             saveDbToDisk();
           }
 
-          googleSheetConfig.lastSyncTime = new Date().toISOString();
-          googleSheetConfig.syncStatus = 'रिअल-टाईम सिंक सक्रिय (Active)';
+          googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
+          googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
+
+          const parts = [];
+          if (importedBs > 0) parts.push(`${importedBs} रक्त नमुने`);
+          if (importedVil > 0) parts.push(`${importedVil} गाव तपशील`);
+          if (importedDengue > 0) parts.push(`${importedDengue} डेंगी/चिकनगुनिया नोंदी`);
 
           result = {
             success: true,
             importedBs,
             importedVil,
+            importedDengue,
             totalRecords: bsDataEntry.length,
-            message: (importedBs > 0 || importedVil > 0)
-              ? `गुगल शीटमधून ${importedBs} रक्त नमुना नोंदी व ${importedVil} गाव नोंदी यशस्वीरित्या सिंक झाल्या!`
-              : `गुगल शीटशी संपर्क झाला, सध्या शीटमध्ये नवीन नोंदी उपलब्ध नाहीत.`
+            message: parts.length > 0
+              ? `गुगल शीटमधून ${parts.join(', ')} यशस्वीरित्या प्राप्त झाले!`
+              : `गुगल शीटशी यशस्वी संपर्क झाला! (सध्या सर्व डेटा अद्ययावत आहे).`
           };
         } catch (err) {
           console.error('[Server] Error fetching from Google Sheet:', err);
@@ -1253,18 +1272,36 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveDengueEntry': {
         const [entryData] = args;
         result = saveDengueEntry(entryData);
+        if (result.success && googleSheetConfig.webhookUrl) {
+          triggerGoogleSheetSync({
+            action: 'saveDengueEntry',
+            entry: result.record || entryData
+          });
+        }
         break;
       }
 
       case 'updateDengueLabReport': {
         const [reportData] = args;
         result = updateDengueLabReport(reportData);
+        if (result.success && googleSheetConfig.webhookUrl) {
+          triggerGoogleSheetSync({
+            action: 'saveDengueEntry',
+            entry: result.record
+          });
+        }
         break;
       }
 
       case 'saveDengueBatchLabReport': {
         const [batchData] = args;
         result = saveDengueBatchLabReport(batchData);
+        if (result.success && googleSheetConfig.webhookUrl) {
+          triggerGoogleSheetSync({
+            action: 'saveDengueBatch',
+            batchData
+          });
+        }
         break;
       }
 
