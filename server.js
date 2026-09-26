@@ -63,9 +63,13 @@ app.options('*', cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve Form.html at root and standard entry paths
-app.get(['/', '/Form.html', '/index.html'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'Form.html'));
+// Serve index.html at root and standard entry paths
+app.get(['/', '/index.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/Form.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // RPC health/info endpoint
