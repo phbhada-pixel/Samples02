@@ -490,6 +490,42 @@ app.get('/api/google-apps-script-code', (req, res) => {
   }
 });
 
+// Endpoint to download Dengue & Chikungunya sample CSV template
+app.get(['/api/download-dengue-template', '/dengue_chikungunya_sample_template.csv'], (req, res) => {
+  const templatePath = path.join(__dirname, 'dengue_chikungunya_sample_template.csv');
+  if (fs.existsSync(templatePath)) {
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="dengue_chikungunya_sample_template.csv"');
+    res.sendFile(templatePath);
+  } else {
+    res.status(404).send('Template file not found');
+  }
+});
+
+// Endpoint to download Dengue & Chikungunya sample Excel (.xls) template with 100% Marathi Unicode support
+app.get(['/api/download-dengue-excel-template', '/dengue_chikungunya_sample_template.xls'], (req, res) => {
+  const templatePath = path.join(__dirname, 'dengue_chikungunya_sample_template.xls');
+  if (fs.existsSync(templatePath)) {
+    res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="dengue_chikungunya_sample_template.xls"');
+    res.sendFile(templatePath);
+  } else {
+    res.status(404).send('Template file not found');
+  }
+});
+
+// Endpoint to download Dengue & Chikungunya English header CSV template
+app.get(['/api/download-dengue-english-template', '/dengue_chikungunya_sample_template_english.csv'], (req, res) => {
+  const templatePath = path.join(__dirname, 'dengue_chikungunya_sample_template_english.csv');
+  if (fs.existsSync(templatePath)) {
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="dengue_chikungunya_sample_template_english.csv"');
+    res.sendFile(templatePath);
+  } else {
+    res.status(404).send('Template file not found');
+  }
+});
+
 // Primary sync helper to send rows directly to Google Sheet Webhook
 async function triggerGoogleSheetSync(payload) {
   if (!googleSheetConfig.webhookUrl) {
