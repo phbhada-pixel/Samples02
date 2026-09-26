@@ -44,7 +44,8 @@ import {
   deleteDengueEntry,
   getDengueEntries,
   updateDengueLabReport,
-  saveDengueBatchLabReport
+  saveDengueBatchLabReport,
+  importDengueOldDataCsv
 } from './data/store.js';
 
 import {
@@ -1263,6 +1264,12 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveDengueBatchLabReport': {
         const [batchData] = args;
         result = saveDengueBatchLabReport(batchData);
+        break;
+      }
+
+      case 'importDengueOldDataCsv': {
+        const [csvText, replace] = args;
+        result = importDengueOldDataCsv(csvText, replace);
         break;
       }
 

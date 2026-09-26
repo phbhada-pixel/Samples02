@@ -3025,6 +3025,197 @@ export function saveDengueBatchLabReport(batchData) {
   }
 }
 
+export function importDengueOldDataCsv(csvText, replace = false) {
+  try {
+    if (!csvText || typeof csvText !== 'string' || !csvText.trim()) {
+      return { success: false, message: "CSV फाईल रिकामा आहे (CSV content is empty)." };
+    }
+
+    const lines = csvText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
+    if (lines.length < 2) {
+      return { success: false, message: "किमान एक डेटा ओळ (Header + Data row) आवश्यक आहे." };
+    }
+
+    function parseLine(line) {
+      let inQuotes = false;
+      let token = "";
+      const cols = [];
+      for (let j = 0; j < line.length; j++) {
+        const c = line[j];
+        if (c === '"') inQuotes = !inQuotes;
+        else if (c === ',' && !inQuotes) {
+          cols.push(token.trim());
+          token = "";
+        } else {
+          token += c;
+        }
+      }
+      cols.push(token.trim());
+      return cols;
+    }
+
+    function cleanVal(v) {
+      if (!v) return "";
+      return String(v).replace(/^"|"$/g, '').trim();
+    }
+
+    function normalizeDate(raw) {
+      if (!raw) return "";
+      const s = String(raw).trim().replace(/^"|"$/g, '');
+      const dmY = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+      if (dmY) {
+        const day = dmY[1].padStart(2, '0');
+        const month = dmY[2].padStart(2, '0');
+        const year = dmY[3];
+        return `${year}-${month}-${day}`;
+      }
+      const yMd = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+      if (yMd) {
+        const year = yMd[1];
+        const month = yMd[2].padStart(2, '0');
+        const day = yMd[3].padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      return s;
+    }
+
+    function normalizeSex(raw) {
+      const s = String(raw || '').trim().toUpperCase();
+      if (s === 'M' || s.includes('MALE') || s.includes('पुरुष')) return 'MALE';
+      if (s === 'F' || s.includes('FEMALE') || s.includes('स्त्री')) return 'FEMALE';
+      return s || 'FEMALE';
+    }
+
+    const header = parseLine(lines[0]).map(c => cleanVal(c).toLowerCase());
+
+    const idIdx = header.findIndex(c => c.includes('आयडी') || c === 'id');
+    const nameIdx = header.findIndex(c => c.includes('नाव') || c.includes('patient name') || c.includes('patient') || c === 'name');
+    const mobileIdx = header.findIndex(c => c.includes('मोबाईल') || c.includes('mobile') || c.includes('phone') || c.includes('contact'));
+    const houseIdx = header.findIndex(c => c.includes('घर') || c.includes('house'));
+    const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village'));
+    const talukaIdx = header.findIndex(c => c.includes('तालुका') || c.includes('taluka'));
+    const distIdx = header.findIndex(c => c.includes('जिल्हा') || c.includes('district'));
+    const hospIdx = header.findIndex(c => c.includes('रुग्णालय') || c.includes('hospital'));
+    const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd'));
+    const wardIdx = header.findIndex(c => c.includes('वार्ड') || c.includes('ward'));
+    const bedIdx = header.findIndex(c => c.includes('बेड') || c.includes('bed'));
+    const ageIdx = header.findIndex(c => c.includes('वय') || c.includes('age'));
+    const sexIdx = header.findIndex(c => c.includes('लिंग') || c.includes('sex') || c.includes('gender'));
+    const onsetIdx = header.findIndex(c => c.includes('लक्षणे सुरू') || c.includes('onset'));
+    const natureIdx = header.findIndex(c => c.includes('नमुना प्रकार') || c.includes('nature'));
+    const collDateIdx = header.findIndex(c => c.includes('नमुना घेतल्याचा') || c.includes('नमुना दिनांक') || c.includes('collection') || c.includes('date'));
+    const feverIdx = header.findIndex(c => c.includes('ताप') || c.includes('fever'));
+    const headacheIdx = header.findIndex(c => c.includes('डोके') || c.includes('headache'));
+    const bodyacheIdx = header.findIndex(c => c.includes('अंग') || c.includes('bodyache'));
+    const jointIdx = header.findIndex(c => c.includes('सांधे') || c.includes('joint'));
+    const retroIdx = header.findIndex(c => c.includes('डोळे') || c.includes('retro'));
+    const rashIdx = header.findIndex(c => c.includes('पुरळ') || c.includes('rash'));
+    const haemIdx = header.findIndex(c => c.includes('रक्तस्राव') || c.includes('haem'));
+    const docNameIdx = header.findIndex(c => c.includes('डॉक्टर नाव') || c.includes('doctor name'));
+    const docMobIdx = header.findIndex(c => c.includes('डॉक्टर मोबाईल') || c.includes('doctor mobile'));
+    const dResIdx = header.findIndex(c => c.includes('डेंगी निष्कर्ष') || c.includes('डेंगी निकाल') || c.includes('dengue result'));
+    const dTestIdx = header.findIndex(c => c.includes('डेंगी चाचणी') || c.includes('dengue test'));
+    const dRefIdx = header.findIndex(c => c.includes('डेंगी लॅब संदर्भ') || c.includes('डेंगी संदर्भ') || c.includes('dengue report ref'));
+    const dDateIdx = header.findIndex(c => c.includes('डेंगी अहवाल दिनांक') || c.includes('dengue report date'));
+    const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया निष्कर्ष') || c.includes('चिकनगुनिया निकाल') || c.includes('chikungunya result'));
+    const cTestIdx = header.findIndex(c => c.includes('चिकनगुनिया चाचणी') || c.includes('chikungunya test'));
+    const cRefIdx = header.findIndex(c => c.includes('चिकनगुनिया लॅब संदर्भ') || c.includes('चिकनगुनिया संदर्भ') || c.includes('chikungunya report ref'));
+    const cDateIdx = header.findIndex(c => c.includes('चिकनगुनिया अहवाल दिनांक') || c.includes('chikungunya report date'));
+    const testResIdx = header.findIndex(c => c.includes('एकूण स्थिती') || c.includes('चाचणी अहवाल') || c.includes('overall status') || c.includes('test result'));
+
+    if (nameIdx === -1) {
+      return { success: false, message: "CSV फाईलमध्ये 'रुग्णाचे नाव' (Patient Name) कॉलम आढळला नाही." };
+    }
+
+    if (replace) {
+      dengueChikungunyaEntries.length = 0;
+    }
+
+    let addedCount = 0;
+    const nowIso = new Date().toISOString();
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseLine(lines[i]);
+      const rawName = nameIdx !== -1 && cols[nameIdx] ? cleanVal(cols[nameIdx]) : "";
+      if (!rawName) continue;
+
+      const pName = rawName.toUpperCase();
+      const rawCollDate = collDateIdx !== -1 && cols[collDateIdx] ? cleanVal(cols[collDateIdx]) : "";
+      const dateCollection = normalizeDate(rawCollDate) || nowIso.slice(0, 10);
+      const regNo = regIdx !== -1 && cols[regIdx] ? cleanVal(cols[regIdx]) : "-";
+
+      const existingId = idIdx !== -1 && cols[idIdx] ? cleanVal(cols[idIdx]) : "";
+      const id = existingId || `DENGUE_${dateCollection.replace(/-/g, "")}_${regNo !== '-' ? regNo : Math.floor(1000 + Math.random() * 9000)}`;
+
+      const dRes = dResIdx !== -1 && cols[dResIdx] ? cleanVal(cols[dResIdx]) : (testResIdx !== -1 && cols[testResIdx] ? cleanVal(cols[testResIdx]) : "Pending");
+      const cRes = cResIdx !== -1 && cols[cResIdx] ? cleanVal(cols[cResIdx]) : "Pending";
+
+      const rec = {
+        id,
+        patientName: pName,
+        mobile: mobileIdx !== -1 && cols[mobileIdx] ? cleanVal(cols[mobileIdx]) : "-",
+        houseNo: houseIdx !== -1 && cols[houseIdx] ? cleanVal(cols[houseIdx]) : "-",
+        village: villageIdx !== -1 && cols[villageIdx] ? cleanVal(cols[villageIdx]) : "भादा",
+        taluka: talukaIdx !== -1 && cols[talukaIdx] ? cleanVal(cols[talukaIdx]) : "AUSA",
+        district: distIdx !== -1 && cols[distIdx] ? cleanVal(cols[distIdx]) : "LATUR",
+        hospitalAddress: hospIdx !== -1 && cols[hospIdx] ? cleanVal(cols[hospIdx]) : "प्राथमिक आरोग्य केंद्र भादा",
+        patientRegNo: regNo,
+        wardNo: wardIdx !== -1 && cols[wardIdx] ? cleanVal(cols[wardIdx]) : "--",
+        bedNo: bedIdx !== -1 && cols[bedIdx] ? cleanVal(cols[bedIdx]) : "--",
+        age: ageIdx !== -1 && cols[ageIdx] ? (parseInt(cleanVal(cols[ageIdx])) || 0) : 0,
+        sex: sexIdx !== -1 && cols[sexIdx] ? normalizeSex(cols[sexIdx]) : "FEMALE",
+        dateOnset: onsetIdx !== -1 && cols[onsetIdx] ? normalizeDate(cols[onsetIdx]) : dateCollection,
+        sampleNature: natureIdx !== -1 && cols[natureIdx] ? cleanVal(cols[natureIdx]) : "Serum",
+        dateCollection,
+        clinicalFever: feverIdx !== -1 && cols[feverIdx] ? (parseInt(cleanVal(cols[feverIdx])) || 1) : 1,
+        clinicalHeadache: headacheIdx !== -1 && cols[headacheIdx] ? (parseInt(cleanVal(cols[headacheIdx])) || 0) : 0,
+        clinicalBodyache: bodyacheIdx !== -1 && cols[bodyacheIdx] ? (parseInt(cleanVal(cols[bodyacheIdx])) || 0) : 0,
+        clinicalJointPain: jointIdx !== -1 && cols[jointIdx] ? (parseInt(cleanVal(cols[jointIdx])) || 0) : 0,
+        clinicalRetroOrbitalPain: retroIdx !== -1 && cols[retroIdx] ? (parseInt(cleanVal(cols[retroIdx])) || 0) : 0,
+        clinicalRash: rashIdx !== -1 && cols[rashIdx] ? (parseInt(cleanVal(cols[rashIdx])) || 0) : 0,
+        haemorrhagic: haemIdx !== -1 && cols[haemIdx] ? cleanVal(cols[haemIdx]) : "No",
+        doctorName: docNameIdx !== -1 && cols[docNameIdx] ? cleanVal(cols[docNameIdx]) : "Dr. Patil S.S.",
+        doctorMobile: docMobIdx !== -1 && cols[docMobIdx] ? cleanVal(cols[docMobIdx]) : "9689686901",
+        outwardNo: "",
+        dengueResult: dRes || "Pending",
+        dengueTestType: dTestIdx !== -1 && cols[dTestIdx] ? cleanVal(cols[dTestIdx]) : "NS1 Ag & IgM ELISA",
+        dengueReportRef: dRefIdx !== -1 && cols[dRefIdx] ? cleanVal(cols[dRefIdx]) : "",
+        dengueReportDate: dDateIdx !== -1 && cols[dDateIdx] ? normalizeDate(cols[dDateIdx]) : "",
+        dengueReportFile: "",
+        dengueReportFileName: "",
+        dengueRemarks: "",
+        chikungunyaResult: cRes || "Pending",
+        chikungunyaTestType: cTestIdx !== -1 && cols[cTestIdx] ? cleanVal(cols[cTestIdx]) : "Chikungunya IgM ELISA",
+        chikungunyaReportRef: cRefIdx !== -1 && cols[cRefIdx] ? cleanVal(cols[cRefIdx]) : "",
+        chikungunyaReportDate: cDateIdx !== -1 && cols[cDateIdx] ? normalizeDate(cols[cDateIdx]) : "",
+        chikungunyaReportFile: "",
+        chikungunyaReportFileName: "",
+        chikungunyaRemarks: "",
+        testResult: (testResIdx !== -1 && cols[testResIdx]) ? cleanVal(cols[testResIdx]) : (dRes === 'Positive' || cRes === 'Positive' ? `Positive (${dRes === 'Positive' ? 'Dengue' : ''}${cRes === 'Positive' ? ' Chik' : ''})` : dRes),
+        createdAt: nowIso
+      };
+
+      const exIdx = dengueChikungunyaEntries.findIndex(e => e.id === id || (e.patientName === pName && e.dateCollection === dateCollection));
+      if (exIdx !== -1) {
+        dengueChikungunyaEntries[exIdx] = { ...dengueChikungunyaEntries[exIdx], ...rec, id: dengueChikungunyaEntries[exIdx].id };
+      } else {
+        dengueChikungunyaEntries.push(rec);
+      }
+      addedCount++;
+    }
+
+    saveDbToDisk();
+    return {
+      success: true,
+      count: addedCount,
+      message: `एकूण ${addedCount} डेंगी व चिकनगुनिया जुन्या रुग्णांच्या नोंदी यशस्वीरित्या आयात व जतन करण्यात आल्या!`
+    };
+  } catch (err) {
+    console.error("[Store] Error importing dengue old data:", err);
+    return { success: false, message: "डेटा आयात करताना त्रुटी: " + err.message };
+  }
+}
+
 export function deleteDengueEntry(id) {
   try {
     const idx = dengueChikungunyaEntries.findIndex(e => e.id === id);
