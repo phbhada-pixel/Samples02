@@ -24,6 +24,61 @@
   <script src="defaultData.js"></script>
   <!-- Google Apps Script Client Bridge with Intelligent Backend / GitHub Pages Hybrid Execution -->
   <script>
+
+    // ================= GLOBAL TOAST NOTIFICATION SYSTEM =================
+    window.showToast = function(msg, type) {
+      try {
+        if (typeof document === 'undefined' || !document.body) {
+          console.log('[Toast]', msg);
+          return;
+        }
+        let container = document.getElementById('globalToastContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'globalToastContainer';
+          container.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:999999; display:flex; flex-direction:column; gap:10px; max-width:420px; pointer-events:none; font-family:inherit;';
+          document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.style.cssText = 'pointer-events:auto; background:#1e293b; color:#fff; padding:12px 18px; border-radius:10px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.3); font-size:13.5px; font-weight:600; display:flex; align-items:center; justify-content:space-between; gap:12px; border-left:4px solid #3182ce; transition:all 0.3s ease;';
+
+        const s = String(msg || '');
+        if (s.includes('✅') || type === 'success') {
+          toast.style.borderLeftColor = '#38a169';
+          toast.style.background = '#064e3b';
+        } else if (s.includes('⚠️') || type === 'warning') {
+          toast.style.borderLeftColor = '#dd6b20';
+          toast.style.background = '#78350f';
+        } else if (s.includes('❌') || type === 'error') {
+          toast.style.borderLeftColor = '#e53e3e';
+          toast.style.background = '#7f1d1d';
+        }
+
+        toast.innerHTML = `<span style="line-height:1.4;">${s}</span><button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:rgba(255,255,255,0.7); cursor:pointer; font-size:16px; font-weight:700; padding:0 4px; line-height:1;">✕</button>`;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          if (toast && toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => { if (toast && toast.parentElement) toast.remove(); }, 350);
+          }
+        }, 4000);
+      } catch (e) {
+        console.log('[Toast Error]', e, msg);
+      }
+    };
+
+    function showToast(msg, type) {
+      if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+        window.showToast(msg, type);
+      } else {
+        console.log('[Toast]', msg);
+      }
+    }
+
     window.google = window.google || {};
     window.google.script = window.google.script || {};
     (function() {
@@ -13255,6 +13310,10 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
     }
 
 
+    if (typeof showToast === 'undefined') {
+      window.showToast = window.showToast || function(msg) { alert(msg); };
+      var showToast = function(msg, type) { window.showToast(msg, type); };
+    }
     // ================= DENGUE & CHIKUNGUNYA LAB REPORT MODAL LOGIC =================
     let mModalDengueFileBase64 = null;
     let mModalDengueFileName = null;
