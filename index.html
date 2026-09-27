@@ -2041,6 +2041,19 @@
       border-color: var(--border-subtle);
     }
 
+    .dg-kpi-clickable {
+      cursor: pointer !important;
+      user-select: none;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .dg-kpi-clickable:hover {
+      transform: translateY(-3px) scale(1.015) !important;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12) !important;
+    }
+    .dg-kpi-clickable:active {
+      transform: translateY(0) scale(0.99) !important;
+    }
+
     .stat-card h4 {
       font-size: 12.5px;
       font-weight: 600;
@@ -4827,36 +4840,59 @@
           </div>
         </div>
 
-        <!-- Dengue & Chikungunya Live KPI Summary Cards -->
+        <!-- Dengue & Chikungunya Live KPI Summary Cards (Clickable to Filter & View Patients) -->
         <div id="dengueKpiStrip" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:18px;">
-          <div class="stat-card" style="border-top:3px solid #3182ce; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <div style="font-size:11.5px; font-weight:700; color:#718096; text-transform:uppercase;">🧪 एकूण सिरम नमुने</div>
-            <div style="font-size:22px; font-weight:800; color:#2b6cb0; margin-top:3px;" id="dgKpiTotalSamples">0</div>
-            <div style="font-size:10.5px; color:#a0aec0; margin-top:2px;">पाठवलेले सर्व नमुने</div>
+          <div class="stat-card dg-kpi-clickable" id="dgCard_all" onclick="filterDengueByKpi('all')" style="border-top:3.5px solid #3182ce; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); cursor:pointer; transition:all 0.18s ease;" title="सर्व सिरम नमुन्यांची यादी पाहण्यासाठी क्लिक करा">
+            <div style="font-size:11.5px; font-weight:700; color:#718096; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+              <span>🧪 एकूण सिरम नमुने</span>
+              <span style="font-size:10px; background:#ebf8ff; color:#2b6cb0; padding:1px 6px; border-radius:4px;">पहा ↗</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#2b6cb0; margin-top:3px;" id="dgKpiTotalSamples">0</div>
+            <div style="font-size:10.5px; color:#718096; margin-top:2px;">पाठवलेले सर्व नमुने</div>
           </div>
-          <div class="stat-card" style="border-top:3px solid #e53e3e; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <div style="font-size:11.5px; font-weight:700; color:#e53e3e; text-transform:uppercase;">🔴 डेंगी पॉझिटिव्ह</div>
-            <div style="font-size:22px; font-weight:800; color:#c53030; margin-top:3px;" id="dgKpiDenguePos">0</div>
+
+          <div class="stat-card dg-kpi-clickable" id="dgCard_dengue_pos" onclick="filterDengueByKpi('dengue_pos')" style="border-top:3.5px solid #e53e3e; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); cursor:pointer; transition:all 0.18s ease;" title="डेंगी पॉझिटिव्ह रुग्णांची यादी पाहण्यासाठी क्लिक करा">
+            <div style="font-size:11.5px; font-weight:700; color:#e53e3e; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+              <span>🔴 डेंगी पॉझिटिव्ह</span>
+              <span style="font-size:10px; background:#fff5f5; color:#c53030; padding:1px 6px; border-radius:4px; font-weight:800;">पहा ↗</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#c53030; margin-top:3px;" id="dgKpiDenguePos">0</div>
             <div style="font-size:10.5px; color:#e53e3e; margin-top:2px;">NS1 / IgM ELISA पॉझिटिव्ह</div>
           </div>
-          <div class="stat-card" style="border-top:3px solid #dd6b20; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <div style="font-size:11.5px; font-weight:700; color:#dd6b20; text-transform:uppercase;">🦠 चिकनगुनिया पॉझिटिव्ह</div>
-            <div style="font-size:22px; font-weight:800; color:#c05621; margin-top:3px;" id="dgKpiChikPos">0</div>
+
+          <div class="stat-card dg-kpi-clickable" id="dgCard_chik_pos" onclick="filterDengueByKpi('chik_pos')" style="border-top:3.5px solid #dd6b20; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); cursor:pointer; transition:all 0.18s ease;" title="चिकनगुनिया पॉझिटिव्ह रुग्णांची यादी पाहण्यासाठी क्लिक करा">
+            <div style="font-size:11.5px; font-weight:700; color:#dd6b20; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+              <span>🦠 चिकनगुनिया पॉझिटिव्ह</span>
+              <span style="font-size:10px; background:#fffaf0; color:#c05621; padding:1px 6px; border-radius:4px; font-weight:800;">पहा ↗</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#c05621; margin-top:3px;" id="dgKpiChikPos">0</div>
             <div style="font-size:10.5px; color:#dd6b20; margin-top:2px;">Chikungunya IgM पॉझिटिव्ह</div>
           </div>
-          <div class="stat-card" style="border-top:3px solid #c05621; padding:12px 14px; background:#fffaf0; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #fbd38d; border-top:3px solid #c05621;">
-            <div style="font-size:11.5px; font-weight:700; color:#7b341e; text-transform:uppercase;">🟠 संशयित / इक्विव्होकल</div>
-            <div style="font-size:22px; font-weight:800; color:#c05621; margin-top:3px;" id="dgKpiEquivocal">0</div>
+
+          <div class="stat-card dg-kpi-clickable" id="dgCard_equivocal" onclick="filterDengueByKpi('equivocal')" style="border-top:3.5px solid #c05621; padding:12px 14px; background:#fffaf0; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #fbd38d; border-top:3.5px solid #c05621; cursor:pointer; transition:all 0.18s ease;" title="संशयित / फेरचाचणी आवश्यक रुग्णांची यादी पाहण्यासाठी क्लिक करा">
+            <div style="font-size:11.5px; font-weight:700; color:#7b341e; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+              <span>🟠 संशयित / इक्विव्होकल</span>
+              <span style="font-size:10px; background:#feebc8; color:#7b341e; padding:1px 6px; border-radius:4px; font-weight:800;">पहा ↗</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#c05621; margin-top:3px;" id="dgKpiEquivocal">0</div>
             <div style="font-size:10.5px; color:#7b341e; margin-top:2px;">अहवाल प्राप्त (फेरचाचणी आवश्यक)</div>
           </div>
-          <div class="stat-card" style="border-top:3px solid #b7791f; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <div style="font-size:11.5px; font-weight:700; color:#b7791f; text-transform:uppercase;">⏳ अहवाल प्रलंबित</div>
-            <div style="font-size:22px; font-weight:800; color:#b7791f; margin-top:3px;" id="dgKpiPending">0</div>
+
+          <div class="stat-card dg-kpi-clickable" id="dgCard_pending" onclick="filterDengueByKpi('pending')" style="border-top:3.5px solid #b7791f; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); cursor:pointer; transition:all 0.18s ease;" title="अहवाल प्रलंबित असलेल्या रुग्णांची यादी पाहण्यासाठी क्लिक करा">
+            <div style="font-size:11.5px; font-weight:700; color:#b7791f; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+              <span>⏳ अहवाल प्रलंबित</span>
+              <span style="font-size:10px; background:#fefcbf; color:#744210; padding:1px 6px; border-radius:4px; font-weight:800;">पहा ↗</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#b7791f; margin-top:3px;" id="dgKpiPending">0</div>
             <div style="font-size:10.5px; color:#b7791f; margin-top:2px;">लॅब अहवाल येणे बाकी (Awaited)</div>
           </div>
-          <div class="stat-card" style="border-top:3px solid #38a169; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <div style="font-size:11.5px; font-weight:700; color:#38a169; text-transform:uppercase;">🟢 चाचणी दोषमुक्त</div>
-            <div style="font-size:22px; font-weight:800; color:#276749; margin-top:3px;" id="dgKpiNegative">0</div>
+
+          <div class="stat-card dg-kpi-clickable" id="dgCard_negative" onclick="filterDengueByKpi('negative')" style="border-top:3.5px solid #38a169; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); cursor:pointer; transition:all 0.18s ease;" title="निगेटिव्ह आलेल्या रुग्णांची यादी पाहण्यासाठी क्लिक करा">
+            <div style="font-size:11.5px; font-weight:700; color:#38a169; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+              <span>🟢 चाचणी दोषमुक्त</span>
+              <span style="font-size:10px; background:#f0fff4; color:#22543d; padding:1px 6px; border-radius:4px; font-weight:800;">पहा ↗</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#276749; margin-top:3px;" id="dgKpiNegative">0</div>
             <div style="font-size:10.5px; color:#38a169; margin-top:2px;">निगेटिव्ह आलेले नमुने</div>
           </div>
         </div>
@@ -5507,6 +5543,14 @@
               </div>
             </div>
 
+            <!-- Active KPI Filter Banner -->
+            <div id="dgActiveKpiBanner" style="display:none; background:#ebf8ff; border:1.5px solid #bee3f8; color:#2b6cb0; padding:10px 16px; border-radius:8px; margin-bottom:14px; font-weight:700; font-size:13px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <span id="dgActiveKpiBannerText" style="display:flex; align-items:center; gap:6px;">🎯 डेंगी पॉझिटिव्ह रुग्ण यादी</span>
+              <button type="button" onclick="filterDengueByKpi('all')" style="background:#2b6cb0; color:#fff; border:none; padding:5px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:4px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <span>✕ सर्व नमुने पहा</span>
+              </button>
+            </div>
+
             <!-- Filter Controls -->
             <div class="filter-bar" style="margin-bottom:14px;">
               <div class="filter-inputs">
@@ -5529,14 +5573,14 @@
                 <select id="dgFilterDate" class="filter-select" onchange="filterDengueTable()">
                   <option value="All">-- सर्व नमुना दिनांक (All Dates) --</option>
                 </select>
-                <select id="dgFilterDengueResult" class="filter-select" onchange="filterDengueTable()">
+                <select id="dgFilterDengueResult" class="filter-select" onchange="onDengueFilterDropdownChange()">
                   <option value="All">-- सर्व डेंगी अहवाल (All Dengue) --</option>
                   <option value="Positive">🔴 डेंगी पॉझिटिव्ह (Positive)</option>
                   <option value="Negative">🟢 डेंगी निगेटिव्ह (Negative)</option>
                   <option value="Equivocal">🟠 डेंगी संशयित / इक्विव्होकल (Equivocal - अहवाल प्राप्त)</option>
                   <option value="Pending">⏳ डेंगी प्रलंबित (Pending - अहवाल अप्राप्त)</option>
                 </select>
-                <select id="dgFilterChikResult" class="filter-select" onchange="filterDengueTable()">
+                <select id="dgFilterChikResult" class="filter-select" onchange="onDengueFilterDropdownChange()">
                   <option value="All">-- सर्व चिकनगुनिया अहवाल (All Chikungunya) --</option>
                   <option value="Positive">🔴 चिकनगुनिया पॉझिटिव्ह (Positive)</option>
                   <option value="Negative">🟢 चिकनगुनिया निगेटिव्ह (Negative)</option>
@@ -13453,6 +13497,104 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       }
     }
 
+    let mActiveDengueKpi = 'all';
+
+    function filterDengueByKpi(kpiType) {
+      mActiveDengueKpi = kpiType || 'all';
+
+      // 1. Switch to register subtab
+      switchDengueSubtab('register');
+
+      // 2. Clear common filter inputs
+      const fSearch = document.getElementById('dgFilterSearch');
+      const fSc = document.getElementById('dgFilterSubcenter');
+      const fVil = document.getElementById('dgFilterVillage');
+      const fDate = document.getElementById('dgFilterDate');
+      const fDg = document.getElementById('dgFilterDengueResult');
+      const fChik = document.getElementById('dgFilterChikResult');
+
+      if (fSearch) fSearch.value = '';
+      if (fSc) fSc.value = 'All';
+      if (fVil) fVil.value = 'All';
+      if (fDate) fDate.value = 'All';
+      if (fDg) fDg.value = 'All';
+      if (fChik) fChik.value = 'All';
+
+      // 3. Highlight the active card in KPI strip
+      const cardMap = {
+        'all': 'dgCard_all',
+        'dengue_pos': 'dgCard_dengue_pos',
+        'chik_pos': 'dgCard_chik_pos',
+        'equivocal': 'dgCard_equivocal',
+        'pending': 'dgCard_pending',
+        'negative': 'dgCard_negative'
+      };
+
+      document.querySelectorAll('#dengueKpiStrip .stat-card').forEach(c => {
+        c.style.transform = 'none';
+        c.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+        c.style.outline = 'none';
+      });
+
+      const activeCardId = cardMap[kpiType];
+      const activeCardEl = document.getElementById(activeCardId);
+      if (activeCardEl) {
+        activeCardEl.style.transform = 'translateY(-2px)';
+        activeCardEl.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)';
+        activeCardEl.style.outline = '2.5px solid #2b6cb0';
+        activeCardEl.style.outlineOffset = '2px';
+      }
+
+      // 4. Update banner & filter select controls
+      const banner = document.getElementById('dgActiveKpiBanner');
+      const bannerText = document.getElementById('dgActiveKpiBannerText');
+
+      let filterTitle = '';
+      if (kpiType === 'all') {
+        if (banner) banner.style.display = 'none';
+      } else if (kpiType === 'dengue_pos') {
+        if (fDg) fDg.value = 'Positive';
+        filterTitle = '🔴 डेंगी पॉझिटिव्ह (NS1 / IgM ELISA) रुग्ण यादी';
+      } else if (kpiType === 'chik_pos') {
+        if (fChik) fChik.value = 'Positive';
+        filterTitle = '🦠 चिकनगुनिया पॉझिटिव्ह (Chikungunya IgM) रुग्ण यादी';
+      } else if (kpiType === 'equivocal') {
+        filterTitle = '🟠 संशयित / इक्विव्होकल (फेरचाचणी आवश्यक) रुग्ण यादी';
+      } else if (kpiType === 'pending') {
+        filterTitle = '⏳ लॅब अहवाल प्रलंबित (Awaited) रुग्ण यादी';
+      } else if (kpiType === 'negative') {
+        filterTitle = '🟢 चाचणी दोषमुक्त (निगेटिव्ह) रुग्ण यादी';
+      }
+
+      if (kpiType !== 'all') {
+        if (banner) banner.style.display = 'flex';
+        if (bannerText) bannerText.innerHTML = `<span>🎯 <b>फिल्टर लागू:</b> ${filterTitle}</span>`;
+      }
+
+      // 5. Filter table
+      filterDengueTable();
+
+      // 6. Smooth scroll to register table
+      setTimeout(() => {
+        const tbl = document.getElementById('tblDengueRegister');
+        if (tbl) {
+          tbl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    }
+
+    function onDengueFilterDropdownChange() {
+      mActiveDengueKpi = 'all';
+      const banner = document.getElementById('dgActiveKpiBanner');
+      if (banner) banner.style.display = 'none';
+      document.querySelectorAll('#dengueKpiStrip .stat-card').forEach(c => {
+        c.style.transform = 'none';
+        c.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+        c.style.outline = 'none';
+      });
+      filterDengueTable();
+    }
+
     function filterDengueTable() {
       const sVal = (document.getElementById('dgFilterSearch')?.value || '').toLowerCase().trim();
       const scVal = document.getElementById('dgFilterSubcenter')?.value || 'All';
@@ -13462,6 +13604,19 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       const chikResVal = document.getElementById('dgFilterChikResult')?.value || 'All';
 
       let filtered = [...mDengueData];
+
+      // If specific KPI filter is active and user hasn't explicitly used dropdowns
+      if (mActiveDengueKpi === 'dengue_pos') {
+        filtered = filtered.filter(e => e.dengueResult === 'Positive');
+      } else if (mActiveDengueKpi === 'chik_pos') {
+        filtered = filtered.filter(e => e.chikungunyaResult === 'Positive');
+      } else if (mActiveDengueKpi === 'equivocal') {
+        filtered = filtered.filter(e => (e.dengueResult === 'Equivocal' || e.chikungunyaResult === 'Equivocal') && e.dengueResult !== 'Positive' && e.chikungunyaResult !== 'Positive');
+      } else if (mActiveDengueKpi === 'pending') {
+        filtered = filtered.filter(e => (e.dengueResult === 'Pending' || e.chikungunyaResult === 'Pending' || (!e.dengueResult && !e.chikungunyaResult)));
+      } else if (mActiveDengueKpi === 'negative') {
+        filtered = filtered.filter(e => (e.dengueResult === 'Negative' && (e.chikungunyaResult === 'Negative' || !e.chikungunyaResult)));
+      }
 
       if (scVal !== 'All') {
         filtered = filtered.filter(e => {
@@ -13477,10 +13632,10 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       if (dVal !== 'All') {
         filtered = filtered.filter(e => e.dateCollection === dVal);
       }
-      if (dgResVal !== 'All') {
+      if (dgResVal !== 'All' && mActiveDengueKpi === 'all') {
         filtered = filtered.filter(e => (e.dengueResult || 'Pending') === dgResVal);
       }
-      if (chikResVal !== 'All') {
+      if (chikResVal !== 'All' && mActiveDengueKpi === 'all') {
         filtered = filtered.filter(e => (e.chikungunyaResult || 'Pending') === chikResVal);
       }
       if (sVal) {
