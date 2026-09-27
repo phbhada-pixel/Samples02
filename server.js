@@ -626,7 +626,7 @@ async function processPendingSyncQueue() {
         let payload = null;
         if (item.action === 'saveDengueEntry') {
           const rec = dengueChikungunyaEntries.find(e => e.id === item.id) || item.entry;
-          if (rec) payload = { action: 'saveDengueEntry', entry: rec };
+          if (rec) payload = { action: 'saveDengueEntry', spreadsheetId: googleSheetConfig.spreadsheetId, entry: rec };
         } else if (item.action === 'deleteEntry') {
           payload = { action: 'deleteEntry', spreadsheetId: googleSheetConfig.spreadsheetId, entryId: item.entryId || item.id };
         } else if (item.action === 'appendEntries') {
@@ -1521,6 +1521,7 @@ app.post('/api/rpc', async (req, res) => {
           if (googleSheetConfig.webhookUrl) {
             sheetSyncResult = await triggerGoogleSheetSync({
               action: 'saveDengueEntry',
+              spreadsheetId: googleSheetConfig.spreadsheetId,
               entry: rec
             }, 3);
           }
@@ -1556,6 +1557,7 @@ app.post('/api/rpc', async (req, res) => {
           if (googleSheetConfig.webhookUrl) {
             sheetSyncResult = await triggerGoogleSheetSync({
               action: 'saveDengueEntry',
+              spreadsheetId: googleSheetConfig.spreadsheetId,
               entry: rec
             }, 3);
           }
