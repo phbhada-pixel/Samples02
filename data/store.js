@@ -2785,6 +2785,55 @@ export const villageDetails = [];
 // ================= DENGUE & CHIKUNGUNYA SAMPLE ENTRIES =================
 export const dengueChikungunyaEntries = [];
 
+// ================= PENDING GOOGLE SHEET SYNC QUEUE =================
+export const pendingSyncQueue = [];
+
+export function addToPendingQueue(item) {
+  if (!item || !item.id) return;
+  const exIdx = pendingSyncQueue.findIndex(q => q.id === item.id && q.action === item.action);
+  const queueEntry = {
+    ...item,
+    queuedAt: item.queuedAt || new Date().toISOString(),
+    attempts: item.attempts || 0,
+    lastAttempt: new Date().toISOString(),
+    status: 'PENDING'
+  };
+  if (exIdx !== -1) {
+    pendingSyncQueue[exIdx] = queueEntry;
+  } else {
+    pendingSyncQueue.push(queueEntry);
+  }
+  saveDbToDisk();
+}
+
+export function getPendingSyncQueue() {
+  return pendingSyncQueue;
+}
+
+export function removePendingQueueItem(index) {
+  if (index >= 0 && index < pendingSyncQueue.length) {
+    pendingSyncQueue.splice(index, 1);
+    saveDbToDisk();
+  }
+}
+
+export function markDengueEntrySyncStatus(id, status, error = null) {
+  const rec = dengueChikungunyaEntries.find(e => e.id === id);
+  if (rec) {
+    rec.syncStatus = status;
+    rec.googleSheetSynced = (status === 'SYNCED');
+    rec.lastSyncAttempt = new Date().toISOString();
+    rec.syncError = error || null;
+    saveDbToDisk();
+    return true;
+  }
+  return false;
+}
+
+export function getPendingDengueEntries() {
+  return dengueChikungunyaEntries.filter(e => e.syncStatus === 'PENDING' || !e.googleSheetSynced);
+}
+
 export function saveDengueEntry(entryData) {
   try {
     if (!entryData || !entryData.patientName) {
@@ -2845,6 +2894,10 @@ export function saveDengueEntry(entryData) {
       chikungunyaReportFile: entryData.chikungunyaReportFile || "",
       chikungunyaReportFileName: entryData.chikungunyaReportFileName || "",
       chikungunyaRemarks: entryData.chikungunyaRemarks || "",
+      syncStatus: entryData.syncStatus || "PENDING",
+      googleSheetSynced: entryData.googleSheetSynced || false,
+      lastSyncAttempt: entryData.lastSyncAttempt || null,
+      syncError: entryData.syncError || null,
       createdAt: entryData.createdAt || new Date().toISOString()
     };
 
@@ -4092,6 +4145,7 @@ export function saveDbToDisk() {
       masterData,
       transferHistory,
       googleSheetConfig,
+      pendingSyncQueue,
       dengueChikungunyaEntries
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(dataToSave, null, 2), 'utf8');
@@ -4106,6 +4160,10 @@ export function loadDbFromDisk() {
       const raw = fs.readFileSync(DB_FILE, 'utf8');
       if (raw && raw.trim()) {
         const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.pendingSyncQueue)) {
+          pendingSyncQueue.length = 0;
+          parsed.pendingSyncQueue.forEach(item => pendingSyncQueue.push(item));
+        }
         if (Array.isArray(parsed.bsDataEntry) && parsed.bsDataEntry.length > 0) {
           bsDataEntry.length = 0;
           parsed.bsDataEntry.forEach(r => {

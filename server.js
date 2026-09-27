@@ -89,7 +89,13 @@ import {
   updateDengueLabReport,
   saveDengueBatchLabReport,
   importDengueOldDataCsv,
-  clearDengueEntries
+  clearDengueEntries,
+  pendingSyncQueue,
+  addToPendingQueue,
+  getPendingSyncQueue,
+  removePendingQueueItem,
+  markDengueEntrySyncStatus,
+  getPendingDengueEntries
 } from './data/store.js';
 
 import {
@@ -528,57 +534,130 @@ app.get(['/api/download-dengue-english-template', '/dengue_chikungunya_sample_te
   }
 });
 
-// Primary sync helper to send rows directly to Google Sheet Webhook
-async function triggerGoogleSheetSync(payload) {
+// Primary sync helper to send rows directly to Google Sheet Webhook with 3-attempt retry
+async function triggerGoogleSheetSync(payload, maxAttempts = 3) {
   if (!googleSheetConfig.webhookUrl) {
     googleSheetConfig.syncStatus = 'स्थानिक प्रणालीमध्ये सुरक्षित (गुगल वेबहुक URL सेट नाही)';
-    return { success: false, message: 'गुगल शीट वेबहुक URL उपलब्ध नाही.' };
+    return { success: false, error: 'गुगल शीट वेबहुक URL उपलब्ध नाही.' };
   }
-  try {
-    console.log(`[GoogleSheetSync] Sending real-time sync action: ${payload.action}`);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 35000);
-    const response = await fetch(googleSheetConfig.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      redirect: 'follow',
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-    
-    const rawText = await response.text();
-    let respData = null;
+
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      respData = JSON.parse(rawText);
-    } catch (_) {}
+      console.log(`[GoogleSheetSync] Sending real-time sync action: ${payload.action} (Attempt ${attempt}/${maxAttempts})`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(googleSheetConfig.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        redirect: 'follow',
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      
+      const rawText = await response.text();
+      let respData = null;
+      try {
+        respData = JSON.parse(rawText);
+      } catch (_) {}
 
-    googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
+      googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
 
-    if (response.ok && respData && respData.success) {
-      googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
-      console.log(`[GoogleSheetSync] Success for action: ${payload.action}`);
-      return { success: true, data: respData };
-    } else {
-      let errMsg = 'गुगल वेबहुक प्रतिसाद अवैध आहे';
-      if (rawText.includes('Page not found') || response.status === 404) {
-        errMsg = 'गुगल वेबहुक URL अमान्य किंवा बंद आहे (Google Apps Script कडून 404 Page not found एरर). कृपया नवीन Web app डिप्लॉय करा.';
-      } else if (respData && respData.message) {
-        errMsg = respData.message;
-      } else if (respData && respData.error) {
-        errMsg = respData.error;
+      if (response.ok && respData && respData.success) {
+        googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
+        console.log(`[GoogleSheetSync] Success for action: ${payload.action} on attempt ${attempt}`);
+        return { success: true, data: respData };
+      } else {
+        let errMsg = 'गुगल वेबहुक प्रतिसाद अवैध आहे';
+        if (rawText.includes('Page not found') || response.status === 404) {
+          errMsg = 'गुगल वेबहुक URL अमान्य किंवा बंद आहे (Google Apps Script कडून 404 Page not found एरर). कृपया नवीन Web app डिप्लॉय करा.';
+          lastError = errMsg;
+          break; // Don't retry indefinitely on 404
+        } else if (respData && respData.message) {
+          errMsg = respData.message;
+        } else if (respData && respData.error) {
+          errMsg = respData.error;
+        }
+        lastError = errMsg;
       }
-      googleSheetConfig.syncStatus = `स्थानिक डेटाबेसमध्ये सुरक्षित (गुगल शीट एरर: ${errMsg})`;
-      console.warn(`[GoogleSheetSync] Sync failed for action ${payload.action}:`, errMsg);
-      return { success: false, error: errMsg };
+    } catch (err) {
+      lastError = err.message;
+      console.warn(`[GoogleSheetSync] Attempt ${attempt} failed for action ${payload.action}:`, err.message);
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise(r => setTimeout(r, attempt * 600)); // exponential backoff: 600ms, 1200ms
+    }
+  }
+
+  googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
+  googleSheetConfig.syncStatus = `स्थानिक डेटाबेसमध्ये सुरक्षित (गुगल शीट सिंक प्रलंबित: ${lastError})`;
+  console.warn(`[GoogleSheetSync] All ${maxAttempts} attempts failed for action ${payload.action}:`, lastError);
+  return { success: false, error: lastError };
+}
+
+// Background queue processor to automatically synchronize pending records
+let isProcessingQueue = false;
+async function processPendingSyncQueue() {
+  if (isProcessingQueue || !googleSheetConfig.webhookUrl) return;
+  isProcessingQueue = true;
+  try {
+    const queue = getPendingSyncQueue();
+    // Also check any dengue records that are PENDING
+    const pendingDengue = getPendingDengueEntries();
+    pendingDengue.forEach(d => {
+      const existsInQueue = queue.some(q => q.id === d.id && q.action === 'saveDengueEntry');
+      if (!existsInQueue) {
+        queue.push({
+          type: 'dengue',
+          id: d.id,
+          action: 'saveDengueEntry',
+          entry: d,
+          status: 'PENDING'
+        });
+      }
+    });
+
+    if (queue.length > 0) {
+      console.log(`[PendingQueue] Attempting background sync for ${queue.length} pending items...`);
+      for (let i = queue.length - 1; i >= 0; i--) {
+        const item = queue[i];
+        let payload = null;
+        if (item.action === 'saveDengueEntry') {
+          const rec = dengueChikungunyaEntries.find(e => e.id === item.id) || item.entry;
+          if (rec) payload = { action: 'saveDengueEntry', entry: rec };
+        } else if (item.action === 'deleteEntry') {
+          payload = { action: 'deleteEntry', spreadsheetId: googleSheetConfig.spreadsheetId, entryId: item.entryId || item.id };
+        } else if (item.action === 'appendEntries') {
+          payload = item.payload;
+        }
+
+        if (payload) {
+          const syncRes = await triggerGoogleSheetSync(payload, 2);
+          if (syncRes.success) {
+            if (item.type === 'dengue' || item.action === 'saveDengueEntry') {
+              markDengueEntrySyncStatus(item.id, 'SYNCED');
+            }
+            removePendingQueueItem(i);
+            console.log(`[PendingQueue] Successfully synced pending item: ${item.id || item.action}`);
+          } else {
+            console.log(`[PendingQueue] Item ${item.id || item.action} remains pending: ${syncRes.error}`);
+          }
+        }
+      }
     }
   } catch (err) {
-    console.warn(`[GoogleSheetSync] Sync error for action ${payload.action}:`, err.message);
-    googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-    googleSheetConfig.syncStatus = `स्थानिक डेटाबेसमध्ये सुरक्षित (कनेक्शन त्रुटी: ${err.message})`;
-    return { success: false, error: err.message };
+    console.warn('[PendingQueue] Error during background queue processing:', err.message);
+  } finally {
+    isProcessingQueue = false;
   }
 }
+
+// Start periodic background sync processor (every 60 seconds)
+setInterval(processPendingSyncQueue, 60000);
+// Run shortly after startup
+setTimeout(processPendingSyncQueue, 5000);
 
 // Central RPC endpoint for Google Apps Script client calls
 app.post('/api/rpc', async (req, res) => {
@@ -713,8 +792,8 @@ app.post('/api/rpc', async (req, res) => {
         recalculateAllMonthProgressives();
         saveDbToDisk();
 
-        // Direct Google Sheet Sync: Await webhook persistence
-        let sheetSyncResult = { success: false };
+        // Direct Google Sheet Sync: Await webhook persistence with 3 attempts
+        let sheetSyncResult = { success: false, error: 'गुगल शीट वेबहुक URL उपलब्ध नाही' };
         if (googleSheetConfig.webhookUrl) {
           sheetSyncResult = await triggerGoogleSheetSync({
             action: 'appendEntries',
@@ -722,15 +801,32 @@ app.post('/api/rpc', async (req, res) => {
             entries: newEntriesForSync,
             villageDetails: newVillageDetailsForSync,
             timestamp: new Date().toISOString()
+          }, 3);
+        }
+
+        if (!sheetSyncResult.success) {
+          addToPendingQueue({
+            type: 'bsData',
+            id: `BS_BATCH_${Date.now()}`,
+            action: 'appendEntries',
+            payload: {
+              action: 'appendEntries',
+              spreadsheetId: googleSheetConfig.spreadsheetId,
+              entries: newEntriesForSync,
+              villageDetails: newVillageDetailsForSync,
+              timestamp: new Date().toISOString()
+            }
           });
         }
 
         result = {
           success: true,
           message: sheetSyncResult.success
-            ? '✅ डेटा थेट गुगल शीटमध्ये यशस्वीरित्या सुरक्षित सेव्ह झाला!'
-            : 'डेटा स्थानिक प्रणालीमध्ये सुरक्षित जतन झाला (गुगल शीट सिंक सज्ज आहे).',
+            ? '✅ डेटा थेट गुगल शीटमध्ये यशस्वीरित्या सुरक्षित सेव्ह झाला 🟢'
+            : 'नोंद स्थानिक प्रणालीमध्ये सुरक्षित जतन झाली • Google Sheet Sync Pending 🟡',
           sheetSynced: sheetSyncResult.success,
+          syncStatus: sheetSyncResult.success ? 'SYNCED' : 'PENDING',
+          syncError: sheetSyncResult.error || null,
           sheetUrl: `https://docs.google.com/spreadsheets/d/${googleSheetConfig.spreadsheetId}/edit`,
           lastSyncTime: googleSheetConfig.lastSyncTime
         };
@@ -972,12 +1068,20 @@ app.post('/api/rpc', async (req, res) => {
           }
           saveDbToDisk();
           if (googleSheetConfig.webhookUrl) {
-            triggerGoogleSheetSync({
+            const delSync = await triggerGoogleSheetSync({
               action: 'deleteEntry',
               spreadsheetId: googleSheetConfig.spreadsheetId,
               entryId: entryId,
               timestamp: new Date().toISOString()
-            }).catch(e => console.error('Error syncing delete to sheet:', e));
+            }, 3);
+            if (!delSync.success) {
+              addToPendingQueue({
+                type: 'deleteBs',
+                id: entryId,
+                action: 'deleteEntry',
+                entryId: entryId
+              });
+            }
           }
           result = { success: true, message: `नोंद ${entryId} यशस्वीरित्या हटवली!` };
         } else {
@@ -1411,11 +1515,34 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveDengueEntry': {
         const [entryData] = args;
         result = saveDengueEntry(entryData);
-        if (result.success && googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'saveDengueEntry',
-            entry: result.record || entryData
-          });
+        if (result.success) {
+          const rec = result.record || entryData;
+          let sheetSyncResult = { success: false, error: 'गुगल शीट वेबहुक उपलब्ध नाही' };
+          if (googleSheetConfig.webhookUrl) {
+            sheetSyncResult = await triggerGoogleSheetSync({
+              action: 'saveDengueEntry',
+              entry: rec
+            }, 3);
+          }
+
+          if (sheetSyncResult.success) {
+            markDengueEntrySyncStatus(rec.id, 'SYNCED');
+            result.sheetSynced = true;
+            result.syncStatus = 'SYNCED';
+            result.message = `रुग्ण ${rec.patientName} ची नोंद जतन झाली • Google Sheet मध्ये थेट Sync झाली 🟢`;
+          } else {
+            markDengueEntrySyncStatus(rec.id, 'PENDING', sheetSyncResult.error);
+            addToPendingQueue({
+              type: 'dengue',
+              id: rec.id,
+              action: 'saveDengueEntry',
+              entry: rec
+            });
+            result.sheetSynced = false;
+            result.syncStatus = 'PENDING';
+            result.syncError = sheetSyncResult.error;
+            result.message = `रुग्ण ${rec.patientName} ची नोंद स्थानिक डेटाबेसमध्ये सुरक्षित जतन झाली; मात्र Google Sheet synchronization प्रलंबित आहे (Pending) 🟡`;
+          }
         }
         break;
       }
@@ -1423,11 +1550,34 @@ app.post('/api/rpc', async (req, res) => {
       case 'updateDengueLabReport': {
         const [reportData] = args;
         result = updateDengueLabReport(reportData);
-        if (result.success && googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'saveDengueEntry',
-            entry: result.record
-          });
+        if (result.success) {
+          const rec = result.record;
+          let sheetSyncResult = { success: false, error: 'गुगल शीट वेबहुक उपलब्ध नाही' };
+          if (googleSheetConfig.webhookUrl) {
+            sheetSyncResult = await triggerGoogleSheetSync({
+              action: 'saveDengueEntry',
+              entry: rec
+            }, 3);
+          }
+
+          if (sheetSyncResult.success) {
+            markDengueEntrySyncStatus(rec.id, 'SYNCED');
+            result.sheetSynced = true;
+            result.syncStatus = 'SYNCED';
+            result.message = `रुग्ण ${rec.patientName} चा प्रयोगशाळा अहवाल सेव्ह झाला • Google Sheet मध्ये थेट Sync झाला 🟢`;
+          } else {
+            markDengueEntrySyncStatus(rec.id, 'PENDING', sheetSyncResult.error);
+            addToPendingQueue({
+              type: 'dengue',
+              id: rec.id,
+              action: 'saveDengueEntry',
+              entry: rec
+            });
+            result.sheetSynced = false;
+            result.syncStatus = 'PENDING';
+            result.syncError = sheetSyncResult.error;
+            result.message = `प्रयोगशाळा अहवाल स्थानिक डेटाबेसमध्ये सुरक्षित जतन झाला; मात्र Google Sheet synchronization प्रलंबित आहे (Pending) 🟡`;
+          }
         }
         break;
       }
@@ -1436,10 +1586,18 @@ app.post('/api/rpc', async (req, res) => {
         const [batchData] = args;
         result = saveDengueBatchLabReport(batchData);
         if (result.success && googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
+          const sheetSyncResult = await triggerGoogleSheetSync({
             action: 'saveDengueBatch',
             batchData
-          });
+          }, 3);
+          if (!sheetSyncResult.success) {
+            addToPendingQueue({
+              type: 'dengueBatch',
+              id: `BATCH_${Date.now()}`,
+              action: 'saveDengueBatch',
+              batchData
+            });
+          }
         }
         break;
       }
@@ -1458,6 +1616,22 @@ app.post('/api/rpc', async (req, res) => {
       case 'deleteDengueEntry': {
         const [id] = args;
         result = deleteDengueEntry(id);
+        if (result.success && googleSheetConfig.webhookUrl) {
+          const delSync = await triggerGoogleSheetSync({
+            action: 'deleteEntry',
+            spreadsheetId: googleSheetConfig.spreadsheetId,
+            entryId: id,
+            timestamp: new Date().toISOString()
+          }, 3);
+          if (!delSync.success) {
+            addToPendingQueue({
+              type: 'deleteDengue',
+              id: id,
+              action: 'deleteEntry',
+              entryId: id
+            });
+          }
+        }
         break;
       }
 

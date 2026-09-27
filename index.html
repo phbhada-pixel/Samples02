@@ -1225,12 +1225,41 @@
             const [entryData] = args;
             const cleanDate = entryData.dateCollection ? String(entryData.dateCollection).trim() : new Date().toISOString().slice(0, 10);
             const id = entryData.id || `DENGUE_${cleanDate.replace(/-/g, '')}_${Math.floor(1000 + Math.random() * 9000)}`;
-            const rec = { ...entryData, id, createdAt: entryData.createdAt || new Date().toISOString() };
+            const rec = {
+              ...entryData,
+              id,
+              syncStatus: 'PENDING',
+              googleSheetSynced: false,
+              createdAt: entryData.createdAt || new Date().toISOString()
+            };
             const exIdx = clientDengueEntries.findIndex(e => e.id === id);
             if (exIdx !== -1) clientDengueEntries[exIdx] = rec;
             else clientDengueEntries.push(rec);
             setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
-            return { result: { success: true, message: `रुग्ण ${rec.patientName} ची नोंद सुरक्षित सेव्ह झाली.`, record: rec } };
+
+            // Attempt automatic background Google Apps Script sync if webhook URL exists
+            if (clientGoogleSheetConfig.webhookUrl) {
+              fetch(clientGoogleSheetConfig.webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'saveDengueEntry', entry: rec })
+              }).then(r => r.json()).then(data => {
+                if (data && data.success) {
+                  rec.syncStatus = 'SYNCED';
+                  rec.googleSheetSynced = true;
+                  setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+                }
+              }).catch(() => {});
+            }
+
+            return {
+              result: {
+                success: true,
+                message: `रुग्ण ${rec.patientName} ची नोंद सुरक्षित सेव्ह झाली.`,
+                record: rec,
+                syncStatus: 'PENDING'
+              }
+            };
           }
 
           case 'updateDengueLabReport': {
@@ -3018,15 +3047,11 @@
             
             <!-- Action Buttons -->
             <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <button type="button" id="btnDashFetchSheet" class="sheet-btn" style="background:#ffffff; color:#065f46; font-weight:800; font-size:13.5px; padding:10px 20px; box-shadow:0 4px 10px rgba(0,0,0,0.15); border:none; display:flex; align-items:center; gap:8px;" onclick="triggerSeamlessGoogleSheetSync(true)">
-                <span id="dashSyncBtnIcon">📥</span>
-                <span id="dashSyncBtnText">गुगल शीटवरून थेट डेटा लोड करा</span>
-              </button>
-              <button type="button" class="sheet-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); font-weight:700; font-size:12.5px; padding:9px 14px;" onclick="syncDataToGoogleSheet(this)">
-                ⬆️ गुगल शीटमध्ये पाठवा (Push)
-              </button>
-              <a href="https://docs.google.com/spreadsheets/d/1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM/edit" target="_blank" class="sheet-btn" style="background:rgba(255,255,255,0.12); color:#ffffff; border:1px solid rgba(255,255,255,0.25); font-weight:700; font-size:12.5px; padding:9px 14px; text-decoration:none;">
-                🌐 शीट उघडा ↗️
+              <span id="dashAutoSyncStatusBadge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); display:inline-flex; align-items:center; gap:6px;">
+                🟢 स्वयंचलित Google Sheet सिंक (Auto-Sync Active)
+              </span>
+              <a href="https://docs.google.com/spreadsheets/d/1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM/edit" target="_blank" class="sheet-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); font-weight:700; font-size:12.5px; padding:9px 14px; text-decoration:none;">
+                🌐 थेट गुगल शीट उघडा ↗️
               </a>
             </div>
           </div>
@@ -4597,11 +4622,8 @@
               </div>
             </div>
             <div class="sheet-actions">
-              <button class="sheet-btn" id="btnSyncGoogleSheet" onclick="syncDataToGoogleSheet(this)">
-                🔄 गुगल शीटमध्ये डेटा पाठवा (Push)
-              </button>
               <button class="sheet-btn" id="btnFetchLiveSheet" style="background:#2f855a;" onclick="fetchRealtimeFromGoogleSheet()">
-                📥 गुगल शीटमधून डेटा आणा (Fetch Live)
+                🔄 गुगल शीटवरून ताजी माहिती लोड करा (Fetch Live)
               </button>
               <button class="sheet-btn" style="background:#2b6cb0;" onclick="openUniversalUploadModal()">
                 📂 डेटा आयात केंद्र

@@ -313,6 +313,12 @@ function doPost(e) {
           var dgSheet = getOrCreateSheet(ss, "DengueChikungunya", [
             "ID", "नोंदणी क्र.", "रुग्णाचे नाव", "गाव", "वय", "लिंग", "मोबाईल", "घर क्र.", "नमुना दिनांक", "लक्षणे सुरू", "ताप", "डोकेदुखी", "सांधेदुखी", "डेंगी निकाल", "डेंगी संदर्भ क्र.", "डेंगी अहवाल दिनांक", "चिकनगुनिया निकाल", "चिकनगुनिया संदर्भ क्र.", "चिकनगुनिया अहवाल दिनांक", "नोंद वेळ (Timestamp)"
           ]);
+          // EDIT SUPPORT: Delete existing row with matching ID first to prevent duplicates
+          dEntries.forEach(function(d) {
+            if (d.id) {
+              deleteRowByFirstColumnValue(dgSheet, d.id);
+            }
+          });
           var dgRows = dEntries.map(function(d) {
             return [
               d.id || "",
@@ -353,6 +359,10 @@ function doPost(e) {
           var vSheet = ss.getSheetByName("VillageDetails");
           if (vSheet) {
             deleteRowByFirstColumnValue(vSheet, delId);
+          }
+          var dgSheet = ss.getSheetByName("DengueChikungunya");
+          if (dgSheet) {
+            deleteRowByFirstColumnValue(dgSheet, delId);
           }
         }
         result.message = "Entry deleted from Google Sheet!";
