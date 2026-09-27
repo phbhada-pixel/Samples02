@@ -3,6 +3,49 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import XLSX from 'xlsx';
+
+// Universal Helper for Excel (.xlsx) and CSV exports with 100% Devanagari Unicode support
+function sendExportData(req, res, filenameBase, headers, rawRows, sheetName = 'Data') {
+  const cleanRows = rawRows.map(r => {
+    const rowArr = Array.isArray(r) ? r : [r];
+    return rowArr.map(c => {
+      if (c === null || c === undefined) return '';
+      let str = String(c).trim();
+      if (str.startsWith('"') && str.endsWith('"')) {
+        str = str.slice(1, -1);
+      }
+      return str.replace(/""/g, '"');
+    });
+  });
+
+  const isCsvReq = req.path.endsWith('.csv') && req.query.format !== 'excel' && req.query.format !== 'xlsx';
+
+  if (isCsvReq) {
+    const csvContent = '\uFEFF' + [headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','), ...cleanRows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.csv"`);
+    return res.status(200).send(csvContent);
+  }
+
+  // Native Binary XLSX Export (100% readable Marathi in Excel)
+  try {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...cleanRows]);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.xlsx"`);
+    return res.status(200).send(buffer);
+  } catch (err) {
+    console.error('Error generating XLSX export:', err);
+    const csvContent = '\uFEFF' + [headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','), ...cleanRows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filenameBase}.csv"`);
+    return res.status(200).send(csvContent);
+  }
+}
 
 import {
   masterData,
@@ -73,6 +116,17 @@ app.options('*', cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Serve xlsx library
+app.use('/js/xlsx.full.min.js', (req, res) => {
+  const xlsxPath = path.join(__dirname, 'node_modules/xlsx/dist/xlsx.full.min.js');
+  if (fs.existsSync(xlsxPath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(xlsxPath);
+  } else {
+    res.status(404).send('Not found');
+  }
+});
+
 // Serve index.html at root and standard entry paths
 app.get(['/', '/index.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -101,54 +155,31 @@ app.get('/api/reports/:id', (req, res) => {
   res.send(reportHtml);
 });
 
-// Export BS Data as CSV (compatible with Google Sheets / Excel with UTF-8 BOM)
-app.get('/api/export/dengue-samples.csv', (req, res) => {
+// Export BS Data as CSV / Excel
+app.get(['/api/export/dengue-samples.csv', '/api/export/dengue-samples.xlsx'], (req, res) => {
   const headers = [
-    'आयडी (ID)',
-    'रुग्णाचे नाव (Patient Name)',
-    'मोबाईल (Mobile)',
-    'घर क्र. (House No)',
-    'गाव (Village)',
-    'तालुका (Taluka)',
-    'जिल्हा (District)',
-    'रुग्णालय पत्ता (Hospital Address)',
-    'नोंदणी क्र. (Reg No)',
-    'वार्ड (Ward)',
-    'बेड (Bed)',
-    'वय (Age)',
-    'लिंग (Sex)',
-    'लक्षणे सुरू दिनांक (Onset Date)',
-    'नमुना प्रकार (Sample Nature)',
-    'नमुना घेतल्याचा दिनांक (Collection Date)',
-    'ताप दिवस (Fever Days)',
-    'डोकेदुखी दिवस (Headache Days)',
-    'अंगदुखी दिवस (Bodyache Days)',
-    'सांधेदुखी दिवस (Joint Pain Days)',
-    'डोळ्यांमागे दुखणे (Retro Orbital Pain Days)',
-    'पुरळ दिवस (Rash Days)',
-    'रक्तस्राव (Haemorrhagic)',
-    'डॉक्टर नाव (Doctor Name)',
-    'डॉक्टर मोबाईल (Doctor Mobile)',
-    'डेंगी निष्कर्ष (Dengue Result)',
-    'डेंगी चाचणी प्रकार (Dengue Test Type)',
-    'डेंगी लॅब संदर्भ क्र. (Dengue Report Ref)',
-    'डेंगी अहवाल दिनांक (Dengue Report Date)',
-    'चिकनगुनिया निष्कर्ष (Chikungunya Result)',
-    'चिकनगुनिया चाचणी प्रकार (Chikungunya Test Type)',
-    'चिकनगुनिया लॅब संदर्भ क्र. (Chikungunya Report Ref)',
-    'चिकनगुनिया अहवाल दिनांक (Chikungunya Report Date)',
-    'एकूण स्थिती (Overall Status)'
+    'आयडी (ID)', 'रुग्णाचे नाव (Patient Name)', 'मोबाईल (Mobile)', 'घर क्र. (House No)',
+    'गाव (Village)', 'तालुका (Taluka)', 'जिल्हा (District)', 'रुग्णालय पत्ता (Hospital Address)',
+    'नोंदणी क्र. (Reg No)', 'वार्ड (Ward)', 'बेड (Bed)', 'वय (Age)', 'लिंग (Sex)',
+    'लक्षणे सुरू दिनांक (Onset Date)', 'नमुना प्रकार (Sample Nature)', 'नमुना घेतल्याचा दिनांक (Collection Date)',
+    'ताप दिवस (Fever Days)', 'डोकेदुखी दिवस (Headache Days)', 'अंगदुखी दिवस (Bodyache Days)',
+    'सांधेदुखी दिवस (Joint Pain Days)', 'डोळ्यांमागे दुखणे (Retro Orbital Pain Days)', 'पुरळ दिवस (Rash Days)',
+    'रक्तस्राव (Haemorrhagic)', 'डॉक्टर नाव (Doctor Name)', 'डॉक्टर मोबाईल (Doctor Mobile)',
+    'डेंगी निष्कर्ष (Dengue Result)', 'डेंगी चाचणी प्रकार (Dengue Test Type)', 'डेंगी लॅब संदर्भ क्र. (Dengue Report Ref)',
+    'डेंगी अहवाल दिनांक (Dengue Report Date)', 'चिकनगुनिया निष्कर्ष (Chikungunya Result)',
+    'चिकनगुनिया चाचणी प्रकार (Chikungunya Test Type)', 'चिकनगुनिया लॅब संदर्भ क्र. (Chikungunya Report Ref)',
+    'चिकनगुनिया अहवाल दिनांक (Chikungunya Report Date)', 'एकूण स्थिती (Overall Status)'
   ];
 
   const rows = dengueChikungunyaEntries.map(e => [
     e.id,
-    `"${(e.patientName || '').replace(/"/g, '""')}"`,
+    e.patientName || '',
     e.mobile || '-',
     e.houseNo || '-',
-    `"${(e.village || '').replace(/"/g, '""')}"`,
+    e.village || '',
     e.taluka || 'AUSA',
     e.district || 'LATUR',
-    `"${(e.hospitalAddress || '').replace(/"/g, '""')}"`,
+    e.hospitalAddress || '',
     e.patientRegNo || '-',
     e.wardNo || '--',
     e.bedNo || '--',
@@ -164,158 +195,137 @@ app.get('/api/export/dengue-samples.csv', (req, res) => {
     e.clinicalRetroOrbitalPain ?? 0,
     e.clinicalRash ?? 0,
     e.haemorrhagic || 'No',
-    `"${(e.doctorName || '').replace(/"/g, '""')}"`,
+    e.doctorName || '',
     e.doctorMobile || '',
     e.dengueResult || 'Pending',
-    `"${(e.dengueTestType || '').replace(/"/g, '""')}"`,
-    `"${(e.dengueReportRef || '').replace(/"/g, '""')}"`,
+    e.dengueTestType || '',
+    e.dengueReportRef || '',
     e.dengueReportDate || '',
     e.chikungunyaResult || 'Pending',
-    `"${(e.chikungunyaTestType || '').replace(/"/g, '""')}"`,
-    `"${(e.chikungunyaReportRef || '').replace(/"/g, '""')}"`,
+    e.chikungunyaTestType || '',
+    e.chikungunyaReportRef || '',
     e.chikungunyaReportDate || '',
-    `"${(e.testResult || 'Pending').replace(/"/g, '""')}"`
+    e.testResult || 'Pending'
   ]);
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="phc_bhada_dengue_chikungunya_samples.csv"');
-  res.status(200).send(csvContent);
+  sendExportData(req, res, 'phc_bhada_dengue_chikungunya_samples', headers, rows, 'Dengue_Chikungunya');
 });
 
-app.get('/api/export/bs-data.csv', (req, res) => {
+app.get(['/api/export/bs-data.csv', '/api/export/bs-data.xlsx'], (req, res) => {
   const headers = ['BS_ID', 'तारीख', 'उपकेंद्र', 'कर्मचारी नाव', 'पदनाम', 'BS Code', 'बंडल क्र.', 'पासून', 'पर्यंत', 'एकूण नमुने'];
   const rows = bsDataEntry.map(r => {
     const item = formatBsEntry(r);
     return [
-      `"${item.id}"`,
-      `"${item.dateStr}"`,
-      `"${item.upkendra}"`,
-      `"${item.employeeName}"`,
-      `"${item.designation}"`,
-      `"${item.bsCode}"`,
-      `"${item.bundleNumber}"`,
+      item.id,
+      item.dateStr,
+      item.upkendra,
+      item.employeeName,
+      item.designation,
+      item.bsCode,
+      item.bundleNumber,
       item.pasun,
       item.paraynt,
       item.total
-    ].join(',');
+    ];
   });
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="BsDataEntry_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'BsDataEntry_PHC_Bhada', headers, rows, 'BsDataEntry');
 });
 
-// Export Village Details as CSV
-app.get('/api/export/village-details.csv', (req, res) => {
+// Export Village Details
+app.get(['/api/export/village-details.csv', '/api/export/village-details.xlsx'], (req, res) => {
   const headers = ['BS_ID', 'कर्मचारी नाव', 'तारीख', 'गाव', 'एकूण नमुने', 'पुरुष', 'स्त्री', 'उपकेंद्र'];
   const rows = villageDetails.map(r => {
     const item = formatVillageDetail(r);
     return [
-      `"${item.id}"`,
-      `"${item.employeeName}"`,
-      `"${item.dateStr}"`,
-      `"${item.villageName}"`,
+      item.id,
+      item.employeeName,
+      item.dateStr,
+      item.villageName,
       item.sampleCount,
       item.maleCount,
       item.femaleCount,
-      `"${item.upkendra}"`
-    ].join(',');
+      item.upkendra
+    ];
   });
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="VillageDetails_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'VillageDetails_PHC_Bhada', headers, rows, 'VillageDetails');
 });
 
-// Export Subcenters as CSV
-app.get('/api/export/subcenters.csv', (req, res) => {
+// Export Subcenters
+app.get(['/api/export/subcenters.csv', '/api/export/subcenters.xlsx'], (req, res) => {
   const headers = ['उपकेंद्र आयडी', 'उपकेंद्र नाव', 'मुख्यालय', 'लोकसंख्या', 'घरांची संख्या', 'समाविष्ट गावे', 'संपर्क व्यक्ती', 'मोबाईल'];
   const rows = subcenterMaster.map(s => [
-    `"${s.id}"`,
-    `"${s.name}"`,
-    `"${s.headquarter || ''}"`,
+    s.id,
+    s.name,
+    s.headquarter || '',
     s.population || 0,
     s.houses || 0,
-    `"${(s.villages || []).join('; ')}"`,
-    `"${s.contactPerson || ''}"`,
-    `"${s.contactPhone || ''}"`
-  ].join(','));
+    (s.villages || []).join('; '),
+    s.contactPerson || '',
+    s.contactPhone || ''
+  ]);
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="SubcenterMaster_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'SubcenterMaster_PHC_Bhada', headers, rows, 'SubcenterMaster');
 });
 
-// Export Villages as CSV
-app.get('/api/export/villages.csv', (req, res) => {
+// Export Villages
+app.get(['/api/export/villages.csv', '/api/export/villages.xlsx'], (req, res) => {
   const headers = ['गाव आयडी', 'गावाचे नाव', 'उपकेंद्र', 'लोकसंख्या', 'घरांची संख्या', 'वार्षिक उद्दिष्ट', 'आशा नाव', 'नियुक्त कर्मचारी'];
   const rows = villagesMaster.map(v => [
-    `"${v.id}"`,
-    `"${v.villageName}"`,
-    `"${v.subcenter}"`,
+    v.id,
+    v.villageName,
+    v.subcenter,
     v.population || 0,
     v.houses || 0,
     v.annualSmearTarget || 0,
-    `"${v.ashaName || ''}"`,
-    `"${(v.assignedEmployees || []).join('; ')}"`
-  ].join(','));
+    v.ashaName || '',
+    (v.assignedEmployees || []).join('; ')
+  ]);
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="VillagesMaster_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'VillagesMaster_PHC_Bhada', headers, rows, 'VillagesMaster');
 });
 
-// Export Employees as CSV
-app.get('/api/export/employees.csv', (req, res) => {
+// Export Employees
+app.get(['/api/export/employees.csv', '/api/export/employees.xlsx'], (req, res) => {
   const headers = ['कर्मचारी आयडी', 'उपकेंद्र', 'कर्मचारी नाव', 'पदनाम', 'प्रवर्ग', 'BS Code', 'मोबाईल', 'लागू असणारी गावे'];
   const rows = employeeMaster.map(e => [
-    `"${e.id}"`,
-    `"${e.upkendra}"`,
-    `"${e.employeeName}"`,
-    `"${e.designation}"`,
-    `"${e.category || ''}"`,
-    `"${e.bsCode || ''}"`,
-    `"${e.mobile || ''}"`,
-    `"${(e.villageList || []).join('; ')}"`
-  ].join(','));
+    e.id,
+    e.upkendra,
+    e.employeeName,
+    e.designation,
+    e.category || '',
+    e.bsCode || '',
+    e.mobile || '',
+    (e.villageList || []).join('; ')
+  ]);
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="EmployeesMaster_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'EmployeesMaster_PHC_Bhada', headers, rows, 'EmployeesMaster');
 });
 
-// Export Transfers as CSV
-app.get('/api/export/transfers.csv', (req, res) => {
+// Export Transfers
+app.get(['/api/export/transfers.csv', '/api/export/transfers.xlsx'], (req, res) => {
   const headers = ['बदली आयडी', 'दिनांक', 'कर्मचारी नाव', 'पदनाम', 'पूर्वीचे उपकेंद्र', 'नवीन उपकेंद्र', 'पूर्वीची गावे', 'नवीन गावे', 'BS Code', 'कारण', 'आदेश क्र', 'आदेश अधिकारी'];
   const rows = transferHistory.map(t => [
-    `"${t.id}"`,
-    `"${t.dateFormatted || ''}"`,
-    `"${t.employeeName}"`,
-    `"${t.designation}"`,
-    `"${t.fromUpkendra}"`,
-    `"${t.toUpkendra}"`,
-    `"${(t.previousVillages || []).join('; ')}"`,
-    `"${(t.newVillages || []).join('; ')}"`,
-    `"${t.bsCode || ''}"`,
-    `"${t.reason || ''}"`,
-    `"${t.orderNo || ''}"`,
-    `"${t.transferredBy || ''}"`
-  ].join(','));
+    t.id,
+    t.dateFormatted || '',
+    t.employeeName,
+    t.designation,
+    t.fromUpkendra,
+    t.toUpkendra,
+    (t.previousVillages || []).join('; '),
+    (t.newVillages || []).join('; '),
+    t.bsCode || '',
+    t.reason || '',
+    t.orderNo || '',
+    t.transferredBy || ''
+  ]);
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="TransferHistory_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'TransferHistory_PHC_Bhada', headers, rows, 'TransferHistory');
 });
 
-// CSV Export for Monthly Indicators (नवीन बाह्यरुग्ण, तापाचे रुग्ण, उपचारीत रुग्ण, क्लोरोक्वीन गोळ्या)
-app.get('/api/export/monthly-indicators.csv', (req, res) => {
+// Export Monthly Indicators
+app.get(['/api/export/monthly-indicators.csv', '/api/export/monthly-indicators.xlsx'], (req, res) => {
   const headers = [
     'महिना (Month)',
     'नवीन बाह्यरुग्ण मासिक (New OPD Monthly)',
@@ -374,7 +384,7 @@ app.get('/api/export/monthly-indicators.csv', (req, res) => {
     priorAnm = anmProg;
 
     return [
-      `"${m.name}"`,
+      m.name,
       opdM, opdP,
       feverM, feverP,
       smearM, smearP,
@@ -382,17 +392,14 @@ app.get('/api/export/monthly-indicators.csv', (req, res) => {
       cqM, cqP,
       mpwFn1, mpwFn2, mpwTot, mpwProg,
       anmFn1, anmFn2, anmTot, anmProg
-    ].join(',');
+    ];
   });
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="NVBDCP_Monthly_Indicators_PHC_Bhada.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'NVBDCP_Monthly_Indicators_PHC_Bhada', headers, rows, 'Monthly_Indicators');
 });
 
-// CSV Export for Month Master (Fortnight, OPD, MPW Visits, ANM Visits, ASHA Visits, Fever, Smears, Treatment, CQ)
-app.get('/api/export/month-master.csv', (req, res) => {
+// Export Month Master
+app.get(['/api/export/month-master.csv', '/api/export/month-master.xlsx'], (req, res) => {
   const headers = [
     'महिना (Month)',
     'पंधरवडा १ सुरु (FN1 Start)',
@@ -423,40 +430,35 @@ app.get('/api/export/month-master.csv', (req, res) => {
 
   const fmtD = d => d instanceof Date ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : String(d || '');
 
-  const rows = monthMaster.map(m => {
-    return [
-      `"${m.name}"`,
-      `"${fmtD(m.f1Start)}"`,
-      `"${fmtD(m.f1End)}"`,
-      `"${fmtD(m.f2Start)}"`,
-      `"${fmtD(m.f2End)}"`,
-      m.newOpd || 0,
-      m.progNewOpd || 0,
-      m.mpwFn1 || 0,
-      m.mpwFn2 || 0,
-      m.mpwHomeVisits || 0,
-      m.progMpwHomeVisits || 0,
-      m.anmFn1 || 0,
-      m.anmFn2 || 0,
-      m.anmHomeVisits || 0,
-      m.progAnmHomeVisits || 0,
-      m.ashaHomeVisits || 0,
-      m.progAshaHomeVisits || 0,
-      m.feverCases || 0,
-      m.progFeverCases || 0,
-      m.bloodSmears || 0,
-      m.progBloodSmears || 0,
-      m.treatedCases || 0,
-      m.progTreatedCases || 0,
-      m.chloroquineSpent || 0,
-      m.progChloroquineSpent || 0
-    ].join(',');
-  });
+  const rows = monthMaster.map(m => [
+    m.name,
+    fmtD(m.f1Start),
+    fmtD(m.f1End),
+    fmtD(m.f2Start),
+    fmtD(m.f2End),
+    m.newOpd || 0,
+    m.progNewOpd || 0,
+    m.mpwFn1 || 0,
+    m.mpwFn2 || 0,
+    m.mpwHomeVisits || 0,
+    m.progMpwHomeVisits || 0,
+    m.anmFn1 || 0,
+    m.anmFn2 || 0,
+    m.anmHomeVisits || 0,
+    m.progAnmHomeVisits || 0,
+    m.ashaHomeVisits || 0,
+    m.progAshaHomeVisits || 0,
+    m.feverCases || 0,
+    m.progFeverCases || 0,
+    m.bloodSmears || 0,
+    m.progBloodSmears || 0,
+    m.treatedCases || 0,
+    m.progTreatedCases || 0,
+    m.chloroquineSpent || 0,
+    m.progChloroquineSpent || 0
+  ]);
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="MonthMaster_PHC_Bhada_2026.csv"');
-  res.send(csvContent);
+  sendExportData(req, res, 'MonthMaster_PHC_Bhada_2026', headers, rows, 'MonthMaster');
 });
 
 // Health check endpoint
@@ -1161,6 +1163,105 @@ app.post('/api/rpc', async (req, res) => {
         const smearFeverCoverage = feverCases > 0 ? Math.round((bloodSmears / feverCases) * 100) : (bloodSmears > 0 ? 100 : 0);
         const treatmentCoverage = feverCases > 0 ? Math.round((treatedCases / feverCases) * 100) : (treatedCases > 0 ? 100 : 0);
 
+        // Dengue & Chikungunya Monthly & Progressive Surveillance Data
+        const startDate = monthObj.f1Start;
+        const endDate = monthObj.f2End;
+        const yearStart = monthMaster[0].f1Start;
+
+        function parseDateSafeHelper(value) {
+          if (!value) return null;
+          if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+          const str = String(value).trim();
+          const mIso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+          if (mIso) return new Date(parseInt(mIso[1]), parseInt(mIso[2]) - 1, parseInt(mIso[3]), 12, 0, 0);
+          const mDmy = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+          if (mDmy) return new Date(parseInt(mDmy[3]), parseInt(mDmy[2]) - 1, parseInt(mDmy[1]), 12, 0, 0);
+          const mDMonY = str.match(/^(\d{1,2})[-/ ]([A-Za-z]{3,})[-/ ](\d{4})/);
+          if (mDMonY) {
+            const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+            const mKey = mDMonY[2].toLowerCase().slice(0, 3);
+            if (months[mKey] !== undefined) return new Date(parseInt(mDMonY[3]), months[mKey], parseInt(mDMonY[1]), 12, 0, 0);
+          }
+          const parsed = new Date(str);
+          return isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function getDengueSampleDateHelper(e) {
+          if (!e) return null;
+          if (e.dateCollection) {
+            const d = parseDateSafeHelper(e.dateCollection);
+            if (d) return d;
+          }
+          if (e.dateOnset) {
+            const d = parseDateSafeHelper(e.dateOnset);
+            if (d) return d;
+          }
+          return parseDateSafeHelper(e.createdAt);
+        }
+
+        const mDengue = dengueChikungunyaEntries.filter(e => {
+          const d = getDengueSampleDateHelper(e);
+          return d && d >= startDate && d <= endDate;
+        });
+
+        const pDengue = dengueChikungunyaEntries.filter(e => {
+          const d = getDengueSampleDateHelper(e);
+          return d && d >= yearStart && d <= endDate;
+        });
+
+        const isDPos = e => {
+          const d = String(e.dengueResult || '').toLowerCase();
+          const t = String(e.testResult || '').toLowerCase();
+          return d.includes('pos') || d.includes('पॉझिटिव्ह') || d.includes('positive') || (t.includes('pos') && t.includes('dengue'));
+        };
+        const isDNeg = e => {
+          const d = String(e.dengueResult || '').toLowerCase();
+          const t = String(e.testResult || '').toLowerCase();
+          return (d.includes('neg') || d.includes('निगेटिव्ह') || d.includes('negative')) && !isDPos(e);
+        };
+        const isDEquivocal = e => {
+          const d = String(e.dengueResult || '').toLowerCase();
+          const t = String(e.testResult || '').toLowerCase();
+          return (d.includes('equivocal') || d.includes('इक्विव्होकल') || d.includes('borderline') || d.includes('संशयित') || t.includes('equivocal')) && !isDPos(e) && !isDNeg(e);
+        };
+        const isDPend = e => !isDPos(e) && !isDNeg(e) && !isDEquivocal(e);
+
+        const isCPos = e => {
+          const c = String(e.chikungunyaResult || '').toLowerCase();
+          const t = String(e.testResult || '').toLowerCase();
+          return c.includes('pos') || c.includes('पॉझिटिव्ह') || c.includes('positive') || (t.includes('pos') && (t.includes('chik') || t.includes('chikungunya')));
+        };
+        const isCNeg = e => {
+          const c = String(e.chikungunyaResult || '').toLowerCase();
+          const t = String(e.testResult || '').toLowerCase();
+          return (c.includes('neg') || c.includes('निगेटिव्ह') || c.includes('negative')) && !isCPos(e);
+        };
+        const isCEquivocal = e => {
+          const c = String(e.chikungunyaResult || '').toLowerCase();
+          const t = String(e.testResult || '').toLowerCase();
+          return (c.includes('equivocal') || c.includes('इक्विव्होकल') || c.includes('borderline') || c.includes('संशयित') || t.includes('equivocal')) && !isCPos(e) && !isCNeg(e);
+        };
+        const isCPend = e => !isCPos(e) && !isCNeg(e) && !isCEquivocal(e);
+
+        const dengueSummary = {
+          monthSamples: mDengue.length,
+          progSamples: pDengue.length,
+          monthDenguePos: mDengue.filter(isDPos).length,
+          progDenguePos: pDengue.filter(isDPos).length,
+          monthChikPos: mDengue.filter(isCPos).length,
+          progChikPos: pDengue.filter(isCPos).length,
+          monthDengueEquivocal: mDengue.filter(isDEquivocal).length,
+          progDengueEquivocal: pDengue.filter(isDEquivocal).length,
+          monthChikEquivocal: mDengue.filter(isCEquivocal).length,
+          progChikEquivocal: pDengue.filter(isCEquivocal).length,
+          monthEquivocal: mDengue.filter(e => isDEquivocal(e) || isCEquivocal(e)).length,
+          progEquivocal: pDengue.filter(e => isDEquivocal(e) || isCEquivocal(e)).length,
+          monthNeg: mDengue.filter(e => isDNeg(e) && isCNeg(e)).length,
+          progNeg: pDengue.filter(e => isDNeg(e) && isCNeg(e)).length,
+          monthPend: mDengue.filter(e => isDPend(e) || isCPend(e)).length,
+          progPend: pDengue.filter(e => isDPend(e) || isCPend(e)).length
+        };
+
         result = {
           success: true,
           data: {
@@ -1199,6 +1300,7 @@ app.post('/api/rpc', async (req, res) => {
             smearFeverCoverage,
             treatmentCoverage,
             opdVillagewise: opdSummary,
+            dengueSummary,
             templateData: {
               phcName: 'भादा',
               month: monthObj.name,

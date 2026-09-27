@@ -2799,8 +2799,10 @@ export function saveDengueEntry(entryData) {
       id,
       patientName: cleanName,
       mobile: entryData.mobile ? String(entryData.mobile).trim() : "-",
-      houseNo: entryData.houseNo ? String(entryData.houseNo).trim() : "-",
+      subcenter: entryData.subcenter ? String(entryData.subcenter).trim() : "",
+      otherVillage: entryData.otherVillage ? String(entryData.otherVillage).trim() : "",
       village: entryData.village ? String(entryData.village).trim() : "भादा",
+      houseNo: entryData.houseNo ? String(entryData.houseNo).trim() : "-",
       taluka: entryData.taluka ? String(entryData.taluka).trim() : "AUSA",
       district: entryData.district ? String(entryData.district).trim() : "LATUR",
       hospitalAddress: entryData.hospitalAddress ? String(entryData.hospitalAddress).trim() : "प्राथमिक आरोग्य केंद्र भादा",
@@ -3031,27 +3033,65 @@ export function importDengueOldDataCsv(csvText, replace = false) {
       return { success: false, message: "CSV फाईल रिकामा आहे (CSV content is empty)." };
     }
 
-    const lines = csvText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (lines.length < 2) {
-      return { success: false, message: "किमान एक डेटा ओळ (Header + Data row) आवश्यक आहे." };
+    function parseSpreadsheetRows(content) {
+      if (!content || !content.trim()) return [];
+      const trimmed = content.trim();
+
+      // 1. Check if content is HTML Table (from .xls or pasted HTML)
+      if (trimmed.includes('<table') || trimmed.includes('<tr')) {
+        const rows = [];
+        const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+        let trMatch;
+        while ((trMatch = trRegex.exec(trimmed)) !== null) {
+          const rowContent = trMatch[1];
+          const cells = [];
+          const cellRegex = /<(?:td|th)[^>]*>([\s\S]*?)<\/(?:td|th)>/gi;
+          let cellMatch;
+          while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+            let text = cellMatch[1].replace(/<[^>]+>/g, '').trim();
+            text = text.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
+            cells.push(text);
+          }
+          if (cells.length > 0) rows.push(cells);
+        }
+        if (rows.length > 0) return rows;
+      }
+
+      // 2. Text lines (CSV / TSV / Semicolon)
+      const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length > 0);
+      if (lines.length === 0) return [];
+
+      const firstLine = lines[0];
+      let delimiter = ',';
+      const tabCount = (firstLine.match(/\t/g) || []).length;
+      const semiCount = (firstLine.match(/;/g) || []).length;
+      const commaCount = (firstLine.match(/,/g) || []).length;
+
+      if (tabCount > commaCount && tabCount >= semiCount) delimiter = '\t';
+      else if (semiCount > commaCount) delimiter = ';';
+
+      return lines.map(line => {
+        let inQuotes = false;
+        let token = "";
+        const cols = [];
+        for (let j = 0; j < line.length; j++) {
+          const c = line[j];
+          if (c === '"') inQuotes = !inQuotes;
+          else if (c === delimiter && !inQuotes) {
+            cols.push(token.replace(/^"|"$/g, '').trim());
+            token = "";
+          } else {
+            token += c;
+          }
+        }
+        cols.push(token.replace(/^"|"$/g, '').trim());
+        return cols;
+      });
     }
 
-    function parseLine(line) {
-      let inQuotes = false;
-      let token = "";
-      const cols = [];
-      for (let j = 0; j < line.length; j++) {
-        const c = line[j];
-        if (c === '"') inQuotes = !inQuotes;
-        else if (c === ',' && !inQuotes) {
-          cols.push(token.trim());
-          token = "";
-        } else {
-          token += c;
-        }
-      }
-      cols.push(token.trim());
-      return cols;
+    const rows = parseSpreadsheetRows(csvText);
+    if (rows.length < 2) {
+      return { success: false, message: "किमान एक डेटा ओळ (Header + Data row) आवश्यक आहे." };
     }
 
     function cleanVal(v) {
@@ -3086,10 +3126,13 @@ export function importDengueOldDataCsv(csvText, replace = false) {
       return s || 'FEMALE';
     }
 
-    const header = parseLine(lines[0]).map(c => cleanVal(c).toLowerCase());
+    const header = rows[0].map(c => cleanVal(c).toLowerCase());
 
-    const idIdx = header.findIndex(c => c.includes('आयडी') || c === 'id');
-    const nameIdx = header.findIndex(c => c.includes('नाव') || c.includes('patient name') || c.includes('patient') || c === 'name');
+    const idIdx = header.findIndex(c => c.includes('आयडी') || c === 'id' || c.includes('अ.क्र'));
+    let nameIdx = header.findIndex(c => 
+      c.includes('नाव') || c.includes('patient name') || c.includes('patient_name') || c.includes('patient') || 
+      c.includes('pname') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('à¤¨à¤¾à¤µ') || c === 'name'
+    );
     const mobileIdx = header.findIndex(c => c.includes('मोबाईल') || c.includes('mobile') || c.includes('phone') || c.includes('contact'));
     const houseIdx = header.findIndex(c => c.includes('घर') || c.includes('house'));
     const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village'));
@@ -3113,18 +3156,24 @@ export function importDengueOldDataCsv(csvText, replace = false) {
     const haemIdx = header.findIndex(c => c.includes('रक्तस्राव') || c.includes('haem'));
     const docNameIdx = header.findIndex(c => c.includes('डॉक्टर नाव') || c.includes('doctor name'));
     const docMobIdx = header.findIndex(c => c.includes('डॉक्टर मोबाईल') || c.includes('doctor mobile'));
-    const dResIdx = header.findIndex(c => c.includes('डेंगी निष्कर्ष') || c.includes('डेंगी निकाल') || c.includes('dengue result'));
+    const dResIdx = header.findIndex(c => c.includes('डेंगी निष्कर्ष') || c.includes('डेंगी निकाल') || c.includes('dengue result') || c.includes('dengue_result'));
     const dTestIdx = header.findIndex(c => c.includes('डेंगी चाचणी') || c.includes('dengue test'));
     const dRefIdx = header.findIndex(c => c.includes('डेंगी लॅब संदर्भ') || c.includes('डेंगी संदर्भ') || c.includes('dengue report ref'));
     const dDateIdx = header.findIndex(c => c.includes('डेंगी अहवाल दिनांक') || c.includes('dengue report date'));
-    const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया निष्कर्ष') || c.includes('चिकनगुनिया निकाल') || c.includes('chikungunya result'));
+    const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया निष्कर्ष') || c.includes('चिकनगुनिया निकाल') || c.includes('chikungunya result') || c.includes('chik_result'));
     const cTestIdx = header.findIndex(c => c.includes('चिकनगुनिया चाचणी') || c.includes('chikungunya test'));
     const cRefIdx = header.findIndex(c => c.includes('चिकनगुनिया लॅब संदर्भ') || c.includes('चिकनगुनिया संदर्भ') || c.includes('chikungunya report ref'));
     const cDateIdx = header.findIndex(c => c.includes('चिकनगुनिया अहवाल दिनांक') || c.includes('chikungunya report date'));
     const testResIdx = header.findIndex(c => c.includes('एकूण स्थिती') || c.includes('चाचणी अहवाल') || c.includes('overall status') || c.includes('test result'));
 
-    if (nameIdx === -1) {
-      return { success: false, message: "CSV फाईलमध्ये 'रुग्णाचे नाव' (Patient Name) कॉलम आढळला नाही." };
+    // Smart fallback if nameIdx is still -1
+    if (nameIdx === -1 && header.length >= 1) {
+      if (header.length === 1) nameIdx = 0;
+      else if (header[0].includes('reg') || header[0].includes('no') || header[0].includes('id') || header[0].includes('नोंदणी') || header[0].includes('क्र')) {
+        nameIdx = 1;
+      } else {
+        nameIdx = 0;
+      }
     }
 
     if (replace) {
@@ -3134,9 +3183,10 @@ export function importDengueOldDataCsv(csvText, replace = false) {
     let addedCount = 0;
     const nowIso = new Date().toISOString();
 
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseLine(lines[i]);
-      const rawName = nameIdx !== -1 && cols[nameIdx] ? cleanVal(cols[nameIdx]) : "";
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
+      if (!cols || cols.length === 0) continue;
+      const rawName = nameIdx !== -1 && cols[nameIdx] ? cleanVal(cols[nameIdx]) : (cols[0] ? cleanVal(cols[0]) : "");
       if (!rawName) continue;
 
       const pName = rawName.toUpperCase();

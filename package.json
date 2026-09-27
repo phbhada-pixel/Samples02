@@ -6,12 +6,13 @@
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
-    "build": "node scripts/generateDefaultData.js && mkdir -p dist && cp index.html dist/index.html && cp Form.html dist/Form.html && cp defaultData.js dist/defaultData.js",
+    "build": "node scripts/generateDefaultData.js && mkdir -p dist/js && cp node_modules/xlsx/dist/xlsx.full.min.js dist/js/xlsx.full.min.js && cp index.html dist/index.html && cp Form.html dist/Form.html && cp defaultData.js dist/defaultData.js",
     "lint": "node -c server.js && node -c data/store.js && node -c services/reports.js",
     "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "xlsx": "^0.18.5"
   }
 }

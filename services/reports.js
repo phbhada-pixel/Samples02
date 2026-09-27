@@ -2,7 +2,8 @@ import { masterData, bsDataEntry, villageDetails, monthMaster, generatedReports,
 
 function formatDateDisplay(d) {
   if (!d) return '';
-  const date = new Date(d);
+  const date = parseDateSafe(d);
+  if (!date) return String(d);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
@@ -11,17 +12,29 @@ function formatDateDisplay(d) {
 
 function parseDateSafe(value) {
   if (!value) return null;
-  if (value instanceof Date) return value;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   const str = String(value).trim();
-  if (str.match(/^\d{1,2}-\d{1,2}-\d{4}$/)) {
-    const parts = str.split('-');
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+  // YYYY-MM-DD or YYYY/MM/DD
+  const mIso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (mIso) {
+    return new Date(parseInt(mIso[1]), parseInt(mIso[2]) - 1, parseInt(mIso[3]), 12, 0, 0);
   }
-  if (str.includes('/')) {
-    const parts = str.split('/');
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+  // DD-MM-YYYY or DD/MM/YYYY
+  const mDmy = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (mDmy) {
+    return new Date(parseInt(mDmy[3]), parseInt(mDmy[2]) - 1, parseInt(mDmy[1]), 12, 0, 0);
   }
-  return new Date(value);
+  // DD-MMM-YYYY like 28-Aug-2025, 9-Sep-2026
+  const mDMonY = str.match(/^(\d{1,2})[-/ ]([A-Za-z]{3,})[-/ ](\d{4})/);
+  if (mDMonY) {
+    const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+    const mKey = mDMonY[2].toLowerCase().slice(0, 3);
+    if (months[mKey] !== undefined) {
+      return new Date(parseInt(mDMonY[3]), months[mKey], parseInt(mDMonY[1]), 12, 0, 0);
+    }
+  }
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function cleanStr(str) {
@@ -109,7 +122,9 @@ function wrapReportPage(title, bodyContent) {
 <body>
   <div class="print-actions">
     <div><strong>प्रा.आ.केंद्र भादा</strong> - अधिकृत अहवाल / पत्र</div>
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <a href="/api/export/monthly-indicators.xlsx" download class="print-btn" style="background:#2b6cb0; text-decoration:none;">📊 मासिक निर्देशक Excel</a>
+      <a href="/api/export/dengue-samples.xlsx" download class="print-btn" style="background:#6b46c1; text-decoration:none;">🦟 डेंगी नमुने Excel</a>
       <button class="print-btn" onclick="window.print()">🖨️ प्रिंट करा / PDF सेव्ह करा</button>
       <button class="close-btn" onclick="window.close()">बंद करा</button>
     </div>
@@ -831,6 +846,127 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
       }
     });
     const lowSubcenterCount = lowSubcenters.length;
+
+    // ================= DENGUE & CHIKUNGUNYA MONTHLY & PROGRESSIVE SURVEILLANCE =================
+    // सॅम्पल घेतलेल्या दिनांक (dateCollection) नुसार महिना निश्चित करावा
+    function getDengueSampleDate(e) {
+      if (!e) return null;
+      if (e.dateCollection) {
+        const d = parseDateSafe(e.dateCollection);
+        if (d) return d;
+      }
+      if (e.dateOnset) {
+        const d = parseDateSafe(e.dateOnset);
+        if (d) return d;
+      }
+      return parseDateSafe(e.createdAt);
+    }
+
+    const monthDengueEntries = dengueChikungunyaEntries.filter(e => {
+      const d = getDengueSampleDate(e);
+      return d && d >= startDate && d <= endDate;
+    }).sort((a, b) => {
+      const da = getDengueSampleDate(a) || new Date(0);
+      const db = getDengueSampleDate(b) || new Date(0);
+      return db - da;
+    });
+
+    const progDengueEntries = dengueChikungunyaEntries.filter(e => {
+      const d = getDengueSampleDate(e);
+      return d && d >= yearStart && d <= endDate;
+    }).sort((a, b) => {
+      const da = getDengueSampleDate(a) || new Date(0);
+      const db = getDengueSampleDate(b) || new Date(0);
+      return db - da;
+    });
+
+    function isDenguePos(e) {
+      const d = String(e.dengueResult || '').toLowerCase();
+      const t = String(e.testResult || '').toLowerCase();
+      return d.includes('pos') || d.includes('पॉझिटिव्ह') || d.includes('positive') || (t.includes('pos') && t.includes('dengue'));
+    }
+    function isDengueNeg(e) {
+      const d = String(e.dengueResult || '').toLowerCase();
+      const t = String(e.testResult || '').toLowerCase();
+      return (d.includes('neg') || d.includes('निगेटिव्ह') || d.includes('negative')) && !isDenguePos(e);
+    }
+    function isDengueEquivocal(e) {
+      const d = String(e.dengueResult || '').toLowerCase();
+      const t = String(e.testResult || '').toLowerCase();
+      return (d.includes('equivocal') || d.includes('इक्विव्होकल') || d.includes('borderline') || d.includes('संशयित') || t.includes('equivocal')) && !isDenguePos(e) && !isDengueNeg(e);
+    }
+    function isDenguePend(e) {
+      return !isDenguePos(e) && !isDengueNeg(e) && !isDengueEquivocal(e);
+    }
+
+    function isChikPos(e) {
+      const c = String(e.chikungunyaResult || '').toLowerCase();
+      const t = String(e.testResult || '').toLowerCase();
+      return c.includes('pos') || c.includes('पॉझिटिव्ह') || c.includes('positive') || (t.includes('pos') && (t.includes('chik') || t.includes('chikungunya')));
+    }
+    function isChikNeg(e) {
+      const c = String(e.chikungunyaResult || '').toLowerCase();
+      const t = String(e.testResult || '').toLowerCase();
+      return (c.includes('neg') || c.includes('निगेटिव्ह') || c.includes('negative')) && !isChikPos(e);
+    }
+    function isChikEquivocal(e) {
+      const c = String(e.chikungunyaResult || '').toLowerCase();
+      const t = String(e.testResult || '').toLowerCase();
+      return (c.includes('equivocal') || c.includes('इक्विव्होकल') || c.includes('borderline') || c.includes('संशयित') || t.includes('equivocal')) && !isChikPos(e) && !isChikNeg(e);
+    }
+    function isChikPend(e) {
+      return !isChikPos(e) && !isChikNeg(e) && !isChikEquivocal(e);
+    }
+
+    // Monthly counts
+    const monthTotalDengueSamples = monthDengueEntries.length;
+    const monthDenguePosCount = monthDengueEntries.filter(isDenguePos).length;
+    const monthDengueNegCount = monthDengueEntries.filter(isDengueNeg).length;
+    const monthDengueEquivocalCount = monthDengueEntries.filter(isDengueEquivocal).length;
+    const monthDenguePendCount = monthDengueEntries.filter(isDenguePend).length;
+
+    const monthChikPosCount = monthDengueEntries.filter(isChikPos).length;
+    const monthChikNegCount = monthDengueEntries.filter(isChikNeg).length;
+    const monthChikEquivocalCount = monthDengueEntries.filter(isChikEquivocal).length;
+    const monthChikPendCount = monthDengueEntries.filter(isChikPend).length;
+
+    // Progressive counts
+    const progTotalDengueSamples = progDengueEntries.length;
+    const progDenguePosCount = progDengueEntries.filter(isDenguePos).length;
+    const progDengueNegCount = progDengueEntries.filter(isDengueNeg).length;
+    const progDengueEquivocalCount = progDengueEntries.filter(isDengueEquivocal).length;
+    const progDenguePendCount = progDengueEntries.filter(isDenguePend).length;
+
+    const progChikPosCount = progDengueEntries.filter(isChikPos).length;
+    const progChikNegCount = progDengueEntries.filter(isChikNeg).length;
+    const progChikEquivocalCount = progDengueEntries.filter(isChikEquivocal).length;
+    const progChikPendCount = progDengueEntries.filter(isChikPend).length;
+
+    // Distinct villages for Dengue & Chikungunya breakdown
+    const uniqueDengueVillages = Array.from(new Set([
+      ...monthDengueEntries.map(e => e.village).filter(Boolean),
+      ...progDengueEntries.map(e => e.village).filter(Boolean)
+    ]));
+
+    const dengueVillagewiseRows = uniqueDengueVillages.map(v => {
+      const vMonthEntries = monthDengueEntries.filter(e => cleanStr(e.village) === cleanStr(v));
+      const vProgEntries = progDengueEntries.filter(e => cleanStr(e.village) === cleanStr(v));
+      const vSc = masterData.find(m => (m.villageList || []).includes(v))?.upkendra || 'भादा';
+      return {
+        village: v,
+        upkendra: vSc,
+        monthSamples: vMonthEntries.length,
+        progSamples: vProgEntries.length,
+        monthDenguePos: vMonthEntries.filter(isDenguePos).length,
+        progDenguePos: vProgEntries.filter(isDenguePos).length,
+        monthChikPos: vMonthEntries.filter(isChikPos).length,
+        progChikPos: vProgEntries.filter(isChikPos).length,
+        monthEquivocal: vMonthEntries.filter(e => isDengueEquivocal(e) || isChikEquivocal(e)).length,
+        progEquivocal: vProgEntries.filter(e => isDengueEquivocal(e) || isChikEquivocal(e)).length,
+        monthNeg: vMonthEntries.filter(e => isDengueNeg(e) && isChikNeg(e)).length,
+        monthPend: vMonthEntries.filter(e => isDenguePend(e) || isChikPend(e)).length
+      };
+    });
 
     const bodyHtml = `
       <!-- Report Header -->
@@ -1571,6 +1707,229 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
                 `;
               }).join('')}
               ${zeroVillages.length === 0 ? '<tr><td colspan="5" style="color:#38a169; font-weight:bold; padding:10px;">सर्व गावांतून रक्त नमुने संकलित झाले आहेत (शून्य संकलन असलेले एकही गाव नाही).</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer-sign" style="margin-top:25px;">
+          <b>वैद्यकीय अधिकारी</b><br>
+          प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर
+        </div>
+      </div>
+
+      <!-- ================= SECTION 5: डेंगी व चिकनगुनिया मासिक व प्रोग्रेसिव्ह (प्रगत) प्रयोगशाळा अहवाल ================= -->
+      <div class="report-page" style="page-break-before: always; margin-top: 30px;">
+        <div style="text-align:center; margin-bottom:16px;">
+          <h3 style="font-size:17px; margin:0 0 4px 0; font-weight:700; color:#1a202c;">प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर</h3>
+          <h4 style="font-size:15px; margin:0 0 4px 0; font-weight:700; color:#2b6cb0;">
+            माहे ${D47} - डेंगी व चिकनगुनिया कीटकजन्य आजार मासिक व प्रोग्रेसिव्ह (प्रगत) प्रयोगशाळा अहवाल
+          </h4>
+          <div style="font-size:13px; color:#4a5568; font-weight:600;">(१०.१५.२ जोडपत्रानंतरचे परिशिष्ट - मासिक व प्रोग्रेसिव्ह संशयित नमुने, GMC लातूर तपासणी निष्कर्ष व गावनिहाय सर्वेक्षण)</div>
+          <hr style="border:0; border-top:1.5px solid #2d3748; margin:10px 0 16px 0;">
+        </div>
+
+        <!-- Part 1: Main Summary Table (मासिक व प्रोग्रेसिव्ह सारांश) -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:13.5px; margin:0; font-weight:700; color:#2b6cb0;">
+              १. डेंगी व चिकनगुनिया - मासिक व प्रोग्रेसिव्ह (प्रगत) प्रयोगशाळा तपासणी सारांश तक्ता:
+            </h4>
+            <span style="background:#ebf8ff; color:#2b6cb0; font-size:11.5px; font-weight:bold; padding:2px 8px; border-radius:10px;">
+              शासकीय वैद्यकीय महाविद्यालय (GMC), लातूर
+            </span>
+          </div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:8px;">
+            <thead>
+              <tr style="background:#edf2f7;">
+                <th style="width:4%;" rowspan="2">अ.क्र.</th>
+                <th style="width:18%;" rowspan="2" class="text-left">कीटकजन्य आजार</th>
+                <th style="width:16%;" rowspan="2">चाचणी पद्धती (Test Method)</th>
+                <th style="width:14%;" colspan="2">पाठवलेले संशयित नमुने</th>
+                <th style="width:14%;" colspan="2">पॉझिटिव्ह निष्पन्न रुग्ण</th>
+                <th style="width:12%;" colspan="2">निगेटिव्ह नमुने</th>
+                <th style="width:12%;" colspan="2" style="background:#fffaf0; color:#c05621;">संशयित / इक्विव्होकल</th>
+                <th style="width:10%;" colspan="2">प्रलंबित अहवाल</th>
+              </tr>
+              <tr style="background:#edf2f7;">
+                <th style="width:7%;">मासिक</th>
+                <th style="width:7%;">प्रगत (YTD)</th>
+                <th style="width:7%; background:#fff5f5; color:#c53030;">मासिक</th>
+                <th style="width:7%; background:#fff5f5; color:#c53030;">प्रगत</th>
+                <th style="width:6%;">मासिक</th>
+                <th style="width:6%;">प्रगत</th>
+                <th style="width:6%; background:#fffaf0; color:#c05621;">मासिक</th>
+                <th style="width:6%; background:#fffaf0; color:#c05621;">प्रगत</th>
+                <th style="width:5%;">मासिक</th>
+                <th style="width:5%;">प्रगत</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>१</td>
+                <td class="text-left font-semibold">🦟 डेंगी ताप (Dengue Fever)</td>
+                <td>NS1 Ag व IgM ELISA</td>
+                <td><b>${monthTotalDengueSamples}</b></td>
+                <td><b>${progTotalDengueSamples}</b></td>
+                <td style="font-weight:bold; color:${monthDenguePosCount > 0 ? '#c53030' : '#2d3748'}; background:${monthDenguePosCount > 0 ? '#fff5f5' : 'transparent'};">${monthDenguePosCount}</td>
+                <td style="font-weight:bold; color:${progDenguePosCount > 0 ? '#c53030' : '#2d3748'}; background:${progDenguePosCount > 0 ? '#fff5f5' : 'transparent'};">${progDenguePosCount}</td>
+                <td>${monthDengueNegCount}</td>
+                <td>${progDengueNegCount}</td>
+                <td style="font-weight:bold; color:${monthDengueEquivocalCount > 0 ? '#c05621' : '#718096'}; background:${monthDengueEquivocalCount > 0 ? '#fffaf0' : 'transparent'};">${monthDengueEquivocalCount}</td>
+                <td style="font-weight:bold; color:${progDengueEquivocalCount > 0 ? '#c05621' : '#718096'}; background:${progDengueEquivocalCount > 0 ? '#fffaf0' : 'transparent'};">${progDengueEquivocalCount}</td>
+                <td style="font-weight:bold; color:${monthDenguePendCount > 0 ? '#b7791f' : '#718096'};">${monthDenguePendCount}</td>
+                <td style="font-weight:bold; color:${progDenguePendCount > 0 ? '#b7791f' : '#718096'};">${progDenguePendCount}</td>
+              </tr>
+              <tr>
+                <td>२</td>
+                <td class="text-left font-semibold">🦠 चिकनगुनिया (Chikungunya)</td>
+                <td>Chikungunya IgM ELISA</td>
+                <td><b>${monthTotalDengueSamples}</b></td>
+                <td><b>${progTotalDengueSamples}</b></td>
+                <td style="font-weight:bold; color:${monthChikPosCount > 0 ? '#c53030' : '#2d3748'}; background:${monthChikPosCount > 0 ? '#fff5f5' : 'transparent'};">${monthChikPosCount}</td>
+                <td style="font-weight:bold; color:${progChikPosCount > 0 ? '#c53030' : '#2d3748'}; background:${progChikPosCount > 0 ? '#fff5f5' : 'transparent'};">${progChikPosCount}</td>
+                <td>${monthChikNegCount}</td>
+                <td>${progChikNegCount}</td>
+                <td style="font-weight:bold; color:${monthChikEquivocalCount > 0 ? '#c05621' : '#718096'}; background:${monthChikEquivocalCount > 0 ? '#fffaf0' : 'transparent'};">${monthChikEquivocalCount}</td>
+                <td style="font-weight:bold; color:${progChikEquivocalCount > 0 ? '#c05621' : '#718096'}; background:${progChikEquivocalCount > 0 ? '#fffaf0' : 'transparent'};">${progChikEquivocalCount}</td>
+                <td style="font-weight:bold; color:${monthChikPendCount > 0 ? '#b7791f' : '#718096'};">${monthChikPendCount}</td>
+                <td style="font-weight:bold; color:${progChikPendCount > 0 ? '#b7791f' : '#718096'};">${progChikPendCount}</td>
+              </tr>
+              <tr style="background:#e6fffa; font-weight:bold;">
+                <td colspan="3" class="text-left">एकूण कीटकजन्य संशयित सिरम नमुने (GMC लातूर):</td>
+                <td><b>${monthTotalDengueSamples}</b></td>
+                <td><b>${progTotalDengueSamples}</b></td>
+                <td style="color:#c53030;">${monthDenguePosCount + monthChikPosCount}</td>
+                <td style="color:#c53030;">${progDenguePosCount + progChikPosCount}</td>
+                <td>${monthDengueNegCount}</td>
+                <td>${progDengueNegCount}</td>
+                <td style="color:#c05621;">${monthDengueEquivocalCount + monthChikEquivocalCount}</td>
+                <td style="color:#c05621;">${progDengueEquivocalCount + progChikEquivocalCount}</td>
+                <td style="color:#b7791f;">${Math.max(monthDenguePendCount, monthChikPendCount)}</td>
+                <td style="color:#b7791f;">${Math.max(progDenguePendCount, progChikPendCount)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="font-size:10.5px; color:#4a5568; background:#f7fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 10px; margin-bottom:15px; line-height:1.5;">
+            📌 <b>महत्त्वाची नोंद (Medical & Reporting Clarification):</b><br>
+            • <b>इक्विव्होकल (Equivocal):</b> प्रयोगशाळेकडून तपासणी अहवाल प्राप्त झाला आहे; परंतु निष्कर्षाचे मूल्य अनिश्चित / सीमावर्ती (Borderline OD Ratio) आहे. अशा रुग्णांची १४ दिवसांनी फेरचाचणी आवश्यक असते.<br>
+            • <b>प्रलंबित (Pending):</b> नमुना प्रयोगशाळेत पाठवला असून अहवाल अद्याप अप्राप्त (येणे बाकी) आहे.<br>
+            <i>(Equivocal आणि Pending हे दोन्ही अहवाल प्रकार पूर्णपणे स्वतंत्र व भिन्न आहेत.)</i>
+          </div>
+        </div>
+
+        <!-- Part 2: Villagewise Surveillance Breakdown -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:13.5px; margin:0; font-weight:700; color:#2d3748;">
+              २. माहे ${D47} गावनिहाय डेंगी व चिकनगुनिया संशयित नमुने व निष्पन्न रुग्ण वर्गीकरण:
+            </h4>
+            <span style="font-size:11.5px; color:#718096; font-weight:600;">
+              कीटकशास्त्रीय सर्वेक्षण व अबेट ट्रीटमेंट
+            </span>
+          </div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:15px;">
+            <thead>
+              <tr style="background:#edf2f7;">
+                <th style="width:5%;">अ.क्र.</th>
+                <th style="width:18%;" class="text-left">गावाचे नाव</th>
+                <th style="width:14%;">उपकेंद्र</th>
+                <th style="width:11%;">मासिक नमुने</th>
+                <th style="width:11%;">प्रगत नमुने</th>
+                <th style="width:10%; color:#c53030;">डेंगी +ve</th>
+                <th style="width:10%; color:#c53030;">चिकनगुनिया +ve</th>
+                <th style="width:10%; color:#c05621;">इक्विव्होकल</th>
+                <th style="width:11%;">प्रलंबित</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dengueVillagewiseRows.map((v, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td class="text-left font-semibold">${v.village}</td>
+                  <td>${v.upkendra}</td>
+                  <td><b>${v.monthSamples}</b></td>
+                  <td>${v.progSamples}</td>
+                  <td style="font-weight:bold; color:${v.monthDenguePos > 0 ? '#c53030' : '#276749'};">${v.monthDenguePos}</td>
+                  <td style="font-weight:bold; color:${v.monthChikPos > 0 ? '#c53030' : '#276749'};">${v.monthChikPos}</td>
+                  <td style="font-weight:bold; color:${v.monthEquivocal > 0 ? '#c05621' : '#718096'};">${v.monthEquivocal}</td>
+                  <td style="font-weight:bold; color:${v.monthPend > 0 ? '#b7791f' : '#718096'};">${v.monthPend}</td>
+                </tr>
+              `).join('')}
+              ${dengueVillagewiseRows.length === 0 ? '<tr><td colspan="9" style="color:#276749; font-weight:bold; padding:10px;">माहे ' + D47 + ' व प्रोग्रेसिव्ह कालावधीत सर्व गावांत नियमित कीटकशास्त्रीय सर्वेक्षण सुरू असून शून्य डेंगी/चिकनगुनिया रुग्ण आहेत (निरंक अहवाल).</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Part 3: Detailed Monthly Patient Register with Results -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:13.5px; margin:0; font-weight:700; color:#2d3748;">
+              ३. माहे ${D47} मधील डेंगी व चिकनगुनिया संशयित नमुने व तपासणी निष्कर्ष नोंदवही (चालू महिन्यातील यादी):
+            </h4>
+            <span style="font-size:11.5px; font-weight:bold; color:#2b6cb0; background:#ebf8ff; padding:2px 8px; border-radius:10px;">
+              चालू मासिक एकूण: ${monthTotalDengueSamples} नमुने (डेंगी +ve: ${monthDenguePosCount} | चिकनगुनिया +ve: ${monthChikPosCount} | इक्विव्होकल: ${monthDengueEquivocalCount + monthChikEquivocalCount} | प्रलंबित: ${Math.max(monthDenguePendCount, monthChikPendCount)})
+            </span>
+          </div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:15px;">
+            <thead>
+              <tr style="background:#edf2f7;">
+                <th style="width:4%;">अ.क्र.</th>
+                <th style="width:16%;" class="text-left">रुग्णाचे नाव</th>
+                <th style="width:8%;">वय/लिंग</th>
+                <th style="width:12%;">गाव (उपकेंद्र)</th>
+                <th style="width:10%;">नोंदणी क्र.</th>
+                <th style="width:10%;">नमुना दिनांक</th>
+                <th style="width:18%;">डेंगी चाचणी निष्कर्ष</th>
+                <th style="width:18%;">चिकनगुनिया चाचणी निष्कर्ष</th>
+                <th style="width:10%;">सद्यस्थिती</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthDengueEntries.map((e, idx) => {
+                const dBadge = isDenguePos(e)
+                  ? '<span style="color:#c53030; font-weight:bold;">🔴 पॉझिटिव्ह (Positive)</span>'
+                  : (isDengueNeg(e)
+                    ? '<span style="color:#276749; font-weight:bold;">🟢 निगेटिव्ह (Negative)</span>'
+                    : (isDengueEquivocal(e)
+                      ? '<span style="display:inline-block; font-size:10.5px; font-weight:bold; padding:1px 6px; border-radius:4px; background:#feebc8; color:#7b341e; border:1px solid #fbd38d;">🟠 इक्विव्होकल (Equivocal)</span>'
+                      : '<span style="color:#718096; font-weight:bold;">⏳ प्रलंबित (Pending)</span>'));
+                const cBadge = isChikPos(e)
+                  ? '<span style="color:#c53030; font-weight:bold;">🔴 पॉझिटिव्ह (Positive)</span>'
+                  : (isChikNeg(e)
+                    ? '<span style="color:#276749; font-weight:bold;">🟢 निगेटिव्ह (Negative)</span>'
+                    : (isChikEquivocal(e)
+                      ? '<span style="display:inline-block; font-size:10.5px; font-weight:bold; padding:1px 6px; border-radius:4px; background:#feebc8; color:#7b341e; border:1px solid #fbd38d;">🟠 इक्विव्होकल (Equivocal)</span>'
+                      : '<span style="color:#718096; font-weight:bold;">⏳ प्रलंबित (Pending)</span>'));
+                const dRef = e.dengueReportRef ? `<br><span style="font-size:9.5px; color:#4a5568;">जा.क्र: ${e.dengueReportRef} ${e.dengueReportDate ? '(' + formatDateDisplay(e.dengueReportDate) + ')' : ''}</span>` : '';
+                const cRef = e.chikungunyaReportRef ? `<br><span style="font-size:9.5px; color:#4a5568;">जा.क्र: ${e.chikungunyaReportRef} ${e.chikungunyaReportDate ? '(' + formatDateDisplay(e.chikungunyaReportDate) + ')' : ''}</span>` : '';
+                const dateFmt = e.dateCollection ? formatDateDisplay(e.dateCollection) : (e.createdAt ? formatDateDisplay(e.createdAt) : '-');
+                const sexLabel = e.sex === 'FEMALE' ? 'स्त्री' : (e.sex === 'MALE' ? 'पुरुष' : e.sex || '-');
+                const sc = masterData.find(m => (m.villageList || []).includes(e.village))?.upkendra || '';
+                const isAnyPos = isDenguePos(e) || isChikPos(e);
+                const isAnyEquiv = isDengueEquivocal(e) || isChikEquivocal(e);
+                const isAllNeg = isDengueNeg(e) && (isChikNeg(e) || !e.chikungunyaResult);
+                const status = isAnyPos
+                  ? '<span style="color:#c53030; font-weight:bold;">उपचारित / कंटेनर सर्व्हे पूर्ण</span>'
+                  : (isAnyEquiv
+                    ? '<span style="color:#c05621; font-weight:bold;">इक्विव्होकल (१४ दिवसांनी फेरचाचणी)</span>'
+                    : (isAllNeg
+                      ? '<span style="color:#276749;">सर्व्हेक्षण पूर्ण</span>'
+                      : '<span style="color:#dd6b20;">GMC अहवाल प्रतीक्षेत (Pending)</span>'));
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td class="text-left font-semibold">${e.patientName}</td>
+                    <td>${e.age || '-'} / ${sexLabel}</td>
+                    <td>${e.village || '-'} ${sc ? `<span style="font-size:9.5px; color:#718096;">(${sc})</span>` : ''}</td>
+                    <td>${e.patientRegNo || '-'}</td>
+                    <td>${dateFmt}</td>
+                    <td>${dBadge}${dRef}</td>
+                    <td>${cBadge}${cRef}</td>
+                    <td>${status}</td>
+                  </tr>
+                `;
+              }).join('')}
+              ${monthDengueEntries.length === 0 ? '<tr><td colspan="9" style="color:#276749; font-weight:bold; padding:12px;">माहे ' + D47 + ' मध्ये डेंगी किंवा चिकनगुनियाचा एकही संशयित सिरम नमुना नोंदवलेला नाही (शून्य संशयित नमुने / निरंक अहवाल).</td></tr>' : ''}
             </tbody>
           </table>
         </div>

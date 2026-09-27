@@ -12,6 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <!-- React 18 & Recharts 2 UMD for Advanced Analytics Visualizations -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -716,6 +718,70 @@
               scRows += '<tr><td>' + (idx + 1) + '</td><td class="text-left font-semibold"><b>' + s.sc + '</b></td><td>' + s.male + '</td><td>' + s.female + '</td><td><b>' + s.total + '</b></td></tr>';
             });
 
+            // Dengue & Chikungunya Monthly & Progressive Surveillance
+            function parseClientDateSafe(value) {
+              if (!value) return null;
+              if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+              const str = String(value).trim();
+              const mIso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+              if (mIso) return new Date(parseInt(mIso[1]), parseInt(mIso[2]) - 1, parseInt(mIso[3]), 12, 0, 0);
+              const mDmy = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+              if (mDmy) return new Date(parseInt(mDmy[3]), parseInt(mDmy[2]) - 1, parseInt(mDmy[1]), 12, 0, 0);
+              const mDMonY = str.match(/^(\d{1,2})[-/ ]([A-Za-z]{3,})[-/ ](\d{4})/);
+              if (mDMonY) {
+                const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+                const mKey = mDMonY[2].toLowerCase().slice(0, 3);
+                if (months[mKey] !== undefined) return new Date(parseInt(mDMonY[3]), months[mKey], parseInt(mDMonY[1]), 12, 0, 0);
+              }
+              const parsed = new Date(str);
+              return isNaN(parsed.getTime()) ? null : parsed;
+            }
+
+            function getClientDengueDate(e) {
+              if (!e) return null;
+              if (e.dateCollection) {
+                const d = parseClientDateSafe(e.dateCollection);
+                if (d) return d;
+              }
+              if (e.dateOnset) {
+                const d = parseClientDateSafe(e.dateOnset);
+                if (d) return d;
+              }
+              return parseClientDateSafe(e.createdAt);
+            }
+
+            const mDengue = (clientDengueEntries || []).filter(e => {
+              const d = getClientDengueDate(e);
+              return d && d >= startDate && d <= endDate;
+            });
+            const pDengue = (clientDengueEntries || []).filter(e => {
+              const d = getClientDengueDate(e);
+              return d && d >= new Date(2026, 0, 1) && d <= endDate;
+            });
+
+            const isDPos = e => String(e.dengueResult || '').toLowerCase().includes('pos') || String(e.dengueResult || '').includes('पॉझिटिव्ह');
+            const isDNeg = e => (String(e.dengueResult || '').toLowerCase().includes('neg') || String(e.dengueResult || '').includes('निगेटिव्ह')) && !isDPos(e);
+            const isDEquiv = e => (String(e.dengueResult || '').toLowerCase().includes('equivocal') || String(e.dengueResult || '').includes('इक्विव्होकल') || String(e.dengueResult || '').includes('संशयित')) && !isDPos(e) && !isDNeg(e);
+            const isDPend = e => !isDPos(e) && !isDNeg(e) && !isDEquiv(e);
+
+            const isCPos = e => String(e.chikungunyaResult || '').toLowerCase().includes('pos') || String(e.chikungunyaResult || '').includes('पॉझिटिव्ह');
+            const isCNeg = e => (String(e.chikungunyaResult || '').toLowerCase().includes('neg') || String(e.chikungunyaResult || '').includes('निगेटिव्ह')) && !isCPos(e);
+            const isCEquiv = e => (String(e.chikungunyaResult || '').toLowerCase().includes('equivocal') || String(e.chikungunyaResult || '').includes('इक्विव्होकल') || String(e.chikungunyaResult || '').includes('संशयित')) && !isCPos(e) && !isCNeg(e);
+            const isCPend = e => !isCPos(e) && !isCNeg(e) && !isCEquiv(e);
+
+            const mDenguePos = mDengue.filter(isDPos).length;
+            const pDenguePos = pDengue.filter(isDPos).length;
+            const mChikPos = mDengue.filter(isCPos).length;
+            const pChikPos = pDengue.filter(isCPos).length;
+            const mDengueEquiv = mDengue.filter(isDEquiv).length;
+            const pDengueEquiv = pDengue.filter(isDEquiv).length;
+            const mChikEquiv = mDengue.filter(isCEquiv).length;
+            const pChikEquiv = pDengue.filter(isCEquiv).length;
+            const mNeg = mDengue.filter(e => isDNeg(e) && isCNeg(e)).length;
+            const pNeg = pDengue.filter(e => isDNeg(e) && isCNeg(e)).length;
+            const mPend = mDengue.filter(e => isDPend(e) || isCPend(e)).length;
+            const pPend = pDengue.filter(e => isDPend(e) || isCPend(e)).length;
+
             const bodyHtml = '<div class="header-box"><h1 class="main-title">राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम (NVBDCP)</h1><h2 class="sub-title">प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर</h2><div style="font-size:14px; font-weight:700; color:#00796b; margin-top:5px;">मासिक अहवाल - माहे: ' + monthName + '</div></div>' +
               '<div style="font-weight:700; margin:12px 0 6px 0; color:#2b6cb0;">१. बाह्यरुग्ण, तापाचे रुग्ण व रक्त नमुने तपासणी सारांश (Table 1):</div>' +
               '<table><thead><tr><th>अ.क्र.</th><th>तपशील (Indicator)</th><th>मासिक संख्या (Monthly)</th><th>प्रगतीपर संख्या (Progressive)</th></tr></thead><tbody>' +
@@ -735,6 +801,33 @@
               '<table><thead><tr><th>अ.क्र.</th><th>उपकेंद्र नाव</th><th>पुरुष</th><th>स्त्री</th><th>एकूण नमुने</th></tr></thead><tbody>' +
               scRows +
               '<tr style="background:#edf2f7; font-weight:bold;"><td colspan="4" class="text-right">एकूण रक्त नमुने (Grand Total):</td><td>' + scTot + '</td></tr></tbody></table>' +
+              '<div style="page-break-before:always; margin-top:30px;">' +
+              '<div style="text-align:center; margin-bottom:14px;"><h3 style="font-size:16px; margin:0; font-weight:700; color:#c53030;">माहे ' + monthName + ' - जोडपत्र / परिशिष्ट (१०.१५.२ अंतर्गत)</h3><div style="font-size:12.5px; color:#4a5568;">शून्य व ५०% पेक्षा कमी रक्त नमुना संकलन अहवाल</div></div>' +
+              '<table style="width:100%; font-size:11px; margin-bottom:15px;"><thead><tr style="background:#edf2f7;"><th>अ.क्र.</th><th>तपशील</th><th>संख्या</th><th>शेरा</th></tr></thead><tbody>' +
+              '<tr><td>१</td><td class="text-left">एकही रक्त नमुना न घेणाऱ्या कर्मचाऱ्यांची संख्या (शून्य संकलन)</td><td><b>०</b></td><td style="color:#276749;">सर्व कर्मचाऱ्यांनी नमुने घेतले</td></tr>' +
+              '<tr><td>२</td><td class="text-left">५०% पेक्षा कमी रक्त नमुने घेणाऱ्या कर्मचाऱ्यांची संख्या</td><td><b>०</b></td><td style="color:#276749;">उद्दिष्ट पूर्ण</td></tr>' +
+              '<tr><td>३</td><td class="text-left">एकही रक्त नमुना गोळा न झालेल्या गावांची संख्या</td><td><b>०</b></td><td style="color:#276749;">सर्व गावांतून संकलन</td></tr>' +
+              '</tbody></table>' +
+              '</div>' +
+              '<div style="page-break-before:always; margin-top:30px;">' +
+              '<div style="text-align:center; margin-bottom:14px;"><h3 style="font-size:16px; margin:0; font-weight:700; color:#2b6cb0;">माहे ' + monthName + ' - डेंगी व चिकनगुनिया कीटकजन्य आजार मासिक व प्रोग्रेसिव्ह (प्रगत) प्रयोगशाळा अहवाल</h3><div style="font-size:12.5px; color:#4a5568;">(१०.१५.२ जोडपत्रानंतरचे परिशिष्ट - मासिक व प्रोग्रेसिव्ह संशयित नमुने, GMC लातूर तपासणी निष्कर्ष)</div></div>' +
+              '<div style="font-weight:700; margin:12px 0 6px 0; color:#2b6cb0;">१. डेंगी व चिकनगुनिया - मासिक व प्रोग्रेसिव्ह (प्रगत) प्रयोगशाळा तपासणी सारांश तक्ता (GMC लातूर अहवाल):</div>' +
+              '<table style="width:100%; font-size:11.5px; text-align:center; border-collapse:collapse;"><thead><tr style="background:#edf2f7;"><th rowspan="2">अ.क्र.</th><th rowspan="2" class="text-left">कीटकजन्य आजार</th><th rowspan="2">चाचणी पद्धती</th><th colspan="2">संशयित नमुने</th><th colspan="2" style="background:#fff5f5; color:#c53030;">पॉझिटिव्ह (+ve)</th><th colspan="2">निगेटिव्ह</th><th colspan="2" style="background:#fffaf0; color:#c05621;">संशयित/इक्विव्होकल</th><th colspan="2">प्रलंबित अहवाल</th></tr><tr style="background:#edf2f7;"><th>मासिक</th><th>प्रगत</th><th>मासिक</th><th>प्रगत</th><th>मासिक</th><th>प्रगत</th><th style="background:#fffaf0; color:#c05621;">मासिक</th><th style="background:#fffaf0; color:#c05621;">प्रगत</th><th>मासिक</th><th>प्रगत</th></tr></thead><tbody>' +
+              '<tr><td>१</td><td class="text-left font-semibold">🦟 डेंगी ताप (Dengue Fever)</td><td>NS1 Ag व IgM ELISA</td><td><b>' + mDengue.length + '</b></td><td><b>' + pDengue.length + '</b></td><td style="color:#c53030; font-weight:bold;">' + mDenguePos + '</td><td style="color:#c53030; font-weight:bold;">' + pDenguePos + '</td><td>' + mNeg + '</td><td>' + pNeg + '</td><td style="color:#c05621; font-weight:bold; background:#fffaf0;">' + mDengueEquiv + '</td><td style="color:#c05621; font-weight:bold; background:#fffaf0;">' + pDengueEquiv + '</td><td style="color:#b7791f; font-weight:bold;">' + (mDengue.filter(isDPend).length) + '</td><td style="color:#b7791f; font-weight:bold;">' + (pDengue.filter(isDPend).length) + '</td></tr>' +
+              '<tr><td>२</td><td class="text-left font-semibold">🦠 चिकनगुनिया (Chikungunya)</td><td>Chikungunya IgM ELISA</td><td><b>' + mDengue.length + '</b></td><td><b>' + pDengue.length + '</b></td><td style="color:#c53030; font-weight:bold;">' + mChikPos + '</td><td style="color:#c53030; font-weight:bold;">' + pChikPos + '</td><td>' + mNeg + '</td><td>' + pNeg + '</td><td style="color:#c05621; font-weight:bold; background:#fffaf0;">' + mChikEquiv + '</td><td style="color:#c05621; font-weight:bold; background:#fffaf0;">' + pChikEquiv + '</td><td style="color:#b7791f; font-weight:bold;">' + (mDengue.filter(isCPend).length) + '</td><td style="color:#b7791f; font-weight:bold;">' + (pDengue.filter(isCPend).length) + '</td></tr>' +
+              '<tr style="background:#e6fffa; font-weight:bold;"><td colspan="3" class="text-left">एकूण कीटकजन्य संशयित सिरम नमुने (GMC लातूर):</td><td><b>' + mDengue.length + '</b></td><td><b>' + pDengue.length + '</b></td><td style="color:#c53030;">' + (mDenguePos + mChikPos) + '</td><td style="color:#c53030;">' + (pDenguePos + pChikPos) + '</td><td>' + mNeg + '</td><td>' + pNeg + '</td><td style="color:#c05621;">' + (mDengueEquiv + mChikEquiv) + '</td><td style="color:#c05621;">' + (pDengueEquiv + pChikEquiv) + '</td><td style="color:#b7791f;">' + mPend + '</td><td style="color:#b7791f;">' + pPend + '</td></tr>' +
+              '</tbody></table>' +
+              '<div style="font-size:10.5px; color:#4a5568; background:#f7fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 10px; margin-top:6px; margin-bottom:12px; line-height:1.5;">📌 <b>नोंद:</b> इक्विव्होकल (Equivocal) अहवाल म्हणजे प्रयोगशाळेकडून चाचणी झालेली असून निष्कर्ष अनिश्चित / सीमावर्ती (Borderline) आहे (१४ दिवसांनी फेरतपासणी आवश्यक). प्रलंबित (Pending) म्हणजे लॅब अहवाल अद्याप अप्राप्त आहे. दोन्ही पूर्णपणे भिन्न आहेत.</div>' +
+              '<div style="font-weight:700; margin:16px 0 6px 0; color:#2d3748;">२. माहे ' + monthName + ' मधील डेंगी व चिकनगुनिया संशयित नमुने व तपासणी निष्कर्ष नोंदवही (चालू महिन्यातील यादी):</div>' +
+              '<table style="width:100%; font-size:11px; text-align:center;"><thead><tr style="background:#edf2f7;"><th>अ.क्र.</th><th class="text-left">रुग्णाचे नाव</th><th>वय/लिंग</th><th>गाव</th><th>नोंदणी क्र.</th><th>नमुना दिनांक</th><th>डेंगी निष्कर्ष</th><th>चिकनगुनिया निष्कर्ष</th><th>सद्यस्थिती</th></tr></thead><tbody>' +
+              (mDengue.length > 0 ? mDengue.map((e, idx) => {
+                const dBadge = isDPos(e) ? '<span style="color:#c53030; font-weight:bold;">🔴 Positive</span>' : (isDNeg(e) ? '<span style="color:#276749;">🟢 Negative</span>' : (isDEquiv(e) ? '<span style="color:#c05621; font-weight:bold; background:#feebc8; padding:1px 5px; border-radius:4px;">🟠 Equivocal</span>' : '<span style="color:#718096;">⏳ Pending</span>'));
+                const cBadge = isCPos(e) ? '<span style="color:#c53030; font-weight:bold;">🔴 Positive</span>' : (isCNeg(e) ? '<span style="color:#276749;">🟢 Negative</span>' : (isCEquiv(e) ? '<span style="color:#c05621; font-weight:bold; background:#feebc8; padding:1px 5px; border-radius:4px;">🟠 Equivocal</span>' : '<span style="color:#718096;">⏳ Pending</span>'));
+                const status = (isDPos(e) || isCPos(e)) ? '<span style="color:#c53030; font-weight:bold;">उपचारित</span>' : ((isDEquiv(e) || isCEquiv(e)) ? '<span style="color:#c05621; font-weight:bold;">इक्विव्होकल (फेरचाचणी)</span>' : ((isDNeg(e) && isCNeg(e)) ? '<span style="color:#276749;">सर्व्हेक्षण पूर्ण</span>' : '<span style="color:#dd6b20;">अहवाल प्रतीक्षेत (Pending)</span>'));
+                return '<tr><td>' + (idx + 1) + '</td><td class="text-left font-semibold">' + (e.patientName || '-') + '</td><td>' + (e.age || '-') + ' / ' + (e.sex === 'FEMALE' ? 'स्त्री' : 'पुरुष') + '</td><td>' + (e.village || '-') + '</td><td>' + (e.patientRegNo || '-') + '</td><td>' + (e.dateCollection || '-') + '</td><td>' + dBadge + '</td><td>' + cBadge + '</td><td>' + status + '</td></tr>';
+              }).join('') : '<tr><td colspan="9" style="color:#276749; font-weight:bold; padding:10px;">माहे ' + monthName + ' मध्ये डेंगी किंवा चिकनगुनियाचा एकही संशयित सिरम नमुना नोंदवलेला नाही (शून्य संशयित नमुने / निरंक अहवाल).</td></tr>') +
+              '</tbody></table>' +
+              '</div>' +
               '<div class="footer-sign"><b>वैद्यकीय अधिकारी</b><br>प्राथमिक आरोग्य केंद्र भादा, ता. औसा जि. लातूर</div>';
 
             return {
@@ -1182,7 +1275,9 @@
                 const dRes = rec.dengueResult || 'Pending';
                 const cRes = rec.chikungunyaResult || 'Pending';
                 if (dRes === 'Positive' || cRes === 'Positive') rec.testResult = `Positive (${dRes === 'Positive' ? 'Dengue' : ''}${cRes === 'Positive' ? ' Chik' : ''})`;
+                else if (dRes === 'Equivocal' || cRes === 'Equivocal') rec.testResult = 'Equivocal';
                 else if (dRes === 'Negative' && cRes === 'Negative') rec.testResult = 'Negative';
+                else if (dRes !== 'Pending' || cRes !== 'Pending') rec.testResult = `D:${dRes} | C:${cRes}`;
                 else rec.testResult = 'Pending';
                 clientDengueEntries[exIdx] = rec;
               }
@@ -1305,6 +1400,14 @@
             if (exIdx !== -1) clientDengueEntries.splice(exIdx, 1);
             setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
             return { result: { success: true, message: 'नोंद यशस्वीरित्या हटवली.' } };
+          }
+
+          case 'getSubcenterMaster': {
+            return { result: clientSubcenters.length > 0 ? clientSubcenters : (defaultSnap.subcenterMaster || []) };
+          }
+
+          case 'getVillagesMaster': {
+            return { result: clientVillages.length > 0 ? clientVillages : (defaultSnap.villagesMaster || []) };
           }
 
           case 'getDrivePhotos': {
@@ -3383,6 +3486,84 @@
                   </table>
                 </div>
               </div>
+
+              <!-- Dengue & Chikungunya Monthly & Progressive Surveillance Table -->
+              <div style="margin-top:20px; border-top:2px solid #e2e8f0; padding-top:16px;">
+                <div style="font-size:14px; font-weight:700; color:#2b6cb0; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">🦟</span>
+                    <b>डेंगी व चिकनगुनिया मासिक व प्रोग्रेसिव्ह (प्रगत) प्रयोगशाळा नमुने व तपासणी निष्कर्ष (GMC लातूर अहवाल):</b>
+                  </div>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:11px; background:#ebf8ff; color:#2b6cb0; padding:2px 8px; border-radius:10px; font-weight:700;">अहवालात परिशिष्टानंतर समाविष्ट 🔗</span>
+                    <button type="button" onclick="handleDrawerNav('dengueTab')" style="background:#2b6cb0; color:white; border:none; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:bold; cursor:pointer;">
+                      डेंगी नोंदणी टॅब उघडा ↗
+                    </button>
+                  </div>
+                </div>
+
+                <div class="table-container" style="max-height:none; overflow-x:auto;">
+                  <table class="app-table" style="font-size:13px; border:2px solid #cbd5e0; width:100%; text-align:center;" border="1">
+                    <thead>
+                      <tr style="background:#edf2f7; color:#1a202c; font-weight:700;">
+                        <th rowspan="2" style="padding:8px; text-align:left; background:#f7fafc; min-width:160px;">कीटकजन्य आजार</th>
+                        <th rowspan="2" style="padding:8px; background:#f7fafc;">चाचणी पद्धत</th>
+                        <th colspan="2" style="padding:7px; background:#ebf8ff; color:#2b6cb0;">संशयित नमुने</th>
+                        <th colspan="2" style="padding:7px; background:#fff5f5; color:#c53030;">पॉझिटिव्ह (+ve)</th>
+                        <th colspan="2" style="padding:7px; background:#f0fff4; color:#276749;">निगेटिव्ह (-ve)</th>
+                        <th colspan="2" style="padding:7px; background:#fffaf0; color:#dd6b20;">प्रलंबित अहवाल</th>
+                      </tr>
+                      <tr style="background:#f7fafc; color:#2d3748; font-weight:700;">
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#ebf8ff; color:#2b6cb0;">मासिक</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#ebf8ff; color:#2b6cb0;">प्रगत</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#fff5f5; color:#c53030;">मासिक</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#fff5f5; color:#c53030;">प्रगत</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#f0fff4; color:#276749;">मासिक</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#f0fff4; color:#276749;">प्रगत</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#fffaf0; color:#dd6b20;">मासिक</th>
+                        <th style="padding:5px; border:1px solid #cbd5e0; background:#fffaf0; color:#dd6b20;">प्रगत</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="font-weight:700; background:#ffffff;">
+                        <td style="padding:9px 8px; text-align:left; font-weight:bold; color:#2b6cb0;">🦟 डेंगी ताप (Dengue Fever)</td>
+                        <td style="padding:8px; border:1px solid #cbd5e0; font-size:12px;">NS1 Ag व IgM ELISA</td>
+                        <td id="mrdCellDengueMonthSamples" style="padding:8px; border:1px solid #cbd5e0; color:#2b6cb0;">0</td>
+                        <td id="mrdCellDengueProgSamples" style="padding:8px; border:1px solid #cbd5e0; color:#2b6cb0;">0</td>
+                        <td id="mrdCellDengueMonthPos" style="padding:8px; border:1px solid #cbd5e0; color:#c53030;">0</td>
+                        <td id="mrdCellDengueProgPos" style="padding:8px; border:1px solid #cbd5e0; color:#c53030;">0</td>
+                        <td id="mrdCellDengueMonthNeg" style="padding:8px; border:1px solid #cbd5e0; color:#276749;">0</td>
+                        <td id="mrdCellDengueProgNeg" style="padding:8px; border:1px solid #cbd5e0; color:#276749;">0</td>
+                        <td id="mrdCellDengueMonthPend" style="padding:8px; border:1px solid #cbd5e0; color:#dd6b20;">0</td>
+                        <td id="mrdCellDengueProgPend" style="padding:8px; border:1px solid #cbd5e0; color:#dd6b20;">0</td>
+                      </tr>
+                      <tr style="font-weight:700; background:#ffffff;">
+                        <td style="padding:9px 8px; text-align:left; font-weight:bold; color:#553c9a;">🦠 चिकनगुनिया (Chikungunya)</td>
+                        <td style="padding:8px; border:1px solid #cbd5e0; font-size:12px;">Chikungunya IgM ELISA</td>
+                        <td id="mrdCellChikMonthSamples" style="padding:8px; border:1px solid #cbd5e0; color:#2b6cb0;">0</td>
+                        <td id="mrdCellChikProgSamples" style="padding:8px; border:1px solid #cbd5e0; color:#2b6cb0;">0</td>
+                        <td id="mrdCellChikMonthPos" style="padding:8px; border:1px solid #cbd5e0; color:#c53030;">0</td>
+                        <td id="mrdCellChikProgPos" style="padding:8px; border:1px solid #cbd5e0; color:#c53030;">0</td>
+                        <td id="mrdCellChikMonthNeg" style="padding:8px; border:1px solid #cbd5e0; color:#276749;">0</td>
+                        <td id="mrdCellChikProgNeg" style="padding:8px; border:1px solid #cbd5e0; color:#276749;">0</td>
+                        <td id="mrdCellChikMonthPend" style="padding:8px; border:1px solid #cbd5e0; color:#dd6b20;">0</td>
+                        <td id="mrdCellChikProgPend" style="padding:8px; border:1px solid #cbd5e0; color:#dd6b20;">0</td>
+                      </tr>
+                      <tr style="font-weight:800; background:#e6fffa; color:#234e52;">
+                        <td colspan="2" style="padding:9px 8px; text-align:left;">एकूण संशयित सिरम नमुने (GMC लातूर):</td>
+                        <td id="mrdCellDengueTotMonthSamples" style="padding:8px; border:1px solid #cbd5e0;">0</td>
+                        <td id="mrdCellDengueTotProgSamples" style="padding:8px; border:1px solid #cbd5e0;">0</td>
+                        <td id="mrdCellDengueTotMonthPos" style="padding:8px; border:1px solid #cbd5e0; color:#c53030;">0</td>
+                        <td id="mrdCellDengueTotProgPos" style="padding:8px; border:1px solid #cbd5e0; color:#c53030;">0</td>
+                        <td id="mrdCellDengueTotMonthNeg" style="padding:8px; border:1px solid #cbd5e0; color:#276749;">0</td>
+                        <td id="mrdCellDengueTotProgNeg" style="padding:8px; border:1px solid #cbd5e0; color:#276749;">0</td>
+                        <td id="mrdCellDengueTotMonthPend" style="padding:8px; border:1px solid #cbd5e0; color:#dd6b20;">0</td>
+                        <td id="mrdCellDengueTotProgPend" style="padding:8px; border:1px solid #cbd5e0; color:#dd6b20;">0</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
             <!-- Live In-App Report Preview Container (Collapsible) -->
@@ -4624,6 +4805,40 @@
           </div>
         </div>
 
+        <!-- Dengue & Chikungunya Live KPI Summary Cards -->
+        <div id="dengueKpiStrip" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:18px;">
+          <div class="stat-card" style="border-top:3px solid #3182ce; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="font-size:11.5px; font-weight:700; color:#718096; text-transform:uppercase;">🧪 एकूण सिरम नमुने</div>
+            <div style="font-size:22px; font-weight:800; color:#2b6cb0; margin-top:3px;" id="dgKpiTotalSamples">0</div>
+            <div style="font-size:10.5px; color:#a0aec0; margin-top:2px;">पाठवलेले सर्व नमुने</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #e53e3e; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="font-size:11.5px; font-weight:700; color:#e53e3e; text-transform:uppercase;">🔴 डेंगी पॉझिटिव्ह</div>
+            <div style="font-size:22px; font-weight:800; color:#c53030; margin-top:3px;" id="dgKpiDenguePos">0</div>
+            <div style="font-size:10.5px; color:#e53e3e; margin-top:2px;">NS1 / IgM ELISA पॉझिटिव्ह</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #dd6b20; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="font-size:11.5px; font-weight:700; color:#dd6b20; text-transform:uppercase;">🦠 चिकनगुनिया पॉझिटिव्ह</div>
+            <div style="font-size:22px; font-weight:800; color:#c05621; margin-top:3px;" id="dgKpiChikPos">0</div>
+            <div style="font-size:10.5px; color:#dd6b20; margin-top:2px;">Chikungunya IgM पॉझिटिव्ह</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #c05621; padding:12px 14px; background:#fffaf0; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid #fbd38d; border-top:3px solid #c05621;">
+            <div style="font-size:11.5px; font-weight:700; color:#7b341e; text-transform:uppercase;">🟠 संशयित / इक्विव्होकल</div>
+            <div style="font-size:22px; font-weight:800; color:#c05621; margin-top:3px;" id="dgKpiEquivocal">0</div>
+            <div style="font-size:10.5px; color:#7b341e; margin-top:2px;">अहवाल प्राप्त (फेरचाचणी आवश्यक)</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #b7791f; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="font-size:11.5px; font-weight:700; color:#b7791f; text-transform:uppercase;">⏳ अहवाल प्रलंबित</div>
+            <div style="font-size:22px; font-weight:800; color:#b7791f; margin-top:3px;" id="dgKpiPending">0</div>
+            <div style="font-size:10.5px; color:#b7791f; margin-top:2px;">लॅब अहवाल येणे बाकी (Awaited)</div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid #38a169; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="font-size:11.5px; font-weight:700; color:#38a169; text-transform:uppercase;">🟢 चाचणी दोषमुक्त</div>
+            <div style="font-size:22px; font-weight:800; color:#276749; margin-top:3px;" id="dgKpiNegative">0</div>
+            <div style="font-size:10.5px; color:#38a169; margin-top:2px;">निगेटिव्ह आलेले नमुने</div>
+          </div>
+        </div>
+
         <!-- Dengue Subtabs Navigation -->
         <div class="table-subtabs" style="margin-bottom:18px;">
           <button id="dengueSubtabBtnEntry" class="subtab-btn active" onclick="switchDengueSubtab('entry')">
@@ -4684,9 +4899,35 @@
                     <input type="text" id="dgMobile" maxlength="10" placeholder="उदा. 9356371517">
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
+                    <label>उपकेंद्र (Subcenter) <span style="color:#e53e3e;">*</span></label>
+                    <select id="dgSubcenter" required onchange="onDengueSubcenterChange(this.value)" style="font-weight:600; width:100%;">
+                      <option value="">-- उपकेंद्र निवडा (Select Subcenter) --</option>
+                      <option value="भादा">भादा</option>
+                      <option value="आलमला">आलमला</option>
+                      <option value="कोरंगळा">कोरंगळा</option>
+                      <option value="बोरगाव">बोरगाव</option>
+                      <option value="भेटा">भेटा</option>
+                      <option value="लखनगाव">लखनगाव</option>
+                      <option value="शिवली">शिवली</option>
+                      <option value="प्रा.आ.केंद्र">प्रा.आ.केंद्र</option>
+                      <option value="Other">इतर (Other / Non-PHC)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
                     <label>गाव (Village) <span style="color:#e53e3e;">*</span></label>
-                    <input type="text" id="dgVillage" required list="dengueVillageList" placeholder="उदा. भादा, भेटा, काळमाथा..." style="font-weight:600;">
-                    <datalist id="dengueVillageList"></datalist>
+                    <select id="dgVillage" required onchange="onDengueVillageChange(this.value)" style="font-weight:600; width:100%;">
+                      <option value="">-- प्रथम उपकेंद्र निवडा --</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="dgOtherVillageBox" style="margin-bottom:0; display:none; grid-column:1 / -1; background:#fffaf0; border:1.5px dashed #dd6b20; border-radius:8px; padding:12px 14px;">
+                    <label style="color:#c05621; font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                      <span>✏️ इतर गाव / ठिकाणाचे नाव नमूद करा (Type Other Village Name)</span>
+                      <span style="color:#e53e3e;">*</span>
+                    </label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                      <input type="text" id="dgOtherVillage" placeholder="गावाचे किंवा शहराचे नाव टाईप करा (उदा. औसा, लातूर, किल्लारी किंवा स्थानिक तांडा/वस्ती)..." style="font-weight:700; border:1.5px solid #dd6b20; flex:1; padding:8px 12px; border-radius:6px; background:#fff;">
+                      <span style="font-size:12px; color:#718096; white-space:nowrap;">(यादीत नसलेल्या इतर गावासाठी)</span>
+                    </div>
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
                     <label>घर क्रमांक (House No)</label>
@@ -4901,11 +5142,17 @@
                 
                 <!-- Date Selector -->
                 <div>
-                  <label class="form-label" style="font-weight:700; color:#1a365d;">
-                    📅 नमुना पाठवल्याचा दिनांक निवडा (Dispatch Date) <span style="color:#e53e3e;">*</span>
-                  </label>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label class="form-label" style="font-weight:700; color:#1a365d; margin:0;">
+                      📅 नमुना पाठवल्याचा दिनांक निवडा (Dispatch Date) <span style="color:#e53e3e;">*</span>
+                    </label>
+                    <label style="font-size:11.5px; color:#4a5568; cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:600;">
+                      <input type="checkbox" id="chkShowCompletedBatchDates" onchange="populateBatchDateSelector()">
+                      <span>पूर्ण झालेले दिनांक दाखवा</span>
+                    </label>
+                  </div>
                   <select id="dgBatchSelectDate" class="form-control" style="font-weight:700; border-color:#3182ce;" onchange="loadBatchDatePatients()">
-                    <option value="">-- दिनांक निवडा --</option>
+                    <option value="">-- प्रलंबित नमुना दिनांक निवडा --</option>
                   </select>
                 </div>
 
@@ -4978,6 +5225,9 @@
                   </button>
                   <button type="button" class="sheet-btn" style="padding:4px 10px; font-size:11.5px; background:#fed7d7; color:#9b2c2c; border-color:#feb2b2; font-weight:700;" onclick="setBatchBulkResult('Positive')">
                     🔴 सर्वांना Positive करा
+                  </button>
+                  <button type="button" class="sheet-btn" style="padding:4px 10px; font-size:11.5px; background:#feebc8; color:#7b341e; border-color:#fbd38d; font-weight:700;" onclick="setBatchBulkResult('Equivocal')">
+                    🟠 सर्वांना Equivocal करा
                   </button>
                   <button type="button" class="sheet-btn" style="padding:4px 10px; font-size:11.5px; background:#edf2f7; color:#4a5568; border-color:#e2e8f0;" onclick="setBatchBulkResult('Pending')">
                     ⏳ प्रलंबित ठेवा (Pending)
@@ -5096,19 +5346,19 @@
               <!-- File Input & Drop Area -->
               <div style="margin-bottom:16px;">
                 <label style="font-size:13.5px; font-weight:700; color:#322659; display:block; margin-bottom:8px;">
-                  २. CSV फाईल निवडा (Select CSV File):
+                  २. Excel किंवा CSV फाईल निवडा (Select Excel / CSV File):
                 </label>
                 <div style="border:2px dashed #9f7aea; background:#fff; border-radius:10px; padding:22px; text-align:center; transition:all 0.2s ease;">
                   <div style="font-size:32px; margin-bottom:8px;">📄</div>
                   <div style="font-size:13.5px; font-weight:700; color:#4a5568; margin-bottom:6px;">
-                    डेंगी / चिकनगुनिया जुन्या नोंदींची .CSV फाईल येथे निवडा
+                    डेंगी / चिकनगुनिया जुन्या नोंदींची Excel (.XLSX / .XLS) किंवा CSV फाईल येथे निवडा
                   </div>
                   <div style="font-size:12px; color:#718096; margin-bottom:14px;">
-                    Excel मधील फाईल 'Save As CSV (Comma delimited)' करून निवडा.
+                    Excel फाईल थेट निवडा किंवा 'CSV / Text' फाईल अपलोड करा (ऑटो-पार्स व व्हॅलिडेट होईल).
                   </div>
-                  <input type="file" id="dgOldDataFileInput" accept=".csv,text/csv,text/plain" style="display:none;" onchange="handleDengueOldDataFileSelect(event)">
+                  <input type="file" id="dgOldDataFileInput" accept=".csv,text/csv,text/plain,.xls,.xlsx,.xlsm,.xlsb,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none;" onchange="handleDengueOldDataFileSelect(event)">
                   <button type="button" class="sheet-btn" style="background:#6b46c1; color:#fff; font-weight:700; padding:8px 20px; font-size:13px;" onclick="document.getElementById('dgOldDataFileInput').click()">
-                    📁 फाईल निवडा (Choose CSV File)
+                    📁 Excel / CSV फाईल निवडा (Choose File)
                   </button>
                   <span id="dgOldDataSelectedFileName" style="margin-left:12px; font-size:13px; font-weight:700; color:#276749;"></span>
                 </div>
@@ -5239,6 +5489,18 @@
             <div class="filter-bar" style="margin-bottom:14px;">
               <div class="filter-inputs">
                 <input type="text" id="dgFilterSearch" class="filter-search" placeholder="🔍 रुग्ण नाव, नोंदणी क्र., मोबाईल, गावाने शोधा..." oninput="filterDengueTable()">
+                <select id="dgFilterSubcenter" class="filter-select" onchange="onDengueFilterSubcenterChange()">
+                  <option value="All">-- सर्व उपकेंद्र (All Subcenters) --</option>
+                  <option value="भादा">भादा</option>
+                  <option value="आलमला">आलमला</option>
+                  <option value="कोरंगळा">कोरंगळा</option>
+                  <option value="बोरगाव">बोरगाव</option>
+                  <option value="भेटा">भेटा</option>
+                  <option value="लखनगाव">लखनगाव</option>
+                  <option value="शिवली">शिवली</option>
+                  <option value="प्रा.आ.केंद्र">प्रा.आ.केंद्र</option>
+                  <option value="Other">इतर (Other / Non-PHC)</option>
+                </select>
                 <select id="dgFilterVillage" class="filter-select" onchange="filterDengueTable()">
                   <option value="All">-- सर्व गावे (All Villages) --</option>
                 </select>
@@ -5247,17 +5509,17 @@
                 </select>
                 <select id="dgFilterDengueResult" class="filter-select" onchange="filterDengueTable()">
                   <option value="All">-- सर्व डेंगी अहवाल (All Dengue) --</option>
-                  <option value="Pending">⏳ डेंगी प्रलंबित (Pending)</option>
                   <option value="Positive">🔴 डेंगी पॉझिटिव्ह (Positive)</option>
                   <option value="Negative">🟢 डेंगी निगेटिव्ह (Negative)</option>
-                  <option value="Equivocal">🟠 डेंगी संशयित (Equivocal)</option>
+                  <option value="Equivocal">🟠 डेंगी संशयित / इक्विव्होकल (Equivocal - अहवाल प्राप्त)</option>
+                  <option value="Pending">⏳ डेंगी प्रलंबित (Pending - अहवाल अप्राप्त)</option>
                 </select>
                 <select id="dgFilterChikResult" class="filter-select" onchange="filterDengueTable()">
                   <option value="All">-- सर्व चिकनगुनिया अहवाल (All Chikungunya) --</option>
-                  <option value="Pending">⏳ चिकनगुनिया प्रलंबित (Pending)</option>
                   <option value="Positive">🔴 चिकनगुनिया पॉझिटिव्ह (Positive)</option>
                   <option value="Negative">🟢 चिकनगुनिया निगेटिव्ह (Negative)</option>
-                  <option value="Equivocal">🟠 चिकनगुनिया संशयित (Equivocal)</option>
+                  <option value="Equivocal">🟠 चिकनगुनिया संशयित / इक्विव्होकल (Equivocal - अहवाल प्राप्त)</option>
+                  <option value="Pending">⏳ चिकनगुनिया प्रलंबित (Pending - अहवाल अप्राप्त)</option>
                 </select>
               </div>
               <div style="font-size:12.5px; font-weight:700; color:#4a5568;">
@@ -7130,6 +7392,9 @@
       document.getElementById('commonDate').valueAsDate = new Date();
       document.getElementById('dailyReportDate').valueAsDate = new Date(); 
       loadDashboard();
+      if (typeof populateDengueSubcenterAndVillages === 'function') {
+        populateDengueSubcenterAndVillages();
+      }
       // Auto-fetch latest data from Google Sheet without user hassle
       setTimeout(() => {
         if (typeof triggerSeamlessGoogleSheetSync === 'function') {
@@ -8950,6 +9215,39 @@
           opdList.innerHTML = listHtml;
         }
       }
+
+      // 5.B Update Dengue & Chikungunya Monthly & Progressive Table
+      const ds = d.dengueSummary || {};
+      const setMrdTxt = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = Number(val || 0).toLocaleString('mr-IN');
+      };
+      setMrdTxt('mrdCellDengueMonthSamples', ds.monthSamples);
+      setMrdTxt('mrdCellDengueProgSamples', ds.progSamples);
+      setMrdTxt('mrdCellDengueMonthPos', ds.monthDenguePos);
+      setMrdTxt('mrdCellDengueProgPos', ds.progDenguePos);
+      setMrdTxt('mrdCellDengueMonthNeg', ds.monthNeg);
+      setMrdTxt('mrdCellDengueProgNeg', ds.progNeg);
+      setMrdTxt('mrdCellDengueMonthPend', ds.monthPend);
+      setMrdTxt('mrdCellDengueProgPend', ds.progPend);
+
+      setMrdTxt('mrdCellChikMonthSamples', ds.monthSamples);
+      setMrdTxt('mrdCellChikProgSamples', ds.progSamples);
+      setMrdTxt('mrdCellChikMonthPos', ds.monthChikPos);
+      setMrdTxt('mrdCellChikProgPos', ds.progChikPos);
+      setMrdTxt('mrdCellChikMonthNeg', ds.monthNeg);
+      setMrdTxt('mrdCellChikProgNeg', ds.progNeg);
+      setMrdTxt('mrdCellChikMonthPend', ds.monthPend);
+      setMrdTxt('mrdCellChikProgPend', ds.progPend);
+
+      setMrdTxt('mrdCellDengueTotMonthSamples', ds.monthSamples);
+      setMrdTxt('mrdCellDengueTotProgSamples', ds.progSamples);
+      setMrdTxt('mrdCellDengueTotMonthPos', (ds.monthDenguePos || 0) + (ds.monthChikPos || 0));
+      setMrdTxt('mrdCellDengueTotProgPos', (ds.progDenguePos || 0) + (ds.progChikPos || 0));
+      setMrdTxt('mrdCellDengueTotMonthNeg', ds.monthNeg);
+      setMrdTxt('mrdCellDengueTotProgNeg', ds.progNeg);
+      setMrdTxt('mrdCellDengueTotMonthPend', ds.monthPend);
+      setMrdTxt('mrdCellDengueTotProgPend', ds.progPend);
 
       // 6. Pre-fill Quick Edit Inputs
       const inpOpdM = document.getElementById('mrdInpOpdM');
@@ -12622,6 +12920,18 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         csvContent = state.rawCsvText;
       }
 
+      if (typeof XLSX !== 'undefined') {
+        const rows = parseSpreadsheetRows(csvContent);
+        if (rows && rows.length > 0) {
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, 'Validated_Data');
+          XLSX.writeFile(wb, `validated_${state.activeDataset}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+          showToast('📗 Validated डेटा Excel (.xlsx) मध्ये डाऊनलोड झाला!');
+          return;
+        }
+      }
+
       const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -12738,36 +13048,280 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       }
     }
 
-    function populateDengueVillageDatalist() {
-      const datalist = document.getElementById('dengueVillageList');
-      if (!datalist) return;
-      const vFilter = document.getElementById('dgFilterVillage');
-      const villagesSet = new Set(['भादा', 'भेटा', 'काळमाथा', 'उटी', 'शिवली', 'कोरंगळा']);
+    // ================= DENGUE SUBCENTER & VILLAGE MAPPING & CONTROLS =================
+    const DENGUE_SUBCENTER_MAP = {
+      "भादा": ["भादा", "हाळदुर्ग", "शिंदेवाडी", "ब-हाणपूर"],
+      "आलमला": ["आलमला", "उंबडगा बू", "उंबडगा खू", "आलमला तांडा"],
+      "कोरंगळा": ["समदर्गा", "कोरंगळा", "येल्लोरी", "येल्लोरी वाडी", "औसा तांडा"],
+      "बोरगाव": ["काळमाथा", "बोरगांव", "कवठा", "कवठा तांडा"],
+      "भेटा": ["आंदोरा", "भेटा", "नाव्होली", "वडजी"],
+      "लखनगाव": ["सत्तधरवाडी", "कुलकर्णी तांडा", "उटी बु.", "सोनपट्टी तांडा", "लखनगांव"],
+      "शिवली": ["शिवली", "वरवडा", "जायफळ"],
+      "प्रा.आ.केंद्र": ["Phc भादा"]
+    };
+
+    function getDengueSubcentersList() {
+      const list = Object.keys(DENGUE_SUBCENTER_MAP);
+      if (typeof mSubcentersData !== 'undefined' && Array.isArray(mSubcentersData) && mSubcentersData.length > 0) {
+        mSubcentersData.forEach(s => {
+          if (s.name && !list.includes(s.name)) list.push(s.name);
+        });
+      }
+      return list;
+    }
+
+    function getDengueVillagesForSubcenter(scName) {
+      if (!scName || scName === 'All') {
+        return getAllKnownDengueVillages();
+      }
+      let vils = DENGUE_SUBCENTER_MAP[scName] ? [...DENGUE_SUBCENTER_MAP[scName]] : [];
       if (typeof mVillagesData !== 'undefined' && Array.isArray(mVillagesData)) {
-        mVillagesData.forEach(v => { if (v.name) villagesSet.add(v.name); });
+        mVillagesData.forEach(v => {
+          if ((v.upkendra === scName || v.subcenter === scName) && v.name && !vils.includes(v.name)) {
+            vils.push(v.name);
+          }
+        });
+      }
+      return vils;
+    }
+
+    function getAllKnownDengueVillages() {
+      const set = new Set();
+      Object.values(DENGUE_SUBCENTER_MAP).forEach(arr => arr.forEach(v => set.add(v)));
+      if (typeof mVillagesData !== 'undefined' && Array.isArray(mVillagesData)) {
+        mVillagesData.forEach(v => { if (v.name) set.add(v.name); });
       }
       if (typeof masterData !== 'undefined' && Array.isArray(masterData)) {
-        masterData.forEach(d => { if (d.villageName) villagesSet.add(d.villageName); });
+        masterData.forEach(d => { if (d.villageName) set.add(d.villageName); });
+      }
+      return Array.from(set).sort();
+    }
+
+    function deriveSubcenterForVillage(vName) {
+      if (!vName) return '';
+      const cleanV = String(vName).trim();
+      for (const [sc, vils] of Object.entries(DENGUE_SUBCENTER_MAP)) {
+        if (vils.some(v => v.toLowerCase() === cleanV.toLowerCase())) return sc;
+      }
+      if (typeof mVillagesData !== 'undefined' && Array.isArray(mVillagesData)) {
+        const found = mVillagesData.find(v => (v.name && v.name.toLowerCase() === cleanV.toLowerCase()) || (v.villageName && v.villageName.toLowerCase() === cleanV.toLowerCase()));
+        if (found && (found.upkendra || found.subcenter)) return found.upkendra || found.subcenter;
+      }
+      return '';
+    }
+
+    function isKnownDengueVillage(vName) {
+      if (!vName) return false;
+      const cleanV = String(vName).trim().toLowerCase();
+      if (cleanV === 'other' || cleanV === 'इतर') return false;
+      const all = getAllKnownDengueVillages().map(v => v.toLowerCase());
+      return all.includes(cleanV);
+    }
+
+    function onDengueSubcenterChange(subcenterVal, preselectedVillage) {
+      const scSelect = document.getElementById('dgSubcenter');
+      const vilSelect = document.getElementById('dgVillage');
+      const otherBox = document.getElementById('dgOtherVillageBox');
+      const otherInput = document.getElementById('dgOtherVillage');
+      if (!vilSelect) return;
+
+      const sc = subcenterVal !== undefined ? subcenterVal : (scSelect ? scSelect.value : '');
+
+      vilSelect.innerHTML = '';
+
+      if (!sc) {
+        vilSelect.innerHTML = '<option value="">-- प्रथम उपकेंद्र निवडा किंवा खालील गाव निवडा --</option>';
+        const scList = getDengueSubcentersList();
+        scList.forEach(sName => {
+          const vils = getDengueVillagesForSubcenter(sName);
+          if (vils.length > 0) {
+            const grp = document.createElement('optgroup');
+            grp.label = `उपकेंद्र: ${sName}`;
+            vils.forEach(v => {
+              const opt = document.createElement('option');
+              opt.value = v;
+              opt.textContent = v;
+              if (preselectedVillage && preselectedVillage === v) opt.selected = true;
+              grp.appendChild(opt);
+            });
+            vilSelect.appendChild(grp);
+          }
+        });
+        const optOther = document.createElement('option');
+        optOther.value = 'Other';
+        optOther.textContent = '➕ इतर (Other / यादीत नसलेले गाव)';
+        if (preselectedVillage && !isKnownDengueVillage(preselectedVillage)) {
+          optOther.selected = true;
+          if (otherBox) {
+            otherBox.style.display = 'block';
+            if (otherInput) otherInput.value = preselectedVillage;
+          }
+        } else if (otherBox) {
+          otherBox.style.display = 'none';
+        }
+        vilSelect.appendChild(optOther);
+        return;
       }
 
-      datalist.innerHTML = '';
-      if (vFilter) vFilter.innerHTML = '<option value="All">-- सर्व गावे (All Villages) --</option>';
+      if (sc === 'Other' || sc === 'इतर') {
+        vilSelect.innerHTML = '<option value="Other" selected>➕ इतर (Other / बाहेरचे गाव)</option>';
+        if (otherBox) {
+          otherBox.style.display = 'block';
+          if (otherInput) {
+            if (preselectedVillage && preselectedVillage !== 'Other' && preselectedVillage !== 'इतर') {
+              otherInput.value = preselectedVillage;
+            }
+            otherInput.focus();
+          }
+        }
+        return;
+      }
 
-      Array.from(villagesSet).sort().forEach(vName => {
+      const villages = getDengueVillagesForSubcenter(sc);
+      const defOpt = document.createElement('option');
+      defOpt.value = '';
+      defOpt.textContent = `-- ${sc} उपकेंद्रातील गाव निवडा --`;
+      vilSelect.appendChild(defOpt);
+
+      let matched = false;
+      villages.forEach(vName => {
         const opt = document.createElement('option');
         opt.value = vName;
-        datalist.appendChild(opt);
-        if (vFilter) {
-          const fOpt = document.createElement('option');
-          fOpt.value = vName;
-          fOpt.textContent = vName;
-          vFilter.appendChild(fOpt);
+        opt.textContent = vName;
+        if (preselectedVillage && preselectedVillage === vName) {
+          opt.selected = true;
+          matched = true;
         }
+        vilSelect.appendChild(opt);
+      });
+
+      const optOther = document.createElement('option');
+      optOther.value = 'Other';
+      optOther.textContent = '➕ इतर (Other / यादीत नसलेले गाव)';
+      if (preselectedVillage && !matched && preselectedVillage !== '') {
+        optOther.selected = true;
+        if (otherBox) {
+          otherBox.style.display = 'block';
+          if (otherInput) otherInput.value = preselectedVillage;
+        }
+      } else {
+        if (otherBox) otherBox.style.display = 'none';
+      }
+      vilSelect.appendChild(optOther);
+    }
+
+    function onDengueVillageChange(villageVal) {
+      const otherBox = document.getElementById('dgOtherVillageBox');
+      const otherInput = document.getElementById('dgOtherVillage');
+      const scSelect = document.getElementById('dgSubcenter');
+
+      if (villageVal === 'Other' || villageVal === 'इतर') {
+        if (otherBox) otherBox.style.display = 'block';
+        if (otherInput) {
+          otherInput.focus();
+        }
+      } else {
+        if (otherBox) otherBox.style.display = 'none';
+        if (otherInput && villageVal) otherInput.value = '';
+
+        if (villageVal && scSelect) {
+          const derivedSc = deriveSubcenterForVillage(villageVal);
+          if (derivedSc && scSelect.value !== derivedSc) {
+            scSelect.value = derivedSc;
+          }
+        }
+      }
+    }
+
+    function populateDengueSubcenterAndVillages() {
+      // 1. Populate data entry subcenter select
+      const scSelect = document.getElementById('dgSubcenter');
+      if (scSelect && scSelect.options.length <= 1) {
+        scSelect.innerHTML = '<option value="">-- उपकेंद्र निवडा (Select Subcenter) --</option>';
+        getDengueSubcentersList().forEach(sc => {
+          const opt = document.createElement('option');
+          opt.value = sc;
+          opt.textContent = sc;
+          scSelect.appendChild(opt);
+        });
+        const optOther = document.createElement('option');
+        optOther.value = 'Other';
+        optOther.textContent = 'इतर (Other / Non-PHC)';
+        scSelect.appendChild(optOther);
+      }
+
+      onDengueSubcenterChange(scSelect ? scSelect.value : '');
+
+      // 2. Populate Register Filter Subcenter & Village
+      const fSc = document.getElementById('dgFilterSubcenter');
+      if (fSc && fSc.options.length <= 1) {
+        fSc.innerHTML = '<option value="All">-- सर्व उपकेंद्र (All Subcenters) --</option>';
+        getDengueSubcentersList().forEach(sc => {
+          const opt = document.createElement('option');
+          opt.value = sc;
+          opt.textContent = sc;
+          fSc.appendChild(opt);
+        });
+        const optOther = document.createElement('option');
+        optOther.value = 'Other';
+        optOther.textContent = 'इतर (Other / Non-PHC)';
+        fSc.appendChild(optOther);
+      }
+
+      updateDengueFilterVillages();
+    }
+
+    function onDengueFilterSubcenterChange() {
+      updateDengueFilterVillages();
+      filterDengueTable();
+    }
+
+    function updateDengueFilterVillages() {
+      const fSc = document.getElementById('dgFilterSubcenter');
+      const fVil = document.getElementById('dgFilterVillage');
+      if (!fVil) return;
+
+      const scVal = fSc ? fSc.value : 'All';
+      const curVil = fVil.value;
+
+      fVil.innerHTML = '<option value="All">-- सर्व गावे (All Villages) --</option>';
+
+      let vils = [];
+      if (!scVal || scVal === 'All') {
+        const set = new Set(getAllKnownDengueVillages());
+        if (typeof mDengueData !== 'undefined' && Array.isArray(mDengueData)) {
+          mDengueData.forEach(e => { if (e.village) set.add(e.village); });
+        }
+        vils = Array.from(set).sort();
+      } else if (scVal === 'Other' || scVal === 'इतर') {
+        const set = new Set();
+        if (typeof mDengueData !== 'undefined' && Array.isArray(mDengueData)) {
+          mDengueData.forEach(e => {
+            if (e.subcenter === 'Other' || e.subcenter === 'इतर' || !isKnownDengueVillage(e.village)) {
+              if (e.village) set.add(e.village);
+            }
+          });
+        }
+        vils = Array.from(set).sort();
+      } else {
+        vils = getDengueVillagesForSubcenter(scVal);
+      }
+
+      vils.forEach(vName => {
+        const opt = document.createElement('option');
+        opt.value = vName;
+        opt.textContent = vName;
+        if (curVil === vName) opt.selected = true;
+        fVil.appendChild(opt);
       });
     }
 
+    function populateDengueVillageDatalist() {
+      populateDengueSubcenterAndVillages();
+    }
+
     function loadDengueData() {
-      populateDengueVillageDatalist();
+      populateDengueSubcenterAndVillages();
 
       const todayStr = new Date().toISOString().slice(0, 10);
       const dgColl = document.getElementById('dgDateCollection');
@@ -12793,6 +13347,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
           filterDengueTable();
           populateDengueLetterDateSelect();
           populateDengueSheetsSelect();
+          populateBatchDateSelector();
         })
         .withFailureHandler(err => {
           console.warn('Dengue data load error:', err);
@@ -12878,6 +13433,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
 
     function filterDengueTable() {
       const sVal = (document.getElementById('dgFilterSearch')?.value || '').toLowerCase().trim();
+      const scVal = document.getElementById('dgFilterSubcenter')?.value || 'All';
       const vVal = document.getElementById('dgFilterVillage')?.value || 'All';
       const dVal = document.getElementById('dgFilterDate')?.value || 'All';
       const dgResVal = document.getElementById('dgFilterDengueResult')?.value || 'All';
@@ -12885,6 +13441,14 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
 
       let filtered = [...mDengueData];
 
+      if (scVal !== 'All') {
+        filtered = filtered.filter(e => {
+          if (scVal === 'Other' || scVal === 'इतर') {
+            return e.subcenter === 'Other' || e.subcenter === 'इतर' || !isKnownDengueVillage(e.village);
+          }
+          return e.subcenter === scVal || deriveSubcenterForVillage(e.village) === scVal;
+        });
+      }
       if (vVal !== 'All') {
         filtered = filtered.filter(e => e.village === vVal);
       }
@@ -12912,6 +13476,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       const totalCount = mDengueData.length;
       const dPosCount = mDengueData.filter(e => e.dengueResult === 'Positive').length;
       const cPosCount = mDengueData.filter(e => e.chikungunyaResult === 'Positive').length;
+      const equivocalCount = mDengueData.filter(e => (e.dengueResult === 'Equivocal' || e.chikungunyaResult === 'Equivocal') && e.dengueResult !== 'Positive' && e.chikungunyaResult !== 'Positive').length;
       const pendingCount = mDengueData.filter(e => (e.dengueResult === 'Pending' || e.chikungunyaResult === 'Pending' || (!e.dengueResult && !e.chikungunyaResult))).length;
       const negCount = mDengueData.filter(e => (e.dengueResult === 'Negative' && (e.chikungunyaResult === 'Negative' || !e.chikungunyaResult))).length;
 
@@ -12921,6 +13486,8 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       if (elDPos) elDPos.textContent = dPosCount;
       const elCPos = document.getElementById('dgKpiChikPos');
       if (elCPos) elCPos.textContent = cPosCount;
+      const elEquiv = document.getElementById('dgKpiEquivocal');
+      if (elEquiv) elEquiv.textContent = equivocalCount;
       const elPend = document.getElementById('dgKpiPending');
       if (elPend) elPend.textContent = pendingCount;
       const elNeg = document.getElementById('dgKpiNegative');
@@ -13034,7 +13601,10 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
                 📱 ${p.mobile && p.mobile !== '-' ? p.mobile : 'नाही'} | घर क्र: ${p.houseNo || '-'}
               </div>
             </td>
-            <td style="font-weight:600; color:#2d3748;">${p.village || '-'}</td>
+            <td style="font-weight:600; color:#2d3748;">
+              ${p.village || '-'}
+              ${p.subcenter && p.subcenter !== 'Other' && p.subcenter !== 'इतर' ? `<div style="font-size:11px; color:#718096; font-weight:500;">उपकेंद्र: ${p.subcenter}</div>` : ((p.subcenter === 'Other' || p.subcenter === 'इतर' || p.otherVillage) ? `<div style="font-size:11px; color:#c05621; font-weight:600;">(इतर/बाहेरचे)</div>` : '')}
+            </td>
             <td style="text-align:center;">${p.age || '-'} / ${p.sex === 'FEMALE' ? 'स्त्री' : 'पुरुष'}</td>
             <td style="text-align:center; font-weight:600;">${pDate}</td>
             <td style="text-align:center;">
@@ -13096,7 +13666,9 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       const recId = document.getElementById('dengueRecordId').value;
       const patientName = document.getElementById('dgPatientName').value.trim();
       const mobile = document.getElementById('dgMobile').value.trim();
-      const village = document.getElementById('dgVillage').value.trim();
+      const scVal = document.getElementById('dgSubcenter')?.value.trim() || '';
+      const vVal = document.getElementById('dgVillage')?.value.trim() || '';
+      const otherVilVal = document.getElementById('dgOtherVillage')?.value.trim() || '';
       const houseNo = document.getElementById('dgHouseNo').value.trim();
       const taluka = document.getElementById('dgTaluka').value.trim() || 'AUSA';
       const district = document.getElementById('dgDistrict').value.trim() || 'LATUR';
@@ -13127,10 +13699,33 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         alert('कृपया रुग्णाचे नाव प्रविष्ट करा.');
         return;
       }
-      if (!village) {
-        alert('कृपया गाव निवडा.');
+
+      let finalVillage = vVal;
+      let finalSubcenter = scVal;
+
+      if (vVal === 'Other' || vVal === 'इतर' || scVal === 'Other' || scVal === 'इतर') {
+        if (!otherVilVal) {
+          alert('कृपया इतर गावाचे किंवा ठिकाणाचे नाव नमूद करा (Please type the village name).');
+          const box = document.getElementById('dgOtherVillageBox');
+          if (box) box.style.display = 'block';
+          document.getElementById('dgOtherVillage')?.focus();
+          return;
+        }
+        finalVillage = otherVilVal;
+        if (scVal === 'Other' || scVal === 'इतर') {
+          finalSubcenter = 'इतर';
+        }
+      }
+
+      if (!finalVillage) {
+        alert('कृपया उपकेंद्र व गाव निवडा.');
         return;
       }
+
+      if (!finalSubcenter) {
+        finalSubcenter = deriveSubcenterForVillage(finalVillage) || 'भादा';
+      }
+
       if (!dateCollection) {
         alert('कृपया नमुना घेतल्याचा दिनांक निवडा.');
         return;
@@ -13140,7 +13735,9 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         id: recId || undefined,
         patientName,
         mobile,
-        village,
+        subcenter: finalSubcenter,
+        village: finalVillage,
+        otherVillage: (vVal === 'Other' || scVal === 'Other' || scVal === 'इतर') ? otherVilVal : '',
         houseNo,
         taluka,
         district,
@@ -13228,6 +13825,15 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         badge.style.background = '#feebc8';
         badge.style.color = '#7b341e';
       }
+
+      const dgSc = document.getElementById('dgSubcenter');
+      if (dgSc) dgSc.value = '';
+      onDengueSubcenterChange('');
+      const otherBox = document.getElementById('dgOtherVillageBox');
+      if (otherBox) otherBox.style.display = 'none';
+      const otherInput = document.getElementById('dgOtherVillage');
+      if (otherInput) otherInput.value = '';
+
       const todayStr = new Date().toISOString().slice(0, 10);
       document.getElementById('dgDateCollection').value = todayStr;
       document.getElementById('dgDateOnset').value = todayStr;
@@ -13249,7 +13855,23 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       document.getElementById('dengueRecordId').value = rec.id;
       document.getElementById('dgPatientName').value = rec.patientName || '';
       document.getElementById('dgMobile').value = rec.mobile || '';
-      document.getElementById('dgVillage').value = rec.village || '';
+
+      let scVal = rec.subcenter || deriveSubcenterForVillage(rec.village);
+      const isKnown = isKnownDengueVillage(rec.village);
+      if (!scVal && !isKnown && rec.village) {
+        scVal = 'Other';
+      }
+      const scSelect = document.getElementById('dgSubcenter');
+      if (scSelect) scSelect.value = scVal || '';
+
+      onDengueSubcenterChange(scVal || '', rec.village);
+      if (!isKnown && rec.village) {
+        const otherBox = document.getElementById('dgOtherVillageBox');
+        if (otherBox) otherBox.style.display = 'block';
+        const otherInput = document.getElementById('dgOtherVillage');
+        if (otherInput) otherInput.value = rec.otherVillage || rec.village || '';
+      }
+
       document.getElementById('dgHouseNo').value = rec.houseNo || '-';
       document.getElementById('dgTaluka').value = rec.taluka || 'AUSA';
       document.getElementById('dgDistrict').value = rec.district || 'LATUR';
@@ -13935,28 +14557,83 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       if (!select) return;
 
       const currentVal = select.value;
-      const dates = Array.from(new Set(mDengueData.map(e => e.dateCollection).filter(Boolean))).sort().reverse();
+      const showCompleted = document.getElementById('chkShowCompletedBatchDates')?.checked || false;
 
-      select.innerHTML = '<option value="">-- नमुना पाठवल्याचा दिनांक निवडा --</option>';
-      dates.forEach(d => {
-        const count = mDengueData.filter(e => e.dateCollection === d).length;
-        const dFmt = d.split('-').reverse().join('-');
-        const opt = document.createElement('option');
-        opt.value = d;
-        opt.textContent = `📅 दिनांक: ${dFmt} (एकूण ${count} सिरम नमुने पाठवले)`;
-        select.appendChild(opt);
+      // Group all unique dates into pending vs completed
+      const allDates = Array.from(new Set(mDengueData.map(e => e.dateCollection).filter(Boolean))).sort().reverse();
+
+      const pendingDates = [];
+      const completedDates = [];
+
+      allDates.forEach(d => {
+        const patients = mDengueData.filter(e => e.dateCollection === d);
+        const pendingCount = patients.filter(e => {
+          const dRes = (e.dengueResult || 'Pending');
+          const cRes = (e.chikungunyaResult || 'Pending');
+          const hasRef = !!(e.dengueReportRef || e.chikungunyaReportRef);
+          return dRes === 'Pending' || cRes === 'Pending' || !hasRef;
+        }).length;
+
+        if (pendingCount > 0) {
+          pendingDates.push({ date: d, totalCount: patients.length, pendingCount: pendingCount });
+        } else {
+          completedDates.push({ date: d, totalCount: patients.length });
+        }
       });
 
-      if (currentVal && dates.includes(currentVal)) {
+      select.innerHTML = '';
+
+      if (pendingDates.length === 0 && completedDates.length === 0) {
+        select.innerHTML = '<option value="">नोंदी उपलब्ध नाहीत</option>';
+        loadBatchDatePatients();
+        return;
+      }
+
+      if (pendingDates.length > 0) {
+        const pendingGrp = document.createElement('optgroup');
+        pendingGrp.label = '⏳ प्रलंबित अहवाल असणारे दिनांक (Pending Dates)';
+        pendingDates.forEach(item => {
+          const dFmt = item.date.split('-').reverse().join('-');
+          const opt = document.createElement('option');
+          opt.value = item.date;
+          opt.textContent = `⏳ ${dFmt} (${item.totalCount} नमुने - ${item.pendingCount} प्रलंबित)`;
+          pendingGrp.appendChild(opt);
+        });
+        select.appendChild(pendingGrp);
+      }
+
+      if (showCompleted && completedDates.length > 0) {
+        const compGrp = document.createElement('optgroup');
+        compGrp.label = '✅ अहवाल पूर्ण झालेले दिनांक (Completed Dates)';
+        completedDates.forEach(item => {
+          const dFmt = item.date.split('-').reverse().join('-');
+          const opt = document.createElement('option');
+          opt.value = item.date;
+          opt.textContent = `✅ ${dFmt} (${item.totalCount} नमुने - पूर्ण झालेले)`;
+          compGrp.appendChild(opt);
+        });
+        select.appendChild(compGrp);
+      }
+
+      if (select.options.length === 0) {
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '🎉 सर्व दिनांकांचे अहवाल पूर्ण झाले आहेत! (सर्व नमुने अद्ययावत)';
+        select.appendChild(defaultOpt);
+      }
+
+      if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
         select.value = currentVal;
-      } else if (dates.length > 0) {
-        select.value = dates[0];
+      } else {
+        select.value = select.options[0]?.value || '';
       }
 
       const recDate = document.getElementById('dgBatchReportDate');
       if (recDate && !recDate.value) {
         recDate.value = new Date().toISOString().slice(0, 10);
       }
+
+      loadBatchDatePatients();
     }
 
     function loadBatchDatePatients() {
@@ -14048,7 +14725,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       if (mActiveBatchDisease === 'chikungunya' || mActiveBatchDisease === 'both') {
         document.querySelectorAll('.batch-chik-res').forEach(sel => sel.value = resultVal);
       }
-      showToast(`सर्व रुग्णांचे निकाल ${resultVal === 'Negative' ? '🟢 Negative' : resultVal === 'Positive' ? '🔴 Positive' : '⏳ Pending'} केले.`);
+      showToast(`सर्व रुग्णांचे निकाल ${resultVal === 'Negative' ? '🟢 Negative' : resultVal === 'Positive' ? '🔴 Positive' : resultVal === 'Equivocal' ? '🟠 Equivocal' : '⏳ Pending'} केले.`);
     }
 
     function handleBatchFileUpload(event) {
@@ -14439,16 +15116,66 @@ td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-fam
       if (!file) return;
 
       const nameEl = document.getElementById('dgOldDataSelectedFileName');
-      if (nameEl) nameEl.textContent = `✅ निवडलेली फाईल: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      if (nameEl) nameEl.textContent = `⏳ फाईल वाचली जात आहे: ${file.name}...`;
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        mDengueRawCsvContent = e.target.result;
-        const pasteArea = document.getElementById('dgOldDataPasteArea');
-        if (pasteArea) pasteArea.value = mDengueRawCsvContent;
-        showToast('✅ CSV फाईल यशस्वीरित्या लोड झाली. आता "डेटा पार्स व तपासा" वर क्लिक करा.');
-      };
-      reader.readAsText(file, 'UTF-8');
+      const fileName = file.name.toLowerCase();
+      const isExcelBinary = fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || fileName.endsWith('.xlsm') || fileName.endsWith('.xlsb');
+
+      if (isExcelBinary && typeof XLSX !== 'undefined') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', codepage: 65001 });
+            const firstSheetName = workbook.SheetNames && workbook.SheetNames[0];
+            if (!firstSheetName) {
+              throw new Error('एक्सेल फाईलमध्ये शीट आढळली नाही.');
+            }
+            const worksheet = workbook.Sheets[firstSheetName];
+            const csvText = XLSX.utils.sheet_to_csv(worksheet);
+            if (!csvText || !csvText.trim()) {
+              throw new Error('एक्सेल मधील निवडलेली शीट रिकामी आहे.');
+            }
+            mDengueRawCsvContent = csvText;
+            const pasteArea = document.getElementById('dgOldDataPasteArea');
+            if (pasteArea) pasteArea.value = mDengueRawCsvContent;
+
+            if (nameEl) nameEl.textContent = `✅ निवडलेली फाईल: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            showToast('✅ Excel (.xlsx/.xls) फाईल यशस्वीरित्या वाचन झाले!', 'success');
+            
+            // Auto-trigger validate & preview
+            parseAndPreviewDengueOldData();
+          } catch (err) {
+            console.warn('XLSX parsing failed, trying text fallback:', err);
+            readAsTextFallback(file);
+          }
+        };
+        reader.onerror = function() {
+          readAsTextFallback(file);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        readAsTextFallback(file);
+      }
+
+      function readAsTextFallback(f) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          mDengueRawCsvContent = e.target.result;
+          const pasteArea = document.getElementById('dgOldDataPasteArea');
+          if (pasteArea) pasteArea.value = mDengueRawCsvContent;
+          if (nameEl) nameEl.textContent = `✅ निवडलेली फाईल: ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+          showToast('✅ फाईल यशस्वीरित्या लोड झाली.', 'success');
+          
+          // Auto-trigger validate & preview
+          parseAndPreviewDengueOldData();
+        };
+        reader.onerror = function(err) {
+          if (nameEl) nameEl.textContent = `⚠️ फाईल वाचता आली नाही: ${f.name}`;
+          alert('⚠️ फाईल वाचताना त्रुटी आली. कृपया फाईल मधील मजकूर कॉपी करून "पेस्ट करा" बॉक्समध्ये टाका.');
+        };
+        reader.readAsText(f, 'UTF-8');
+      }
     }
 
     function toggleDenguePasteArea() {
@@ -14465,36 +15192,77 @@ td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-fam
       }
 
       if (!content || !content.trim()) {
-        alert('⚠️ कृपया प्रथम CSV फाईल निवडा किंवा मजकूर पेस्ट करा.');
+        alert('⚠️ कृपया प्रथम CSV / Excel फाईल निवडा किंवा मजकूर पेस्ट करा.');
         return;
       }
 
-      const lines = content.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
-      if (lines.length < 2) {
-        alert('⚠️ CSV मध्ये किमान एक हेडर ओळ व एक डेटा ओळ असणे आवश्यक आहे.');
-        return;
-      }
+      function parseSpreadsheetRows(cnt) {
+        if (!cnt || !cnt.trim()) return [];
+        const trimmed = cnt.trim();
 
-      function parseLine(line) {
-        let inQuotes = false;
-        let token = "";
-        const cols = [];
-        for (let j = 0; j < line.length; j++) {
-          const c = line[j];
-          if (c === '"') inQuotes = !inQuotes;
-          else if (c === ',' && !inQuotes) {
-            cols.push(token.trim());
-            token = "";
-          } else {
-            token += c;
+        // 1. Check if content is HTML Table (from .xls or pasted HTML)
+        if (trimmed.includes('<table') || trimmed.includes('<tr')) {
+          const rows = [];
+          const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+          let trMatch;
+          while ((trMatch = trRegex.exec(trimmed)) !== null) {
+            const rowContent = trMatch[1];
+            const cells = [];
+            const cellRegex = /<(?:td|th)[^>]*>([\s\S]*?)<\/(?:td|th)>/gi;
+            let cellMatch;
+            while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+              let text = cellMatch[1].replace(/<[^>]+>/g, '').trim();
+              text = text.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
+              cells.push(text);
+            }
+            if (cells.length > 0) rows.push(cells);
           }
+          if (rows.length > 0) return rows;
         }
-        cols.push(token.trim());
-        return cols;
+
+        // 2. Text lines (CSV / TSV / Semicolon)
+        const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (lines.length === 0) return [];
+
+        const firstLine = lines[0];
+        let delimiter = ',';
+        const tabCount = (firstLine.match(/\t/g) || []).length;
+        const semiCount = (firstLine.match(/;/g) || []).length;
+        const commaCount = (firstLine.match(/,/g) || []).length;
+
+        if (tabCount > commaCount && tabCount >= semiCount) delimiter = '\t';
+        else if (semiCount > commaCount) delimiter = ';';
+
+        return lines.map(line => {
+          let inQuotes = false;
+          let token = "";
+          const cols = [];
+          for (let j = 0; j < line.length; j++) {
+            const c = line[j];
+            if (c === '"') inQuotes = !inQuotes;
+            else if (c === delimiter && !inQuotes) {
+              cols.push(token.replace(/^"|"$/g, '').trim());
+              token = "";
+            } else {
+              token += c;
+            }
+          }
+          cols.push(token.replace(/^"|"$/g, '').trim());
+          return cols;
+        });
       }
 
-      const header = parseLine(lines[0]).map(c => c.replace(/^"|"$/g, '').trim().toLowerCase());
-      const nameIdx = header.findIndex(c => c.includes('नाव') || c.includes('patient') || c.includes('name'));
+      const rows = parseSpreadsheetRows(content);
+      if (rows.length < 2) {
+        alert('⚠️ फाईलमध्ये किमान एक हेडर ओळ व एक डेटा ओळ असणे आवश्यक आहे.');
+        return;
+      }
+
+      const header = rows[0].map(c => c.replace(/^"|"$/g, '').trim().toLowerCase());
+      let nameIdx = header.findIndex(c => 
+        c.includes('नाव') || c.includes('patient name') || c.includes('patient_name') || c.includes('patient') || 
+        c.includes('pname') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('à¤¨à¤¾à¤µ') || c === 'name'
+      );
       const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd'));
       const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village'));
       const ageIdx = header.findIndex(c => c.includes('वय') || c.includes('age'));
@@ -14503,9 +15271,14 @@ td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-fam
       const dResIdx = header.findIndex(c => c.includes('डेंगी') || c.includes('dengue'));
       const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया') || c.includes('chik'));
 
-      if (nameIdx === -1) {
-        alert('⚠️ CSV फाईलमध्ये "रुग्णाचे नाव" (Patient Name) कॉलम आढळला नाही.');
-        return;
+      // Smart fallback if nameIdx is still -1
+      if (nameIdx === -1 && header.length >= 1) {
+        if (header.length === 1) nameIdx = 0;
+        else if (header[0].includes('reg') || header[0].includes('no') || header[0].includes('id') || header[0].includes('नोंदणी') || header[0].includes('क्र')) {
+          nameIdx = 1;
+        } else {
+          nameIdx = 0;
+        }
       }
 
       let validCount = 0;
@@ -14513,9 +15286,10 @@ td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-fam
       let errorCount = 0;
       let previewRowsHtml = '';
 
-      for (let i = 1; i < lines.length; i++) {
-        const cols = parseLine(lines[i]);
-        const pName = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx].replace(/^"|"$/g, '').trim() : '';
+      for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i];
+        if (!cols || cols.length === 0) continue;
+        const pName = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx].replace(/^"|"$/g, '').trim() : (cols[0] ? cols[0].replace(/^"|"$/g, '').trim() : '');
         if (!pName) {
           errorCount++;
           continue;
@@ -14553,7 +15327,7 @@ td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-fam
       }
 
       // Update KPI Cards
-      document.getElementById('kpiDgOldTotalRows').textContent = lines.length - 1;
+      document.getElementById('kpiDgOldTotalRows').textContent = rows.length - 1;
       document.getElementById('kpiDgOldValidRecords').textContent = validCount;
       document.getElementById('kpiDgOldNormalized').textContent = normalizedCount;
       document.getElementById('kpiDgOldErrors').textContent = errorCount;
@@ -14665,31 +15439,44 @@ td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-fam
 
     function exportDengueCsvClient() {
       if (typeof window !== 'undefined' && window.location && window.location.hostname && !window.location.hostname.endsWith('github.io')) {
-        window.location.href = '/api/export/dengue-samples.csv';
+        window.location.href = '/api/export/dengue-samples.xlsx';
         return;
       }
 
-      // Offline / GitHub Pages fallback
+      // Offline / GitHub Pages fallback with SheetJS
       const headers = [
-        'ID', 'Patient Name', 'Mobile', 'House No', 'Village', 'Taluka', 'District',
-        'Hospital Address', 'Reg No', 'Ward', 'Bed', 'Age', 'Sex', 'Onset Date',
-        'Sample Nature', 'Collection Date', 'Fever Days', 'Headache Days', 'Bodyache Days',
-        'Joint Pain Days', 'Retro Orbital Pain Days', 'Rash Days', 'Haemorrhagic',
-        'Doctor Name', 'Doctor Mobile'
+        'आयडी (ID)', 'रुग्णाचे नाव (Patient Name)', 'मोबाईल (Mobile)', 'घर क्र. (House No)',
+        'गाव (Village)', 'तालुका (Taluka)', 'जिल्हा (District)', 'रुग्णालय पत्ता (Hospital Address)',
+        'नोंदणी क्र. (Reg No)', 'वार्ड (Ward)', 'बेड (Bed)', 'वय (Age)', 'लिंग (Sex)',
+        'लक्षणे सुरू दिनांक (Onset Date)', 'नमुना प्रकार (Sample Nature)', 'नमुना घेतल्याचा दिनांक (Collection Date)',
+        'ताप दिवस (Fever Days)', 'डोकेदुखी दिवस (Headache Days)', 'अंगदुखी दिवस (Bodyache Days)',
+        'सांधेदुखी दिवस (Joint Pain Days)', 'डोळ्यांमागे दुखणे (Retro Orbital Pain Days)', 'पुरळ दिवस (Rash Days)',
+        'रक्तस्राव (Haemorrhagic)', 'डॉक्टर नाव (Doctor Name)', 'डॉक्टर मोबाईल (Doctor Mobile)',
+        'डेंगी निष्कर्ष (Dengue Result)', 'चिकनगुनिया निष्कर्ष (Chikungunya Result)'
       ];
       const rows = mDengueData.map(e => [
-        e.id, `"${(e.patientName || '').replace(/"/g, '""')}"`, e.mobile || '-',
-        e.houseNo || '-', `"${(e.village || '').replace(/"/g, '""')}"`,
-        e.taluka || 'AUSA', e.district || 'LATUR', `"${(e.hospitalAddress || '').replace(/"/g, '""')}"`,
+        e.id || '', e.patientName || '', e.mobile || '-',
+        e.houseNo || '-', e.village || '',
+        e.taluka || 'AUSA', e.district || 'LATUR', e.hospitalAddress || '',
         e.patientRegNo || '-', e.wardNo || '--', e.bedNo || '--', e.age || 0,
         e.sex || '', e.dateOnset || '', e.sampleNature || 'Serum', e.dateCollection || '',
         e.clinicalFever ?? 1, e.clinicalHeadache ?? 0, e.clinicalBodyache ?? 0,
         e.clinicalJointPain ?? 0, e.clinicalRetroOrbitalPain ?? 0, e.clinicalRash ?? 0,
-        e.haemorrhagic || 'No', `"${(e.doctorName || '').replace(/"/g, '""')}"`, e.doctorMobile || ''
+        e.haemorrhagic || 'No', e.doctorName || '', e.doctorMobile || '',
+        e.dengueResult || 'Pending', e.chikungunyaResult || 'Pending'
       ]);
 
-      const csvContent = '﻿' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+      if (typeof XLSX !== 'undefined') {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        XLSX.utils.book_append_sheet(wb, ws, 'Dengue_Samples');
+        XLSX.writeFile(wb, `phc_bhada_dengue_samples_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast('📗 Excel (.xlsx) फाईल डाऊनलोड झाली!');
+        return;
+      }
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

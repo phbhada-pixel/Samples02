@@ -3573,7 +3573,7 @@
               <button type="button" class="sheet-btn sheet-btn-secondary" onclick="resetMasterEmpFilters()" style="padding:7px 12px; font-size:12px;">✕ रीसेट</button>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <a href="/api/export/employees.csv" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px;">📥 CSV डाउनलोड</a>
+              <a href="/api/export/employees.xlsx" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px; background:#ebf8ff; color:#2b6cb0; border-color:#3182ce; font-weight:700;">📗 Excel (.xlsx) डाउनलोड</a>
               <button type="button" class="sheet-btn" style="background:#00796b; font-size:12px; padding:7px 14px;" onclick="openAddEmployeeModal()">➕ नवीन कर्मचारी</button>
               <button type="button" class="sheet-btn" style="background:#2b6cb0; font-size:12px; padding:7px 14px; font-weight:700;" onclick="openTransferModal()">🔄 कर्मचारी बदली / गाव वाटप</button>
             </div>
@@ -3611,7 +3611,7 @@
               <button type="button" class="sheet-btn sheet-btn-secondary" onclick="resetMasterVillageFilters()" style="padding:7px 12px; font-size:12px;">✕ रीसेट</button>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <a href="/api/export/villages.csv" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px;">📥 CSV डाउनलोड</a>
+              <a href="/api/export/villages.xlsx" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px; background:#ebf8ff; color:#2b6cb0; border-color:#3182ce; font-weight:700;">📗 Excel (.xlsx) डाउनलोड</a>
               <button type="button" class="sheet-btn" style="background:#00796b; font-size:12px; padding:7px 14px;" onclick="openAddVillageModal()">➕ नवीन गाव जोडा</button>
             </div>
           </div>
@@ -3650,7 +3650,7 @@
               <input type="text" id="mSubcenterSearch" class="filter-search" placeholder="🔍 उपकेंद्र, मुख्यालय ने शोधा..." oninput="filterMasterSubcenters()">
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <a href="/api/export/subcenters.csv" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px;">📥 CSV डाउनलोड</a>
+              <a href="/api/export/subcenters.xlsx" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px; background:#ebf8ff; color:#2b6cb0; border-color:#3182ce; font-weight:700;">📗 Excel (.xlsx) डाउनलोड</a>
               <button type="button" class="sheet-btn" style="background:#00796b; font-size:12px; padding:7px 14px;" onclick="openAddSubcenterModal()">➕ नवीन उपकेंद्र जोडा</button>
             </div>
           </div>
@@ -3697,7 +3697,7 @@
               <input type="text" id="mTransferSearch" class="filter-search" placeholder="🔍 कर्मचारी नाव, उपकेंद्र, आदेश क्र. ने शोधा..." oninput="filterMasterTransfers()">
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <a href="/api/export/transfers.csv" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px;">📥 बदली इतिहास (CSV) डाउनलोड</a>
+              <a href="/api/export/transfers.xlsx" download class="sheet-btn sheet-btn-secondary" style="font-size:12px; padding:7px 12px; background:#ebf8ff; color:#2b6cb0; border-color:#3182ce; font-weight:700;">📗 Excel (.xlsx) डाउनलोड</a>
             </div>
           </div>
 
@@ -3763,14 +3763,14 @@
             <div>📄 <b>Spreadsheet ID:</b> <span id="lblSpreadsheetId" style="font-family:monospace; background:#e2e8f0; padding:2px 6px; border-radius:4px;">1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM</span></div>
             <div>🕒 <b>शेवटचे सिंक:</b> <span id="lblLastSyncTime">सिंक सज्ज</span></div>
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-              <b>📥 CSV डाऊनलोड:</b>
-              <a href="/api/export/bs-data.csv" download style="color:#2b6cb0; text-decoration:underline; font-weight:600;">🩸 BsDataEntry (रक्त नमुने)</a>
+              <b>📗 Excel (.xlsx) डाऊनलोड:</b>
+              <a href="/api/export/bs-data.xlsx" download style="color:#2b6cb0; text-decoration:underline; font-weight:700;">🩸 BsDataEntry (रक्त नमुने)</a>
               <span>•</span>
-              <a href="/api/export/village-details.csv" download style="color:#2f855a; text-decoration:underline; font-weight:600;">🏡 VillageDetails (गावनिहाय)</a>
+              <a href="/api/export/village-details.xlsx" download style="color:#2f855a; text-decoration:underline; font-weight:700;">🏡 VillageDetails (गावनिहाय)</a>
               <span>•</span>
-              <a href="/api/export/month-master.csv" download style="color:#805ad5; text-decoration:underline; font-weight:600;">📅 MonthMaster (गृहभेटी व निर्देशांक)</a>
+              <a href="/api/export/month-master.xlsx" download style="color:#805ad5; text-decoration:underline; font-weight:700;">📅 MonthMaster (गृहभेटी व निर्देशांक)</a>
               <span>•</span>
-              <a href="/api/export/master-data.csv" download style="color:#c05621; text-decoration:underline; font-weight:600;">👥 MasterData (६५ कर्मचारी)</a>
+              <a href="/api/export/master-data.xlsx" download style="color:#c05621; text-decoration:underline; font-weight:700;">👥 MasterData (६५ कर्मचारी)</a>
             </div>
           </div>
         </div>
