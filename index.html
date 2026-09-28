@@ -2172,16 +2172,16 @@
             const mpwFn1 = mObj.mpwFn1 != null ? parseInt(mObj.mpwFn1) : 5460;
             const mpwFn2 = mObj.mpwFn2 != null ? parseInt(mObj.mpwFn2) : 5421;
             const mpwHomeVisits = mObj.mpwHomeVisits != null ? parseInt(mObj.mpwHomeVisits) : (mpwFn1 + mpwFn2);
-            const progMpwFn1 = mObj.progMpwFn1 != null ? parseInt(mObj.progMpwFn1) : (priorMpwFn1 + mpwFn1);
-            const progMpwFn2 = mObj.progMpwFn2 != null ? parseInt(mObj.progMpwFn2) : (priorMpwFn2 + mpwFn2);
-            const progMpwHomeVisits = mObj.progMpwHomeVisits != null ? parseInt(mObj.progMpwHomeVisits) : (priorMpwTot + mpwHomeVisits);
+            const progMpwFn1 = priorMpwFn1 + mpwFn1;
+            const progMpwFn2 = priorMpwFn2 + mpwFn2;
+            const progMpwHomeVisits = priorMpwTot + mpwHomeVisits;
 
             const anmFn1 = mObj.anmFn1 != null ? parseInt(mObj.anmFn1) : 2461;
             const anmFn2 = mObj.anmFn2 != null ? parseInt(mObj.anmFn2) : 2630;
             const anmHomeVisits = mObj.anmHomeVisits != null ? parseInt(mObj.anmHomeVisits) : (anmFn1 + anmFn2);
-            const progAnmFn1 = mObj.progAnmFn1 != null ? parseInt(mObj.progAnmFn1) : (priorAnmFn1 + anmFn1);
-            const progAnmFn2 = mObj.progAnmFn2 != null ? parseInt(mObj.progAnmFn2) : (priorAnmFn2 + anmFn2);
-            const progAnmHomeVisits = mObj.progAnmHomeVisits != null ? parseInt(mObj.progAnmHomeVisits) : (priorAnmTot + anmHomeVisits);
+            const progAnmFn1 = priorAnmFn1 + anmFn1;
+            const progAnmFn2 = priorAnmFn2 + anmFn2;
+            const progAnmHomeVisits = priorAnmTot + anmHomeVisits;
 
             const defaultOpdVillages = [
               { name: "भादा", villageName: "भादा", count: 65, total: 65, smears: 65, monthlyTotal: 65, male: 33, monthlyMale: 33, female: 32, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475, upkendra: "भादा" },
@@ -5454,9 +5454,9 @@
           <div style="background:linear-gradient(135deg, #e6fffa, #ebf8ff); border:1.5px solid #319795; border-radius:12px; padding:16px 20px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
               <div>
-                <h3 style="margin:0; color:#234e52; font-size:17.5px; font-weight:800;">📋 मासिक अहवाल व गृहभेटी नोंदणी (NVBDCP Monthly Indicators & Home Visits)</h3>
-                <p style="margin:4px 0 0 0; font-size:13px; color:#2d3748;">
-                  या पानावर <b>नवीन बाह्यरुग्ण (OPD)</b>, <b>तापाचे रुग्ण</b>, <b>रक्त नमुणे</b>, <b>उपचारीत रुग्ण</b>, <b>क्लोरोक्वीन खर्च</b> आणि <b>आरोग्य सेवक/सेविका गृहभेटी (MPW & ANM)</b> एकाच ठिकाणी भरा.
+                <h3 id="monthlySubpaneTitle" style="margin:0; color:#234e52; font-size:17.5px; font-weight:800;">📋 मासिक अहवाल नोंदणी (NVBDCP Monthly Indicators)</h3>
+                <p id="monthlySubpaneDesc" style="margin:4px 0 0 0; font-size:13px; color:#2d3748;">
+                  या पानावर फक्त <b>'नवीन बाह्यरुग्ण (New OPD)'</b> ची मासिक संख्या प्रविष्ट करा. बाकी सर्व घटक इनॲक्टिव्ह/लॉक आहेत.
                 </p>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
@@ -5470,12 +5470,14 @@
               </div>
             </div>
 
-            <!-- Quick Section Jump Links -->
-            <div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(49, 151, 149, 0.2); display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-              <span style="font-size:12px; font-weight:700; color:#234e52;">⚡ जलद उडी:</span>
-              <a href="#opdSectionAnchor" style="font-size:12px; font-weight:700; color:#2b6cb0; background:#fff; padding:3px 10px; border-radius:15px; border:1px solid #bee3f8; text-decoration:none;">🏥 १. ओपीडी माहिती (Cards 1-5)</a>
-              <a href="#homeVisitSection" style="font-size:12px; font-weight:700; color:#22543d; background:#f0fff4; padding:3px 10px; border-radius:15px; border:1.5px solid #68d391; text-decoration:none;">🚶‍♂️ २. गृहभेटी माहिती (MPW & ANM)</a>
-              <a href="#previewSectionAnchor" style="font-size:12px; font-weight:700; color:#4a5568; background:#fff; padding:3px 10px; border-radius:15px; border:1px solid #cbd5e0; text-decoration:none;">📊 ३. थेट अहवाल पूर्वावलोकन (तक्ते)</a>
+            <!-- Quick Subtab Switcher for OPD vs Home Visit -->
+            <div class="table-subtabs" style="margin-top:12px; margin-bottom:0; gap:8px;">
+              <button id="subtabBtnMonthlyOpd" class="subtab-btn active" style="color:#2b6cb0; font-weight:700;" onclick="switchMonthlySubtab('opd')">
+                🏥 १. नवीन ओपीडी नोंदणी (New OPD Entry)
+              </button>
+              <button id="subtabBtnMonthlyHomeVisit" class="subtab-btn" style="color:#22543d; font-weight:700;" onclick="switchMonthlySubtab('homevisit')">
+                🚶‍♂️ २. स्वतंत्र गृहभेटी नोंदणी (Home Visit Entry - MPW & ANM)
+              </button>
             </div>
           </div>
 
@@ -5488,228 +5490,240 @@
           <div id="indicatorFormContent">
 
             <!-- ================= SECTION 1: OPD INFORMATION ================= -->
-            <div id="opdSectionAnchor" style="background:#ebf8ff; border:1px solid #bee3f8; border-left:4px solid #3182ce; border-radius:8px; padding:10px 14px; margin-bottom:16px;">
-              <div style="font-weight:700; color:#2b6cb0; font-size:14px;">🏥 १. बाह्यरुग्ण (OPD) व तापाचे रुग्ण माहिती (OPD Information)</div>
-              <div style="font-size:12.5px; color:#4a5568; margin-top:2px;">नवीन बाह्यरुग्ण (OPD), तापाचे रुग्ण, घेतलेले रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन गोळ्यांची नोंद येथे भरा.</div>
-            </div>
-
-            <!-- 5 Metric Cards Grid (OPD) -->
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:24px;">
-              
-              <!-- 1. नवीन बाह्यरुग्ण (New OPD) -->
-              <div class="indicator-input-card" style="border-top:4px solid #3182ce;">
-                <div class="indicator-card-title" style="color:#2b6cb0;">
-                  <span>🏥 १. नवीन बाह्यरुग्ण (New OPD)</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div class="form-group" style="margin-bottom:10px;">
-                    <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
-                    <input type="number" id="inpNewOpd" class="indicator-input" placeholder="उदा. 470" oninput="onIndicatorFieldChange()">
-                  </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
-                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
-                    </div>
-                    <input type="number" id="inpProgNewOpd" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
-                  </div>
-                  <div class="indicator-hint" id="hintOpd">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
-                </div>
+            <div id="monthlySectionOpd">
+              <div id="opdSectionAnchor" style="background:#ebf8ff; border:1px solid #bee3f8; border-left:4px solid #3182ce; border-radius:8px; padding:10px 14px; margin-bottom:12px;">
+                <div style="font-weight:700; color:#2b6cb0; font-size:14px;">🏥 १. नवीन बाह्यरुग्ण (OPD) माहिती नोंदणी</div>
+                <div style="font-size:12.5px; color:#4a5568; margin-top:2px;">मासिक अहवालासाठी खालील **'नवीन बाह्यरुग्ण (New OPD)'** ची मासिक संख्या प्रविष्ट करा.</div>
               </div>
 
-              <!-- 2. तापाचे रुग्ण (Fever Patients) -->
-              <div class="indicator-input-card" style="border-top:4px solid #dd6b20;">
-                <div class="indicator-card-title" style="color:#c05621; display:flex; justify-content:space-between; align-items:center;">
-                  <span>🌡️ २. तापाचे रुग्ण (Fever Cases)</span>
-                  <span style="background:#feebc8; color:#c05621; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔗 = रक्त नमुणे = उपचारीत</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div class="form-group" style="margin-bottom:10px;">
-                    <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
-                    <input type="number" id="inpFeverCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange('fever')">
-                  </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
-                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
-                    </div>
-                    <input type="number" id="inpProgFeverCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
-                  </div>
-                  <div class="indicator-hint" id="hintFever">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
-                </div>
+              <!-- Notice Banner for OPD active field -->
+              <div style="background:#fffaf0; border:1px solid #fbd38d; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12.5px; color:#c05621; font-weight:600; display:flex; align-items:center; gap:8px;">
+                <span>📌</span>
+                <span><b>मासिक ओपीडी नोंदणी सूचना:</b> या फॉर्ममध्ये फक्त <b>'१. नवीन बाह्यरुग्ण (New OPD)'</b> ही एकमेव फील्ड भरण्यासाठी ॲक्टिव्ह ठेवली आहे. तापाचे रुग्ण, रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन गोळ्या दैनिक नमुन्यांमधून आपोआप (Auto-calculated) तयार होतात व इनॲक्टिव्ह/लॉक आहेत.</span>
               </div>
 
-              <!-- 3. घेतलेले रक्त नमुणे (Blood Smears Collected) -->
-              <div class="indicator-input-card" style="border-top:4px solid #319795;">
-                <div class="indicator-card-title" style="color:#234e52; display:flex; justify-content:space-between; align-items:center;">
-                  <span>🩸 ३. घेतलेले रक्त नमुणे (Blood Smears)</span>
-                  <span style="background:#c6f6d5; color:#22543d; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🏥 बाह्यरुग्ण विभाग (OPD) auto-save</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div class="form-group" style="margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
-                      <span id="badgeOpdMonthTag" style="font-size:11px; color:#2c7a7b; font-weight:700;"></span>
+              <!-- 5 Metric Cards Grid (OPD) -->
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:24px;">
+                
+                <!-- 1. नवीन बाह्यरुग्ण (New OPD) - Active Field -->
+                <div class="indicator-input-card" style="border-top:4px solid #3182ce; background:#ffffff; box-shadow:0 2px 8px rgba(49, 130, 206, 0.12);">
+                  <div class="indicator-card-title" style="color:#2b6cb0; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🏥 १. नवीन बाह्यरुग्ण (New OPD)</span>
+                    <span style="background:#ebf8ff; color:#2b6cb0; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">✅ ॲक्टिव्ह (Active)</span>
+                  </div>
+                  <div class="indicator-card-body">
+                    <div class="form-group" style="margin-bottom:10px;">
+                      <label style="font-size:12px; font-weight:700; color:#2b6cb0;">मासिक संख्या (Monthly OPD) *</label>
+                      <input type="number" id="inpNewOpd" class="indicator-input" placeholder="उदा. 470" oninput="onIndicatorFieldChange()" style="border:2px solid #3182ce; font-weight:700; font-size:15px; color:#2b6cb0;">
                     </div>
-                    <input type="number" id="inpBloodSmears" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange('smears')">
-                  </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
-                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    <div class="form-group" style="margin-bottom:6px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
+                        <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 स्वयं-गणना</span>
+                      </div>
+                      <input type="number" id="inpProgNewOpd" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
                     </div>
-                    <input type="number" id="inpProgBloodSmears" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
+                    <div class="indicator-hint" id="hintOpd">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                   </div>
-                  <div class="indicator-hint" id="hintSmears">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
+                </div>
 
-                  <!-- Villagewise OPD Details info box -->
-                  <div id="opdVillagewiseInfoBox" style="margin-top:10px; padding:8px 10px; background:#f0fff4; border:1px solid #9ae6b4; border-radius:6px; font-size:11.5px; color:#22543d; line-height:1.4;">
-                    <div style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
-                      <span>🏥 गावनिहाय ओपीडी नोंद तपशील:</span>
-                      <button type="button" onclick="syncWithOpdVillagewise()" style="background:#319795; color:white; border:none; border-radius:4px; padding:2px 7px; font-size:10.5px; cursor:pointer; font-weight:bold;" title="गावनिहाय नोंदींमधून मूल्य रिफ्रेश करा">🔄 सिंक करा</button>
+                <!-- 2. तापाचे रुग्ण (Fever Patients) - Inactive Field -->
+                <div class="indicator-input-card" style="border-top:4px solid #a0aec0; background:#f7fafc; opacity:0.85;">
+                  <div class="indicator-card-title" style="color:#4a5568; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🌡️ २. तापाचे रुग्ण (Fever Cases)</span>
+                    <span style="background:#edf2f7; color:#718096; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔒 इनॲक्टिव्ह</span>
+                  </div>
+                  <div class="indicator-card-body">
+                    <div class="form-group" style="margin-bottom:10px;">
+                      <label style="font-size:12px; font-weight:600; color:#718096;">मासिक संख्या (दैनिक नोंदींमधून)</label>
+                      <input type="number" id="inpFeverCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="दैनिक रक्त नमुन्यांमधून स्वयं-गणना (इनॲक्टिव्ह)">
                     </div>
-                    <div id="opdVillagewiseList" style="margin-top:4px;">भादा: ४५ (पुरुष: २३, स्त्री: २२)</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4. उपचारीत रुग्ण (Treated Patients) -->
-              <div class="indicator-input-card" style="border-top:4px solid #38a169;">
-                <div class="indicator-card-title" style="color:#276749; display:flex; justify-content:space-between; align-items:center;">
-                  <span>💊 ४. उपचारीत रुग्ण (Treated Patients)</span>
-                  <span style="background:#c6f6d5; color:#276749; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔗 = रक्त नमुणे = तापाचे रुग्ण</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div class="form-group" style="margin-bottom:10px;">
-                    <label style="font-size:12px; font-weight:600;">मासिक संख्या (Monthly)</label>
-                    <input type="number" id="inpTreatedCases" class="indicator-input" placeholder="उदा. 45" oninput="onIndicatorFieldChange('treated')">
-                  </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत संख्या (Progressive - YTD)</label>
-                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                    <div class="form-group" style="margin-bottom:6px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="font-size:12px; font-weight:600; color:#718096;">प्रगत संख्या (YTD)</label>
+                        <span style="font-size:11px; background:#edf2f7; color:#718096; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 स्वयं-गणना</span>
+                      </div>
+                      <input type="number" id="inpProgFeverCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
                     </div>
-                    <input type="number" id="inpProgTreatedCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
+                    <div class="indicator-hint" id="hintFever">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                   </div>
-                  <div class="indicator-hint" id="hintTreated">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
                 </div>
-              </div>
 
-              <!-- 5. क्लोरोक्वीन गोळया खर्च (Chloroquine Consumption) -->
-              <div class="indicator-input-card" style="border-top:4px solid #805ad5;">
-                <div class="indicator-card-title" style="color:#553c9a;">
-                  <span>⚪ ५. क्लोरोक्वीन गोळया खर्च (Chloroquine)</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div class="form-group" style="margin-bottom:10px;">
-                    <label style="font-size:12px; font-weight:600;">मासिक गोळ्या खर्च (Monthly)</label>
-                    <input type="number" id="inpChloroquine" class="indicator-input" placeholder="उदा. 0" oninput="onIndicatorFieldChange()">
+                <!-- 3. घेतलेले रक्त नमुणे (Blood Smears) - Inactive Field -->
+                <div class="indicator-input-card" style="border-top:4px solid #a0aec0; background:#f7fafc; opacity:0.85;">
+                  <div class="indicator-card-title" style="color:#4a5568; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🩸 ३. घेतलेले रक्त नमुणे (Blood Smears)</span>
+                    <span style="background:#edf2f7; color:#718096; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔒 इनॲक्टिव्ह</span>
                   </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                      <label style="font-size:12px; font-weight:600; color:#4a5568;">प्रगत गोळ्या खर्च (Progressive - YTD)</label>
-                      <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 लॉक (स्वयं-गणना)</span>
+                  <div class="indicator-card-body">
+                    <div class="form-group" style="margin-bottom:10px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-size:12px; font-weight:600; color:#718096;">मासिक संख्या (दैनिक नोंदींमधून)</label>
+                        <span id="badgeOpdMonthTag" style="font-size:11px; color:#718096; font-weight:700;"></span>
+                      </div>
+                      <input type="number" id="inpBloodSmears" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="दैनिक रक्त नमुन्यांमधून स्वयं-गणना (इनॲक्टिव्ह)">
                     </div>
-                    <input type="number" id="inpProgChloroquine" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="प्रगत संख्या मागील बेरीज + चालू महिना यावरून आपोआप काढली जाते">
-                  </div>
-                  <div class="indicator-hint" id="hintCq">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
-                </div>
-              </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="font-size:12px; font-weight:600; color:#718096;">प्रगत संख्या (YTD)</label>
+                        <span style="font-size:11px; background:#edf2f7; color:#718096; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 स्वयं-गणना</span>
+                      </div>
+                      <input type="number" id="inpProgBloodSmears" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
+                    </div>
+                    <div class="indicator-hint" id="hintSmears">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
 
-            </div>
-
-            <!-- ================= SECTION 2: HOME VISIT INFORMATION ================= -->
-            <div id="homeVisitSection" style="background:#f0fff4; border:1.5px solid #68d391; border-left:5px solid #276749; border-radius:8px; padding:12px 16px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                <div>
-                  <div style="font-weight:800; color:#22543d; font-size:15.5px; display:flex; align-items:center; gap:8px;">
-                    <span>🚶‍♂️</span> <span>२. घरावरील स्टेन्सीलिंग / गृहभेटी तपशील (Home Visit Information - MPW & ANM)</span>
-                    <span style="background:#c6f6d5; color:#22543d; font-size:11px; padding:2px 8px; border-radius:12px; font-weight:700;">NVBDCP १०.१४</span>
-                  </div>
-                  <div style="font-size:13px; color:#2d3748; margin-top:4px;">
-                    आरोग्य सेवक (MPW) व आरोग्य सेविका (ANM) यांच्या पहिल्या (1 ते 15) व दुसऱ्या (16 ते अखेर) पंधरवड्यातील प्रत्यक्ष गृहभेटींची नोंद खाली भरा:
+                    <!-- Villagewise OPD Details info box -->
+                    <div id="opdVillagewiseInfoBox" style="margin-top:10px; padding:8px 10px; background:#f7fafc; border:1px solid #cbd5e0; border-radius:6px; font-size:11.5px; color:#4a5568; line-height:1.4;">
+                      <div style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+                        <span>🏥 गावनिहाय ओपीडी नोंद तपशील:</span>
+                        <button type="button" onclick="syncWithOpdVillagewise()" style="background:#718096; color:white; border:none; border-radius:4px; padding:2px 7px; font-size:10.5px; cursor:pointer; font-weight:bold;" title="गावनिहाय नोंदींमधून मूल्य रिफ्रेश करा">🔄 सिंक</button>
+                      </div>
+                      <div id="opdVillagewiseList" style="margin-top:4px;">भादा: ४५ (पुरुष: २३, स्त्री: २२)</div>
+                    </div>
                   </div>
                 </div>
+
+                <!-- 4. उपचारीत रुग्ण (Treated Patients) - Inactive Field -->
+                <div class="indicator-input-card" style="border-top:4px solid #a0aec0; background:#f7fafc; opacity:0.85;">
+                  <div class="indicator-card-title" style="color:#4a5568; display:flex; justify-content:space-between; align-items:center;">
+                    <span>💊 ४. उपचारीत रुग्ण (Treated Patients)</span>
+                    <span style="background:#edf2f7; color:#718096; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔒 इनॲक्टिव्ह</span>
+                  </div>
+                  <div class="indicator-card-body">
+                    <div class="form-group" style="margin-bottom:10px;">
+                      <label style="font-size:12px; font-weight:600; color:#718096;">मासिक संख्या (तापाच्या रुग्णांनुसार)</label>
+                      <input type="number" id="inpTreatedCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="तापाच्या रुग्णांनुसार स्वयं-गणना (इनॲक्टिव्ह)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="font-size:12px; font-weight:600; color:#718096;">प्रगत संख्या (YTD)</label>
+                        <span style="font-size:11px; background:#edf2f7; color:#718096; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 स्वयं-गणना</span>
+                      </div>
+                      <input type="number" id="inpProgTreatedCases" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
+                    </div>
+                    <div class="indicator-hint" id="hintTreated">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
+                  </div>
+                </div>
+
+                <!-- 5. क्लोरोक्वीन गोळया खर्च (Chloroquine) - Inactive Field -->
+                <div class="indicator-input-card" style="border-top:4px solid #a0aec0; background:#f7fafc; opacity:0.85;">
+                  <div class="indicator-card-title" style="color:#4a5568; display:flex; justify-content:space-between; align-items:center;">
+                    <span>⚪ ५. क्लोरोक्वीन गोळया खर्च (Chloroquine)</span>
+                    <span style="background:#edf2f7; color:#718096; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">🔒 इनॲक्टिव्ह</span>
+                  </div>
+                  <div class="indicator-card-body">
+                    <div class="form-group" style="margin-bottom:10px;">
+                      <label style="font-size:12px; font-weight:600; color:#718096;">मासिक गोळ्या खर्च (स्वयं-गणना)</label>
+                      <input type="number" id="inpChloroquine" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="इनॲक्टिव्ह / स्वयं-गणना">
+                    </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="font-size:12px; font-weight:600; color:#718096;">प्रगत गोळ्या खर्च (YTD)</label>
+                        <span style="font-size:11px; background:#edf2f7; color:#718096; padding:1px 6px; border-radius:4px; font-weight:600;">🔒 स्वयं-गणना</span>
+                      </div>
+                      <input type="number" id="inpProgChloroquine" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#4a5568; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
+                    </div>
+                    <div class="indicator-hint" id="hintCq">मागील महिन्यांची बेरीज: ० + चालू = ०</div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
-            <!-- 2 Cards Grid for MPW & ANM Home Visits -->
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:24px;">
-              
-              <!-- 6. आरोग्य सेवक (MPW) गृहभेटी - पहिला व दुसरा पंधरवडा -->
-              <div class="indicator-input-card" style="border-top:4px solid #2b6cb0; background:#fcfdff;">
-                <div class="indicator-card-title" style="color:#2c5282; display:flex; justify-content:space-between; align-items:center;">
-                  <span>🚶‍♂️ ६. आरोग्य सेवक (MPW) गृहभेटी</span>
-                  <span style="background:#ebf8ff; color:#2b6cb0; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">पंधरवडा १ व २</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                    <div class="form-group" style="margin:0;">
-                      <label style="font-size:11.5px; font-weight:600; color:#2b6cb0;">१ ला पंधरवाडा (1-15)</label>
-                      <input type="number" id="inpMpwFn1" class="indicator-input" placeholder="उदा. 450" oninput="onIndicatorFieldChange('mpw')">
+            <!-- ================= SECTION 2: STANDALONE HOME VISIT FORM ================= -->
+            <div id="monthlySectionHomeVisit" style="display:none;">
+              <div id="homeVisitSection" style="background:#f0fff4; border:1.5px solid #68d391; border-left:5px solid #276749; border-radius:10px; padding:14px 18px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                  <div>
+                    <div style="font-weight:800; color:#22543d; font-size:16.5px; display:flex; align-items:center; gap:8px;">
+                      <span>🚶‍♂️</span> <span>स्वतंत्र गृहभेटी नोंदणी फॉर्म (Standalone Home Visit Entry Form - MPW & ANM)</span>
+                      <span style="background:#c6f6d5; color:#22543d; font-size:11px; padding:2px 8px; border-radius:12px; font-weight:700;">NVBDCP १०.१४</span>
                     </div>
-                    <div class="form-group" style="margin:0;">
-                      <label style="font-size:11.5px; font-weight:600; color:#2b6cb0;">२ रा पंधरवडा (16-अखेर)</label>
-                      <input type="number" id="inpMpwFn2" class="indicator-input" placeholder="उदा. 480" oninput="onIndicatorFieldChange('mpw')">
+                    <div style="font-size:13px; color:#2d3748; margin-top:6px;">
+                      या स्वतंत्र फॉर्ममध्ये फक्त आरोग्य सेवक (MPW) व आरोग्य सेविका (ANM) यांच्या पहिल्या (1 ते 15) व दुसऱ्या (16 ते अखेर) पंधरवड्यातील प्रत्यक्ष गृहभेटींची नोंद करा. (यामध्ये ओपीडी, तापाचे रुग्ण किंवा रक्त नमुने समाविष्ट नाहीत.)
                     </div>
                   </div>
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:6px;">
-                    <div class="form-group" style="margin:0;">
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                        <label style="font-size:11.5px; font-weight:600; color:#4a5568;">एकूण मासिक</label>
-                        <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 १+२</span>
-                      </div>
-                      <input type="number" id="inpMpwTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2c5282; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="पहिला + दुसरा पंधरवडा बेरीज">
-                    </div>
-                    <div class="form-group" style="margin:0;">
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                        <label style="font-size:11.5px; font-weight:600; color:#4a5568;">प्रगत (YTD)</label>
-                        <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 प्रगत</span>
-                      </div>
-                      <input type="number" id="inpProgMpwTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
-                    </div>
-                  </div>
-                  <div class="indicator-hint" id="hintMpw">मागील बेरीज: ० + चालू (०) = ०</div>
                 </div>
               </div>
 
-              <!-- 7. आरोग्य सेविका (ANM) गृहभेटी - पहिला व दुसरा पंधरवडा -->
-              <div class="indicator-input-card" style="border-top:4px solid #276749; background:#fcfffd;">
-                <div class="indicator-card-title" style="color:#22543d; display:flex; justify-content:space-between; align-items:center;">
-                  <span>👩‍⚕️ ७. आरोग्य सेविका (ANM) गृहभेटी</span>
-                  <span style="background:#f0fff4; color:#276749; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">पंधरवडा १ व २</span>
-                </div>
-                <div class="indicator-card-body">
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                    <div class="form-group" style="margin:0;">
-                      <label style="font-size:11.5px; font-weight:600; color:#276749;">१ ला पंधरवाडा (1-15)</label>
-                      <input type="number" id="inpAnmFn1" class="indicator-input" placeholder="उदा. 320" oninput="onIndicatorFieldChange('anm')">
-                    </div>
-                    <div class="form-group" style="margin:0;">
-                      <label style="font-size:11.5px; font-weight:600; color:#276749;">२ रा पंधरवडा (16-अखेर)</label>
-                      <input type="number" id="inpAnmFn2" class="indicator-input" placeholder="उदा. 340" oninput="onIndicatorFieldChange('anm')">
-                    </div>
+              <!-- 2 Cards Grid for MPW & ANM Home Visits -->
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:24px;">
+                
+                <!-- 6. आरोग्य सेवक (MPW) गृहभेटी - पहिला व दुसरा पंधरवडा -->
+                <div class="indicator-input-card" style="border-top:4px solid #2b6cb0; background:#fcfdff;">
+                  <div class="indicator-card-title" style="color:#2c5282; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🚶‍♂️ ६. आरोग्य सेवक (MPW) गृहभेटी</span>
+                    <span style="background:#ebf8ff; color:#2b6cb0; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">पंधरवडा १ व २</span>
                   </div>
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:6px;">
-                    <div class="form-group" style="margin:0;">
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                        <label style="font-size:11.5px; font-weight:600; color:#4a5568;">एकूण मासिक</label>
-                        <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 १+२</span>
+                  <div class="indicator-card-body">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                      <div class="form-group" style="margin:0;">
+                        <label style="font-size:11.5px; font-weight:600; color:#2b6cb0;">१ ला पंधरवाडा (1-15)</label>
+                        <input type="number" id="inpMpwFn1" class="indicator-input" placeholder="उदा. 450" oninput="onIndicatorFieldChange('mpw')">
                       </div>
-                      <input type="number" id="inpAnmTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#276749; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="पहिला + दुसरा पंधरवडा बेरीज">
-                    </div>
-                    <div class="form-group" style="margin:0;">
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                        <label style="font-size:11.5px; font-weight:600; color:#4a5568;">प्रगत (YTD)</label>
-                        <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 प्रगत</span>
+                      <div class="form-group" style="margin:0;">
+                        <label style="font-size:11.5px; font-weight:600; color:#2b6cb0;">२ रा पंधरवडा (16-अखेर)</label>
+                        <input type="number" id="inpMpwFn2" class="indicator-input" placeholder="उदा. 480" oninput="onIndicatorFieldChange('mpw')">
                       </div>
-                      <input type="number" id="inpProgAnmTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
                     </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:6px;">
+                      <div class="form-group" style="margin:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                          <label style="font-size:11.5px; font-weight:600; color:#4a5568;">एकूण मासिक</label>
+                          <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 १+२</span>
+                        </div>
+                        <input type="number" id="inpMpwTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2c5282; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="पहिला + दुसरा पंधरवडा बेरीज">
+                      </div>
+                      <div class="form-group" style="margin:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                          <label style="font-size:11.5px; font-weight:600; color:#4a5568;">प्रगत (YTD)</label>
+                          <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 प्रगत</span>
+                        </div>
+                        <input type="number" id="inpProgMpwTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
+                      </div>
+                    </div>
+                    <div class="indicator-hint" id="hintMpw">मागील बेरीज: ० + चालू (०) = ०</div>
                   </div>
-                  <div class="indicator-hint" id="hintAnm">मागील बेरीज: ० + चालू (०) = ०</div>
                 </div>
-              </div>
 
+                <!-- 7. आरोग्य सेविका (ANM) गृहभेटी - पहिला व दुसरा पंधरवडा -->
+                <div class="indicator-input-card" style="border-top:4px solid #276749; background:#fcfffd;">
+                  <div class="indicator-card-title" style="color:#22543d; display:flex; justify-content:space-between; align-items:center;">
+                    <span>👩‍⚕️ ७. आरोग्य सेविका (ANM) गृहभेटी</span>
+                    <span style="background:#f0fff4; color:#276749; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">पंधरवडा १ व २</span>
+                  </div>
+                  <div class="indicator-card-body">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                      <div class="form-group" style="margin:0;">
+                        <label style="font-size:11.5px; font-weight:600; color:#276749;">१ ला पंधरवाडा (1-15)</label>
+                        <input type="number" id="inpAnmFn1" class="indicator-input" placeholder="उदा. 320" oninput="onIndicatorFieldChange('anm')">
+                      </div>
+                      <div class="form-group" style="margin:0;">
+                        <label style="font-size:11.5px; font-weight:600; color:#276749;">२ रा पंधरवडा (16-अखेर)</label>
+                        <input type="number" id="inpAnmFn2" class="indicator-input" placeholder="उदा. 340" oninput="onIndicatorFieldChange('anm')">
+                      </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:6px;">
+                      <div class="form-group" style="margin:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                          <label style="font-size:11.5px; font-weight:600; color:#4a5568;">एकूण मासिक</label>
+                          <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 १+२</span>
+                        </div>
+                        <input type="number" id="inpAnmTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#276749; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;" title="पहिला + दुसरा पंधरवडा बेरीज">
+                      </div>
+                      <div class="form-group" style="margin:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                          <label style="font-size:11.5px; font-weight:600; color:#4a5568;">प्रगत (YTD)</label>
+                          <span style="font-size:10px; background:#edf2f7; color:#4a5568; padding:1px 4px; border-radius:3px;">🔒 प्रगत</span>
+                        </div>
+                        <input type="number" id="inpProgAnmTotal" class="indicator-input" placeholder="🔒 स्वयं-गणना" readonly tabindex="-1" style="background:#edf2f7; color:#2d3748; cursor:not-allowed; border:1px solid #cbd5e0; font-weight:700;">
+                      </div>
+                    </div>
+                    <div class="indicator-hint" id="hintAnm">मागील बेरीज: ० + चालू (०) = ०</div>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
             <!-- ================= SECTION 3: REAL-TIME TEMPLATE REPORT PREVIEW ================= -->
@@ -5731,7 +5745,7 @@
               </div>
 
               <!-- Table 1: OPD, Fever, Smears, Treated, Chloroquine -->
-              <div class="table-container" style="max-height:none; margin-bottom:18px;">
+              <div id="previewOpdTableContainer" class="table-container" style="max-height:none; margin-bottom:18px;">
                 <table class="app-table" style="font-size:13px; border:1px solid #cbd5e0;" border="1">
                   <thead>
                     <tr style="background:#edf2f7; color:#1a202c;">
@@ -5774,7 +5788,7 @@
               </div>
 
               <!-- Table 10.14: MPW & ANM Home Visits (Fortnight 1 & 2) -->
-              <div style="border-top:1.5px dashed #cbd5e0; padding-top:14px;">
+              <div id="previewHomeVisitTableContainer" style="border-top:1.5px dashed #cbd5e0; padding-top:14px;">
                 <div style="font-size:13.5px; font-weight:700; color:#234e52; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                   <span>📋 <b>१०.१४ घरावरील स्टेन्सीलिंग / गृहभेटी (थेट अहवाल पूर्वावलोकन):</b></span>
                   <span style="font-size:11.5px; background:#f0fff4; color:#22543d; padding:2px 8px; border-radius:10px; font-weight:700; border:1px solid #9ae6b4;">
@@ -10572,9 +10586,9 @@
       const mMpwFn1 = mpwData.fn1 != null ? mpwData.fn1 : (tData.mpwFn1 || 0);
       const mMpwFn2 = mpwData.fn2 != null ? mpwData.fn2 : (tData.mpwFn2 || 0);
       const mMpwTot = mpwData.monthly != null ? mpwData.monthly : (mMpwFn1 + mMpwFn2);
-      const pMpwFn1 = mpwData.progFn1 != null ? mpwData.progFn1 : (prior.mpwFn1 + mMpwFn1);
-      const pMpwFn2 = mpwData.progFn2 != null ? mpwData.progFn2 : (prior.mpwFn2 + mMpwFn2);
-      const pMpwTot = mpwData.progressive != null ? mpwData.progressive : (prior.mpwTot + mMpwTot);
+      const pMpwFn1 = (mpwData.progFn1 != null && mpwData.progFn1 > 0) ? mpwData.progFn1 : ((prior.mpwFn1 || 0) + mMpwFn1);
+      const pMpwFn2 = (mpwData.progFn2 != null && mpwData.progFn2 > 0) ? mpwData.progFn2 : ((prior.mpwFn2 || 0) + mMpwFn2);
+      const pMpwTot = (mpwData.progressive != null && mpwData.progressive > 0) ? mpwData.progressive : ((prior.mpwTot || 0) + mMpwTot);
 
       const elValMpwTot = document.getElementById('mrdValMpwTot');
       const elValMpwFn1 = document.getElementById('mrdValMpwFn1');
@@ -10589,9 +10603,9 @@
       const mAnmFn1 = anmData.fn1 != null ? anmData.fn1 : (tData.anmFn1 || 0);
       const mAnmFn2 = anmData.fn2 != null ? anmData.fn2 : (tData.anmFn2 || 0);
       const mAnmTot = anmData.monthly != null ? anmData.monthly : (mAnmFn1 + mAnmFn2);
-      const pAnmFn1 = anmData.progFn1 != null ? anmData.progFn1 : (prior.anmFn1 + mAnmFn1);
-      const pAnmFn2 = anmData.progFn2 != null ? anmData.progFn2 : (prior.anmFn2 + mAnmFn2);
-      const pAnmTot = anmData.progressive != null ? anmData.progressive : (prior.anmTot + mAnmTot);
+      const pAnmFn1 = (anmData.progFn1 != null && anmData.progFn1 > 0) ? anmData.progFn1 : ((prior.anmFn1 || 0) + mAnmFn1);
+      const pAnmFn2 = (anmData.progFn2 != null && anmData.progFn2 > 0) ? anmData.progFn2 : ((prior.anmFn2 || 0) + mAnmFn2);
+      const pAnmTot = (anmData.progressive != null && anmData.progressive > 0) ? anmData.progressive : ((prior.anmTot || 0) + mAnmTot);
 
       const elValAnmTot = document.getElementById('mrdValAnmTot');
       const elValAnmFn1 = document.getElementById('mrdValAnmFn1');
@@ -11555,6 +11569,10 @@
       const btnTopHome = document.getElementById('subtabBtnHomeVisit');
       const paneOpd = document.getElementById('monthlySectionOpd');
       const paneHome = document.getElementById('monthlySectionHomeVisit');
+      const opdPreview = document.getElementById('previewOpdTableContainer');
+      const homePreview = document.getElementById('previewHomeVisitTableContainer');
+      const titleEl = document.getElementById('monthlySubpaneTitle');
+      const descEl = document.getElementById('monthlySubpaneDesc');
 
       if (subtab === 'homevisit') {
         if (btnOpd) {
@@ -11566,19 +11584,25 @@
         if (btnHome) {
           btnHome.classList.add('active');
           btnHome.style.color = '#276749';
-          btnHome.style.background = 'rgba(47, 133, 90, 0.08)';
+          btnHome.style.background = 'rgba(47, 133, 90, 0.12)';
           btnHome.style.borderBottomColor = '#276749';
         }
         if (btnTopMonthly) btnTopMonthly.classList.remove('active');
         if (btnTopHome) btnTopHome.classList.add('active');
 
+        if (titleEl) titleEl.innerHTML = '🚶‍♂️ स्वतंत्र गृहभेटी नोंदणी फॉर्म (Standalone Home Visit Entry Form)';
+        if (descEl) descEl.innerHTML = 'या स्वतंत्र पानावर फक्त <b>आरोग्य सेवक (MPW)</b> व <b>आरोग्य सेविका (ANM)</b> पंधरवडा १ व २ नुसार प्रत्यक्ष गृहभेटींची नोंद करा. (यामध्ये ओपीडी, तापाचे रुग्ण, रक्त नमुने समाविष्ट नाहीत.)';
+
         if (paneOpd) paneOpd.style.display = 'none';
         if (paneHome) paneHome.style.display = 'block';
+
+        if (opdPreview) opdPreview.style.display = 'none'; // Exclude OPD, fever, blood samples from Home Visit view
+        if (homePreview) homePreview.style.display = 'block';
       } else {
         if (btnOpd) {
           btnOpd.classList.add('active');
           btnOpd.style.color = '#2b6cb0';
-          btnOpd.style.background = 'rgba(49, 130, 206, 0.08)';
+          btnOpd.style.background = 'rgba(49, 130, 206, 0.12)';
           btnOpd.style.borderBottomColor = '#2b6cb0';
         }
         if (btnHome) {
@@ -11590,8 +11614,14 @@
         if (btnTopMonthly) btnTopMonthly.classList.add('active');
         if (btnTopHome) btnTopHome.classList.remove('active');
 
+        if (titleEl) titleEl.innerHTML = '📋 नवीन बाह्यरुग्ण (OPD) मासिक अहवाल नोंदणी (New OPD Monthly Indicators)';
+        if (descEl) descEl.innerHTML = 'या पानावर फक्त <b>\'१. नवीन बाह्यरुग्ण (New OPD)\'</b> ची मासिक संख्या प्रविष्ट करा. बाकी सर्व घटक (तापाचे रुग्ण, रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन खर्च) इनॲक्टिव्ह / लॉक आहेत.';
+
         if (paneOpd) paneOpd.style.display = 'block';
         if (paneHome) paneHome.style.display = 'none';
+
+        if (opdPreview) opdPreview.style.display = 'block';
+        if (homePreview) homePreview.style.display = 'block';
       }
     }
 

@@ -1051,20 +1051,20 @@ app.post('/api/rpc', async (req, res) => {
         const chloroquineSpent = parseInt(monthObj.chloroquineSpent) || 0;
         const progChloroquineSpent = priorCqSum + chloroquineSpent;
 
-        // MPW & ANM Home Visits (पहिला व दुसरा पंधरवडा)
+        // MPW & ANM Home Visits (पहिला व दुसरा पंधरवडा - जानेवारीपासून सर्व महिन्याची बेरीज)
         const mpwFn1 = parseInt(monthObj.mpwFn1) || 0;
         const mpwFn2 = parseInt(monthObj.mpwFn2) || 0;
         const mpwHomeVisits = parseInt(monthObj.mpwHomeVisits) || (mpwFn1 + mpwFn2);
-        const progMpwFn1 = monthObj.progMpwFn1 != null ? parseInt(monthObj.progMpwFn1) : (priorMpwFn1Sum + mpwFn1);
-        const progMpwFn2 = monthObj.progMpwFn2 != null ? parseInt(monthObj.progMpwFn2) : (priorMpwFn2Sum + mpwFn2);
-        const progMpwHomeVisits = monthObj.progMpwHomeVisits != null ? parseInt(monthObj.progMpwHomeVisits) : (priorMpwSum + mpwHomeVisits);
+        const progMpwFn1 = priorMpwFn1Sum + mpwFn1;
+        const progMpwFn2 = priorMpwFn2Sum + mpwFn2;
+        const progMpwHomeVisits = priorMpwSum + mpwHomeVisits;
 
         const anmFn1 = parseInt(monthObj.anmFn1) || 0;
         const anmFn2 = parseInt(monthObj.anmFn2) || 0;
         const anmHomeVisits = parseInt(monthObj.anmHomeVisits) || (anmFn1 + anmFn2);
-        const progAnmFn1 = monthObj.progAnmFn1 != null ? parseInt(monthObj.progAnmFn1) : (priorAnmFn1Sum + anmFn1);
-        const progAnmFn2 = monthObj.progAnmFn2 != null ? parseInt(monthObj.progAnmFn2) : (priorAnmFn2Sum + anmFn2);
-        const progAnmHomeVisits = monthObj.progAnmHomeVisits != null ? parseInt(monthObj.progAnmHomeVisits) : (priorAnmSum + anmHomeVisits);
+        const progAnmFn1 = priorAnmFn1Sum + anmFn1;
+        const progAnmFn2 = priorAnmFn2Sum + anmFn2;
+        const progAnmHomeVisits = priorAnmSum + anmHomeVisits;
 
         // Calculate field vs opd smears in this month from entries
         let fieldSmears = 0;
@@ -1511,16 +1511,16 @@ app.post('/api/rpc', async (req, res) => {
         const mpwFn1 = parseInt(monthObj.mpwFn1) || 0;
         const mpwFn2 = parseInt(monthObj.mpwFn2) || 0;
         const mpwHomeVisits = parseInt(monthObj.mpwHomeVisits) || (mpwFn1 + mpwFn2);
-        const progMpwFn1 = monthObj.progMpwFn1 != null ? parseInt(monthObj.progMpwFn1) : ((monthObj.priorMpwFn1Sum || 0) + mpwFn1);
-        const progMpwFn2 = monthObj.progMpwFn2 != null ? parseInt(monthObj.progMpwFn2) : ((monthObj.priorMpwFn2Sum || 0) + mpwFn2);
-        const progMpwHomeVisits = monthObj.progMpwHomeVisits != null ? parseInt(monthObj.progMpwHomeVisits) : ((monthObj.priorMpwSum || 0) + mpwHomeVisits);
+        const progMpwFn1 = (monthObj.priorMpwFn1Sum || 0) + mpwFn1;
+        const progMpwFn2 = (monthObj.priorMpwFn2Sum || 0) + mpwFn2;
+        const progMpwHomeVisits = (monthObj.priorMpwSum || 0) + mpwHomeVisits;
 
         const anmFn1 = parseInt(monthObj.anmFn1) || 0;
         const anmFn2 = parseInt(monthObj.anmFn2) || 0;
         const anmHomeVisits = parseInt(monthObj.anmHomeVisits) || (anmFn1 + anmFn2);
-        const progAnmFn1 = monthObj.progAnmFn1 != null ? parseInt(monthObj.progAnmFn1) : ((monthObj.priorAnmFn1Sum || 0) + anmFn1);
-        const progAnmFn2 = monthObj.progAnmFn2 != null ? parseInt(monthObj.progAnmFn2) : ((monthObj.priorAnmFn2Sum || 0) + anmFn2);
-        const progAnmHomeVisits = monthObj.progAnmHomeVisits != null ? parseInt(monthObj.progAnmHomeVisits) : ((monthObj.priorAnmSum || 0) + anmHomeVisits);
+        const progAnmFn1 = (monthObj.priorAnmFn1Sum || 0) + anmFn1;
+        const progAnmFn2 = (monthObj.priorAnmFn2Sum || 0) + anmFn2;
+        const progAnmHomeVisits = (monthObj.priorAnmSum || 0) + anmHomeVisits;
 
         result = {
           success: true,

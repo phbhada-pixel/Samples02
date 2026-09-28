@@ -2172,16 +2172,16 @@
             const mpwFn1 = mObj.mpwFn1 != null ? parseInt(mObj.mpwFn1) : 5460;
             const mpwFn2 = mObj.mpwFn2 != null ? parseInt(mObj.mpwFn2) : 5421;
             const mpwHomeVisits = mObj.mpwHomeVisits != null ? parseInt(mObj.mpwHomeVisits) : (mpwFn1 + mpwFn2);
-            const progMpwFn1 = mObj.progMpwFn1 != null ? parseInt(mObj.progMpwFn1) : (priorMpwFn1 + mpwFn1);
-            const progMpwFn2 = mObj.progMpwFn2 != null ? parseInt(mObj.progMpwFn2) : (priorMpwFn2 + mpwFn2);
-            const progMpwHomeVisits = mObj.progMpwHomeVisits != null ? parseInt(mObj.progMpwHomeVisits) : (priorMpwTot + mpwHomeVisits);
+            const progMpwFn1 = priorMpwFn1 + mpwFn1;
+            const progMpwFn2 = priorMpwFn2 + mpwFn2;
+            const progMpwHomeVisits = priorMpwTot + mpwHomeVisits;
 
             const anmFn1 = mObj.anmFn1 != null ? parseInt(mObj.anmFn1) : 2461;
             const anmFn2 = mObj.anmFn2 != null ? parseInt(mObj.anmFn2) : 2630;
             const anmHomeVisits = mObj.anmHomeVisits != null ? parseInt(mObj.anmHomeVisits) : (anmFn1 + anmFn2);
-            const progAnmFn1 = mObj.progAnmFn1 != null ? parseInt(mObj.progAnmFn1) : (priorAnmFn1 + anmFn1);
-            const progAnmFn2 = mObj.progAnmFn2 != null ? parseInt(mObj.progAnmFn2) : (priorAnmFn2 + anmFn2);
-            const progAnmHomeVisits = mObj.progAnmHomeVisits != null ? parseInt(mObj.progAnmHomeVisits) : (priorAnmTot + anmHomeVisits);
+            const progAnmFn1 = priorAnmFn1 + anmFn1;
+            const progAnmFn2 = priorAnmFn2 + anmFn2;
+            const progAnmHomeVisits = priorAnmTot + anmHomeVisits;
 
             const defaultOpdVillages = [
               { name: "भादा", villageName: "भादा", count: 65, total: 65, smears: 65, monthlyTotal: 65, male: 33, monthlyMale: 33, female: 32, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475, upkendra: "भादा" },
@@ -5454,9 +5454,9 @@
           <div style="background:linear-gradient(135deg, #e6fffa, #ebf8ff); border:1.5px solid #319795; border-radius:12px; padding:16px 20px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
               <div>
-                <h3 style="margin:0; color:#234e52; font-size:17.5px; font-weight:800;">📋 मासिक अहवाल व गृहभेटी नोंदणी (NVBDCP Monthly Indicators & Home Visits)</h3>
-                <p style="margin:4px 0 0 0; font-size:13px; color:#2d3748;">
-                  या पानावर <b>नवीन बाह्यरुग्ण (OPD)</b>, <b>तापाचे रुग्ण</b>, <b>रक्त नमुणे</b>, <b>उपचारीत रुग्ण</b>, <b>क्लोरोक्वीन खर्च</b> आणि <b>आरोग्य सेवक/सेविका गृहभेटी (MPW & ANM)</b> एकाच ठिकाणी भरा.
+                <h3 id="monthlySubpaneTitle" style="margin:0; color:#234e52; font-size:17.5px; font-weight:800;">📋 मासिक अहवाल नोंदणी (NVBDCP Monthly Indicators)</h3>
+                <p id="monthlySubpaneDesc" style="margin:4px 0 0 0; font-size:13px; color:#2d3748;">
+                  या पानावर फक्त <b>'नवीन बाह्यरुग्ण (New OPD)'</b> ची मासिक संख्या प्रविष्ट करा. बाकी सर्व घटक इनॲक्टिव्ह/लॉक आहेत.
                 </p>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
@@ -5470,12 +5470,14 @@
               </div>
             </div>
 
-            <!-- Quick Section Jump Links -->
-            <div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(49, 151, 149, 0.2); display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-              <span style="font-size:12px; font-weight:700; color:#234e52;">⚡ जलद उडी:</span>
-              <a href="#opdSectionAnchor" style="font-size:12px; font-weight:700; color:#2b6cb0; background:#fff; padding:3px 10px; border-radius:15px; border:1px solid #bee3f8; text-decoration:none;">🏥 १. ओपीडी माहिती (Cards 1-5)</a>
-              <a href="#homeVisitSection" style="font-size:12px; font-weight:700; color:#22543d; background:#f0fff4; padding:3px 10px; border-radius:15px; border:1.5px solid #68d391; text-decoration:none;">🚶‍♂️ २. गृहभेटी माहिती (MPW & ANM)</a>
-              <a href="#previewSectionAnchor" style="font-size:12px; font-weight:700; color:#4a5568; background:#fff; padding:3px 10px; border-radius:15px; border:1px solid #cbd5e0; text-decoration:none;">📊 ३. थेट अहवाल पूर्वावलोकन (तक्ते)</a>
+            <!-- Quick Subtab Switcher for OPD vs Home Visit -->
+            <div class="table-subtabs" style="margin-top:12px; margin-bottom:0; gap:8px;">
+              <button id="subtabBtnMonthlyOpd" class="subtab-btn active" style="color:#2b6cb0; font-weight:700;" onclick="switchMonthlySubtab('opd')">
+                🏥 १. नवीन ओपीडी नोंदणी (New OPD Entry)
+              </button>
+              <button id="subtabBtnMonthlyHomeVisit" class="subtab-btn" style="color:#22543d; font-weight:700;" onclick="switchMonthlySubtab('homevisit')">
+                🚶‍♂️ २. स्वतंत्र गृहभेटी नोंदणी (Home Visit Entry - MPW & ANM)
+              </button>
             </div>
           </div>
 
@@ -5488,10 +5490,17 @@
           <div id="indicatorFormContent">
 
             <!-- ================= SECTION 1: OPD INFORMATION ================= -->
-            <div id="opdSectionAnchor" style="background:#ebf8ff; border:1px solid #bee3f8; border-left:4px solid #3182ce; border-radius:8px; padding:10px 14px; margin-bottom:16px;">
-              <div style="font-weight:700; color:#2b6cb0; font-size:14px;">🏥 १. बाह्यरुग्ण (OPD) व तापाचे रुग्ण माहिती (OPD Information)</div>
-              <div style="font-size:12.5px; color:#4a5568; margin-top:2px;">नवीन बाह्यरुग्ण (OPD), तापाचे रुग्ण, घेतलेले रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन गोळ्यांची नोंद येथे भरा.</div>
-            </div>
+            <div id="monthlySectionOpd">
+              <div id="opdSectionAnchor" style="background:#ebf8ff; border:1px solid #bee3f8; border-left:4px solid #3182ce; border-radius:8px; padding:10px 14px; margin-bottom:12px;">
+                <div style="font-weight:700; color:#2b6cb0; font-size:14px;">🏥 १. नवीन बाह्यरुग्ण (OPD) माहिती नोंदणी</div>
+                <div style="font-size:12.5px; color:#4a5568; margin-top:2px;">मासिक अहवालासाठी खालील **'नवीन बाह्यरुग्ण (New OPD)'** ची मासिक संख्या प्रविष्ट करा.</div>
+              </div>
+
+              <!-- Notice Banner for OPD active field -->
+              <div style="background:#fffaf0; border:1px solid #fbd38d; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12.5px; color:#c05621; font-weight:600; display:flex; align-items:center; gap:8px;">
+                <span>📌</span>
+                <span><b>मासिक ओपीडी नोंदणी सूचना:</b> या फॉर्ममध्ये फक्त <b>'१. नवीन बाह्यरुग्ण (New OPD)'</b> ही एकमेव फील्ड भरण्यासाठी ॲक्टिव्ह ठेवली आहे. तापाचे रुग्ण, रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन गोळ्या दैनिक नमुन्यांमधून आपोआप (Auto-calculated) तयार होतात व इनॲक्टिव्ह/लॉक आहेत.</span>
+              </div>
 
             <!-- 5 Metric Cards Grid (OPD) -->
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:24px;">
@@ -5731,7 +5740,7 @@
               </div>
 
               <!-- Table 1: OPD, Fever, Smears, Treated, Chloroquine -->
-              <div class="table-container" style="max-height:none; margin-bottom:18px;">
+              <div id="previewOpdTableContainer" class="table-container" style="max-height:none; margin-bottom:18px;">
                 <table class="app-table" style="font-size:13px; border:1px solid #cbd5e0;" border="1">
                   <thead>
                     <tr style="background:#edf2f7; color:#1a202c;">
@@ -5774,7 +5783,7 @@
               </div>
 
               <!-- Table 10.14: MPW & ANM Home Visits (Fortnight 1 & 2) -->
-              <div style="border-top:1.5px dashed #cbd5e0; padding-top:14px;">
+              <div id="previewHomeVisitTableContainer" style="border-top:1.5px dashed #cbd5e0; padding-top:14px;">
                 <div style="font-size:13.5px; font-weight:700; color:#234e52; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                   <span>📋 <b>१०.१४ घरावरील स्टेन्सीलिंग / गृहभेटी (थेट अहवाल पूर्वावलोकन):</b></span>
                   <span style="font-size:11.5px; background:#f0fff4; color:#22543d; padding:2px 8px; border-radius:10px; font-weight:700; border:1px solid #9ae6b4;">
@@ -10532,9 +10541,9 @@
       const mMpwFn1 = mpwData.fn1 != null ? mpwData.fn1 : (tData.mpwFn1 || 0);
       const mMpwFn2 = mpwData.fn2 != null ? mpwData.fn2 : (tData.mpwFn2 || 0);
       const mMpwTot = mpwData.monthly != null ? mpwData.monthly : (mMpwFn1 + mMpwFn2);
-      const pMpwFn1 = mpwData.progFn1 != null ? mpwData.progFn1 : (prior.mpwFn1 + mMpwFn1);
-      const pMpwFn2 = mpwData.progFn2 != null ? mpwData.progFn2 : (prior.mpwFn2 + mMpwFn2);
-      const pMpwTot = mpwData.progressive != null ? mpwData.progressive : (prior.mpwTot + mMpwTot);
+      const pMpwFn1 = (mpwData.progFn1 != null && mpwData.progFn1 > 0) ? mpwData.progFn1 : ((prior.mpwFn1 || 0) + mMpwFn1);
+      const pMpwFn2 = (mpwData.progFn2 != null && mpwData.progFn2 > 0) ? mpwData.progFn2 : ((prior.mpwFn2 || 0) + mMpwFn2);
+      const pMpwTot = (mpwData.progressive != null && mpwData.progressive > 0) ? mpwData.progressive : ((prior.mpwTot || 0) + mMpwTot);
 
       const elValMpwTot = document.getElementById('mrdValMpwTot');
       const elValMpwFn1 = document.getElementById('mrdValMpwFn1');
@@ -10549,9 +10558,9 @@
       const mAnmFn1 = anmData.fn1 != null ? anmData.fn1 : (tData.anmFn1 || 0);
       const mAnmFn2 = anmData.fn2 != null ? anmData.fn2 : (tData.anmFn2 || 0);
       const mAnmTot = anmData.monthly != null ? anmData.monthly : (mAnmFn1 + mAnmFn2);
-      const pAnmFn1 = anmData.progFn1 != null ? anmData.progFn1 : (prior.anmFn1 + mAnmFn1);
-      const pAnmFn2 = anmData.progFn2 != null ? anmData.progFn2 : (prior.anmFn2 + mAnmFn2);
-      const pAnmTot = anmData.progressive != null ? anmData.progressive : (prior.anmTot + mAnmTot);
+      const pAnmFn1 = (anmData.progFn1 != null && anmData.progFn1 > 0) ? anmData.progFn1 : ((prior.anmFn1 || 0) + mAnmFn1);
+      const pAnmFn2 = (anmData.progFn2 != null && anmData.progFn2 > 0) ? anmData.progFn2 : ((prior.anmFn2 || 0) + mAnmFn2);
+      const pAnmTot = (anmData.progressive != null && anmData.progressive > 0) ? anmData.progressive : ((prior.anmTot || 0) + mAnmTot);
 
       const elValAnmTot = document.getElementById('mrdValAnmTot');
       const elValAnmFn1 = document.getElementById('mrdValAnmFn1');
@@ -11515,6 +11524,10 @@
       const btnTopHome = document.getElementById('subtabBtnHomeVisit');
       const paneOpd = document.getElementById('monthlySectionOpd');
       const paneHome = document.getElementById('monthlySectionHomeVisit');
+      const opdPreview = document.getElementById('previewOpdTableContainer');
+      const homePreview = document.getElementById('previewHomeVisitTableContainer');
+      const titleEl = document.getElementById('monthlySubpaneTitle');
+      const descEl = document.getElementById('monthlySubpaneDesc');
 
       if (subtab === 'homevisit') {
         if (btnOpd) {
@@ -11526,19 +11539,25 @@
         if (btnHome) {
           btnHome.classList.add('active');
           btnHome.style.color = '#276749';
-          btnHome.style.background = 'rgba(47, 133, 90, 0.08)';
+          btnHome.style.background = 'rgba(47, 133, 90, 0.12)';
           btnHome.style.borderBottomColor = '#276749';
         }
         if (btnTopMonthly) btnTopMonthly.classList.remove('active');
         if (btnTopHome) btnTopHome.classList.add('active');
 
+        if (titleEl) titleEl.innerHTML = '🚶‍♂️ स्वतंत्र गृहभेटी नोंदणी फॉर्म (Standalone Home Visit Entry Form)';
+        if (descEl) descEl.innerHTML = 'या स्वतंत्र पानावर फक्त <b>आरोग्य सेवक (MPW)</b> व <b>आरोग्य सेविका (ANM)</b> पंधरवडा १ व २ नुसार प्रत्यक्ष गृहभेटींची नोंद करा. (यामध्ये ओपीडी, तापाचे रुग्ण, रक्त नमुने समाविष्ट नाहीत.)';
+
         if (paneOpd) paneOpd.style.display = 'none';
         if (paneHome) paneHome.style.display = 'block';
+
+        if (opdPreview) opdPreview.style.display = 'none'; // Exclude OPD, fever, blood samples from Home Visit view
+        if (homePreview) homePreview.style.display = 'block';
       } else {
         if (btnOpd) {
           btnOpd.classList.add('active');
           btnOpd.style.color = '#2b6cb0';
-          btnOpd.style.background = 'rgba(49, 130, 206, 0.08)';
+          btnOpd.style.background = 'rgba(49, 130, 206, 0.12)';
           btnOpd.style.borderBottomColor = '#2b6cb0';
         }
         if (btnHome) {
@@ -11550,8 +11569,14 @@
         if (btnTopMonthly) btnTopMonthly.classList.add('active');
         if (btnTopHome) btnTopHome.classList.remove('active');
 
+        if (titleEl) titleEl.innerHTML = '📋 नवीन बाह्यरुग्ण (OPD) मासिक अहवाल नोंदणी (New OPD Monthly Indicators)';
+        if (descEl) descEl.innerHTML = 'या पानावर फक्त <b>\'१. नवीन बाह्यरुग्ण (New OPD)\'</b> ची मासिक संख्या प्रविष्ट करा. बाकी सर्व घटक (तापाचे रुग्ण, रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन खर्च) इनॲक्टिव्ह / लॉक आहेत.';
+
         if (paneOpd) paneOpd.style.display = 'block';
         if (paneHome) paneHome.style.display = 'none';
+
+        if (opdPreview) opdPreview.style.display = 'block';
+        if (homePreview) homePreview.style.display = 'block';
       }
     }
 

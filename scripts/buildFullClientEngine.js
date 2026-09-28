@@ -246,16 +246,16 @@ const clientEngineCode = `
             const mpwFn1 = mObj.mpwFn1 != null ? parseInt(mObj.mpwFn1) : 5460;
             const mpwFn2 = mObj.mpwFn2 != null ? parseInt(mObj.mpwFn2) : 5421;
             const mpwHomeVisits = mObj.mpwHomeVisits != null ? parseInt(mObj.mpwHomeVisits) : (mpwFn1 + mpwFn2);
-            const progMpwFn1 = mObj.progMpwFn1 != null ? parseInt(mObj.progMpwFn1) : (priorMpwFn1 + mpwFn1);
-            const progMpwFn2 = mObj.progMpwFn2 != null ? parseInt(mObj.progMpwFn2) : (priorMpwFn2 + mpwFn2);
-            const progMpwHomeVisits = mObj.progMpwHomeVisits != null ? parseInt(mObj.progMpwHomeVisits) : (priorMpwTot + mpwHomeVisits);
+            const progMpwFn1 = priorMpwFn1 + mpwFn1;
+            const progMpwFn2 = priorMpwFn2 + mpwFn2;
+            const progMpwHomeVisits = priorMpwTot + mpwHomeVisits;
 
             const anmFn1 = mObj.anmFn1 != null ? parseInt(mObj.anmFn1) : 2461;
             const anmFn2 = mObj.anmFn2 != null ? parseInt(mObj.anmFn2) : 2630;
             const anmHomeVisits = mObj.anmHomeVisits != null ? parseInt(mObj.anmHomeVisits) : (anmFn1 + anmFn2);
-            const progAnmFn1 = mObj.progAnmFn1 != null ? parseInt(mObj.progAnmFn1) : (priorAnmFn1 + anmFn1);
-            const progAnmFn2 = mObj.progAnmFn2 != null ? parseInt(mObj.progAnmFn2) : (priorAnmFn2 + anmFn2);
-            const progAnmHomeVisits = mObj.progAnmHomeVisits != null ? parseInt(mObj.progAnmHomeVisits) : (priorAnmTot + anmHomeVisits);
+            const progAnmFn1 = priorAnmFn1 + anmFn1;
+            const progAnmFn2 = priorAnmFn2 + anmFn2;
+            const progAnmHomeVisits = priorAnmTot + anmHomeVisits;
 
             const defaultOpdVillages = [
               { name: "भादा", villageName: "भादा", count: 65, total: 65, smears: 65, monthlyTotal: 65, male: 33, monthlyMale: 33, female: 32, monthlyFemale: 32, priorTotal: 410, ytdTotal: 475, upkendra: "भादा" },
