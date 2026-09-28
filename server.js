@@ -2263,4 +2263,73 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PHC Bhada Malaria Management System running on http://0.0.0.0:${PORT}`);
+  
+  // Background live sync from Google Sheet on server startup
+  if (googleSheetConfig.webhookUrl) {
+    console.log('[Server Startup] Triggering background live sync from Google Sheet...');
+    fetch(googleSheetConfig.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'fetchAllData',
+        spreadsheetId: googleSheetConfig.spreadsheetId
+      }),
+      redirect: 'follow'
+    }).then(res => res.json()).then(fetchedData => {
+      let importedBs = 0;
+      let importedVil = 0;
+      let importedDengue = 0;
+
+      if (Array.isArray(fetchedData.bsData) && fetchedData.bsData.length > 0) {
+        bsDataEntry.length = 0;
+        fetchedData.bsData.forEach(r => {
+          bsDataEntry.push([
+            r.id,
+            new Date(r.date || Date.now()),
+            r.upkendra || '',
+            r.name || '',
+            r.designation || '',
+            r.bsCode || '',
+            r.bundleNumber || '',
+            parseInt(r.pasun) || 1,
+            parseInt(r.paraynt) || 1,
+            parseInt(r.total) || 1
+          ]);
+          importedBs++;
+        });
+      }
+
+      if (Array.isArray(fetchedData.villageDetails) && fetchedData.villageDetails.length > 0) {
+        villageDetails.length = 0;
+        fetchedData.villageDetails.forEach(v => {
+          villageDetails.push([
+            v.id,
+            v.employeeName || '',
+            new Date(v.date || Date.now()),
+            v.villageName || '',
+            parseInt(v.sampleCount) || 1,
+            parseInt(v.maleCount) || 0,
+            parseInt(v.femaleCount) || 0,
+            v.upkendra || ''
+          ]);
+          importedVil++;
+        });
+      }
+
+      if (Array.isArray(fetchedData.dengueData) && fetchedData.dengueData.length > 0) {
+        dengueChikungunyaEntries.length = 0;
+        fetchedData.dengueData.forEach(d => {
+          dengueChikungunyaEntries.push(d);
+          importedDengue++;
+        });
+      }
+
+      if (importedBs > 0 || importedVil > 0 || importedDengue > 0) {
+        saveDbToDisk();
+        console.log(`[Server Startup] Synced from Google Sheet: ${importedBs} BS, ${importedVil} Vil, ${importedDengue} Dengue entries.`);
+      }
+    }).catch(err => {
+      console.warn('[Server Startup] Google Sheet initial sync note:', err.message);
+    });
+  }
 });

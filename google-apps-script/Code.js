@@ -388,11 +388,120 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "active",
-    name: "PHC Bhada NVBDCP Google Sheet Real-time Storage Endpoint",
-    time: new Date().toISOString()
-  })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var action = (e && e.parameter && e.parameter.action) || 'ping';
+    var spreadsheetId = (e && e.parameter && e.parameter.spreadsheetId) || "1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM";
+    
+    if (action === 'fetchAllData' || action === 'readAll') {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      if (!ss && spreadsheetId) {
+        ss = SpreadsheetApp.openById(spreadsheetId);
+      }
+      if (!ss) {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Spreadsheet not found" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      var bsSheet = ss.getSheetByName("BsDataEntry");
+      var vilSheet = ss.getSheetByName("VillageDetails");
+      var dgSheet = ss.getSheetByName("DengueChikungunya");
+
+      var bsData = [];
+      if (bsSheet && bsSheet.getLastRow() > 1) {
+        var bsValues = bsSheet.getDataRange().getValues();
+        for (var b = 1; b < bsValues.length; b++) {
+          var row = bsValues[b];
+          if (!row[0]) continue;
+          bsData.push({
+            id: String(row[0]),
+            date: row[1] instanceof Date ? row[1].toISOString() : String(row[1]),
+            upkendra: String(row[2] || ""),
+            name: String(row[3] || ""),
+            designation: String(row[4] || ""),
+            bsCode: String(row[5] || ""),
+            bundleNumber: String(row[6] || ""),
+            pasun: parseInt(row[7]) || 1,
+            paraynt: parseInt(row[8]) || 1,
+            total: parseInt(row[9]) || 1
+          });
+        }
+      }
+
+      var vilData = [];
+      if (vilSheet && vilSheet.getLastRow() > 1) {
+        var vilValues = vilSheet.getDataRange().getValues();
+        for (var v = 1; v < vilValues.length; v++) {
+          var vRow = vilValues[v];
+          if (!vRow[0]) continue;
+          vilData.push({
+            id: String(vRow[0]),
+            employeeName: String(vRow[1] || ""),
+            date: vRow[2] instanceof Date ? vRow[2].toISOString() : String(vRow[2]),
+            villageName: String(vRow[3] || ""),
+            sampleCount: parseInt(vRow[4]) || 1,
+            maleCount: parseInt(vRow[5]) || 0,
+            femaleCount: parseInt(vRow[6]) || 0,
+            upkendra: String(vRow[7] || "")
+          });
+        }
+      }
+
+      var dgData = [];
+      if (dgSheet && dgSheet.getLastRow() > 1) {
+        var dgValues = dgSheet.getDataRange().getValues();
+        for (var g = 1; g < dgValues.length; g++) {
+          var gRow = dgValues[g];
+          if (!gRow[0] && !gRow[2]) continue;
+          dgData.push({
+            id: String(gRow[0]),
+            patientRegNo: String(gRow[1] || ""),
+            patientName: String(gRow[2] || ""),
+            village: String(gRow[3] || ""),
+            age: parseInt(gRow[4]) || 0,
+            sex: String(gRow[5] || ""),
+            mobile: String(gRow[6] || ""),
+            houseNo: String(gRow[7] || ""),
+            dateCollection: gRow[8] instanceof Date ? gRow[8].toISOString().slice(0, 10) : String(gRow[8] || ""),
+            dateOnset: gRow[9] instanceof Date ? gRow[9].toISOString().slice(0, 10) : String(gRow[9] || ""),
+            clinicalFever: parseInt(gRow[10]) || 1,
+            clinicalHeadache: parseInt(gRow[11]) || 0,
+            clinicalJointPain: parseInt(gRow[12]) || 0,
+            dengueResult: String(gRow[13] || "Pending"),
+            dengueReportRef: String(gRow[14] || ""),
+            dengueReportDate: String(gRow[15] || ""),
+            chikungunyaResult: String(gRow[16] || "Pending"),
+            chikungunyaReportRef: String(gRow[17] || ""),
+            chikungunyaReportDate: String(gRow[18] || ""),
+            testResult: String(gRow[13] || "Pending")
+          });
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        status: "active",
+        bsData: bsData,
+        villageDetails: vilData,
+        dengueData: dgData,
+        bsCount: bsData.length,
+        vilCount: vilData.length,
+        dengueCount: dgData.length,
+        message: "Google Sheet मधून रिअल-टाईम डेटा यशस्वीरित्या प्राप्त झाला!",
+        time: new Date().toISOString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "active",
+      name: "PHC Bhada NVBDCP Google Sheet Real-time Storage Endpoint",
+      time: new Date().toISOString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: err.message
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function getOrCreateSheet(ss, sheetName, headers) {
