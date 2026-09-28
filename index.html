@@ -3188,10 +3188,14 @@
       --sidebar-width: 260px;
     }
 
-    * {
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
 
     body {
@@ -3203,6 +3207,11 @@
       line-height: 1.5;
       font-size: 14px;
       min-height: 100vh;
+    }
+
+    p, h1, h2, h3, h4, h5, h6, span, div, a, label, table, td, th {
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
 
     .tabular-nums, .count, .value, .master-kpi-value, td, th {
@@ -3293,28 +3302,33 @@
       z-index: 1000;
       background: linear-gradient(135deg, #004d40 0%, #00796b 100%);
       color: #ffffff;
-      padding: 10px 14px;
+      padding: 10px 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
       margin: -16px -20px 14px -20px;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 100vw;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .mobile-appbar-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
     }
 
     .mobile-menu-btn {
       background: rgba(255, 255, 255, 0.18);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #ffffff;
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
-      font-size: 19px;
+      font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -3329,16 +3343,24 @@
     }
 
     .mobile-appbar-title {
-      font-size: 15px;
+      font-size: 13.5px;
       font-weight: 700;
       line-height: 1.2;
       color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
     }
 
     .mobile-appbar-sub {
-      font-size: 11px;
+      font-size: 10.5px;
       color: rgba(255, 255, 255, 0.85);
       font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
     }
 
     /* ================= MOBILE SLIDE-OUT DRAWER ================= */
@@ -3443,22 +3465,26 @@
       bottom: 0;
       left: 0;
       right: 0;
-      width: 100%;
+      width: 100vw;
+      max-width: 100vw;
       height: var(--bottom-nav-height);
-      background: rgba(255, 255, 255, 0.96);
+      background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid var(--border-color);
-      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
       z-index: 9999;
-      justify-content: space-around;
+      justify-content: space-between;
       align-items: center;
-      padding: 4px 6px;
-      padding-bottom: env(safe-area-inset-bottom, 4px);
+      padding: 2px 2px;
+      padding-bottom: env(safe-area-inset-bottom, 2px);
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .bottom-nav-item {
       flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -3466,13 +3492,12 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 600;
       cursor: pointer;
-      padding: 6px 2px;
+      padding: 4px 1px;
       min-height: 48px;
-      min-width: 48px;
-      border-radius: 8px;
+      border-radius: 6px;
       transition: color 0.15s ease, transform 0.1s ease;
     }
 
@@ -4169,6 +4194,8 @@
       body {
         padding: 0 0 calc(var(--bottom-nav-height) + 20px) 0;
         background-color: #f8fafc;
+        max-width: 100vw;
+        overflow-x: hidden;
       }
       
       .app-header { display: none; }
@@ -4177,33 +4204,38 @@
       .dashboard-wrapper {
         flex-direction: column;
         gap: 12px;
-        padding: 0 10px;
+        padding: 0 8px;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
       
       .sidebar.tab-nav { display: none; }
       .main-content {
-        padding: 16px 14px;
+        padding: 14px 10px;
         border-radius: 12px;
         box-shadow: var(--shadow-sm);
         border: 1px solid var(--border-color);
         min-height: 480px;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
       }
       .stats-container {
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 16px;
+        gap: 8px;
+        margin-bottom: 14px;
       }
-      .stat-card { padding: 12px 14px; }
-      .stat-card .value { font-size: 22px; }
-      .stat-card h4 { font-size: 11.5px; }
+      .stat-card { padding: 10px 12px; }
+      .stat-card .value { font-size: 20px; }
+      .stat-card h4 { font-size: 11px; }
       .master-kpi-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
         margin-bottom: 14px;
       }
-      .master-kpi-card { padding: 10px 12px; }
-      .master-kpi-value { font-size: 20px; }
+      .master-kpi-card { padding: 8px 10px; }
+      .master-kpi-value { font-size: 18px; }
       
       /* Inputs - 16px on mobile prevents iOS viewport auto-zoom */
       input[type="text"],
@@ -4212,18 +4244,28 @@
       select,
       textarea {
         font-size: 16px !important;
-        padding: 11px 12px;
+        padding: 10px 10px;
         border-radius: 8px;
       }
-      .entry-section { padding: 14px 12px; margin-bottom: 14px; }
+      .entry-section { padding: 12px 10px; margin-bottom: 12px; max-width: 100%; }
       
       .table-subtabs {
-        gap: 4px;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 8px;
         margin-bottom: 12px;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+        scroll-snap-type: x mandatory;
       }
       .subtab-btn {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 7px 12px;
+        font-size: 11.5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        scroll-snap-align: start;
       }
       .filter-bar {
         flex-direction: column;
@@ -4234,20 +4276,34 @@
       .filter-inputs { flex-direction: column; width: 100%; gap: 6px; }
       .filter-search, .filter-select { width: 100%; min-width: 100%; }
       .table-scroll-hint { display: block; }
-      .app-table th, .app-table td { padding: 8px 10px; font-size: 12px; }
+      .app-table th, .app-table td { padding: 8px 8px; font-size: 11.5px; }
       .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .photo-card img { height: 110px; }
-      .sheet-card { padding: 12px; }
-      .sheet-actions { width: 100%; justify-content: stretch; }
-      .sheet-btn { flex: 1; justify-content: center; font-size: 12px; }
+      .photo-card img { height: 100px; }
+      .sheet-card { padding: 10px; max-width: 100%; }
+      .sheet-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .sheet-actions { width: 100%; justify-content: stretch; flex-wrap: wrap; gap: 6px; }
+      .sheet-btn { flex: 1; justify-content: center; font-size: 11.5px; padding: 7px 10px; }
       .sheet-modal { padding: 8px; }
       .sheet-modal-body {
-        padding: 16px 14px;
+        padding: 14px 12px;
         border-radius: 12px;
         max-height: 94vh;
       }
-      .chart-box { min-height: 240px; padding: 10px; }
-      .app-footer { margin: 16px auto 0 auto; font-size: 11.5px; padding: 12px 10px; }
+      .chart-box { min-height: 220px; padding: 8px; }
+      .app-footer { margin: 14px auto 0 auto; font-size: 11px; padding: 10px 8px; }
+
+      .firestore-banner-card {
+        padding: 12px 12px !important;
+        margin-bottom: 14px !important;
+        border-radius: 12px !important;
+      }
+      .firestore-banner-card h3 {
+        font-size: 14.5px !important;
+        line-height: 1.35 !important;
+      }
+      .firestore-banner-card div {
+        font-size: 11.5px !important;
+      }
     }
   
     /* ================= COLOURFUL REPORT CARDS & UPLOAD KPI STYLES ================= */
@@ -4633,7 +4689,7 @@
       
       <div id="dashboardTab" class="tab-pane active">
         <!-- CLOUD FIRESTORE REAL-TIME STATUS BANNER -->
-        <div style="background:linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color:#ffffff; border-radius:14px; padding:18px 22px; margin-bottom:22px; box-shadow:0 8px 20px -4px rgba(6, 78, 59, 0.35); border:1px solid #10b981;">
+        <div class="firestore-banner-card" style="background:linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color:#ffffff; border-radius:14px; padding:18px 22px; margin-bottom:22px; box-shadow:0 8px 20px -4px rgba(6, 78, 59, 0.35); border:1px solid #10b981;">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div style="display:flex; align-items:center; gap:14px;">
               <div style="width:52px; height:52px; background:rgba(255,255,255,0.18); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; border:1px solid rgba(255,255,255,0.3); flex-shrink:0;">
@@ -5929,17 +5985,29 @@
 
             <!-- अहवाल डेटा पडताळणी कार्ड (Report Validation Check Card) -->
             <div id="reportValidationContainer" style="background:#f8fafc; border:1px solid #cbd5e0; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
                 <div style="font-weight:700; color:#2b6cb0; font-size:13px; display:flex; align-items:center; gap:6px;">
-                  <span>🔍</span> <span>अहवाल डेटा पडताळणी (Validation Check)</span>
+                  <span>🔍</span> <span>अहवाल डेटा पडताळणी व त्रुटी दुरुस्ती (Report Validator)</span>
                 </div>
-                <button type="button" class="sheet-btn sheet-btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="runReportValidationForMonth(document.getElementById('reportMonthSelect').value)">
-                  🔄 पुन्हा तपासा
-                </button>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button type="button" class="sheet-btn" style="background:#2b6cb0; color:#ffffff; padding:4px 12px; font-size:12px; font-weight:700; border-radius:6px; border:none; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" onclick="triggerValidatorCheck()">
+                    🛡️ Validator (त्रुटी तपासा)
+                  </button>
+                  <button type="button" class="sheet-btn sheet-btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="runReportValidationForMonth(document.getElementById('reportMonthSelect').value)">
+                    🔄 पुनश्च तपासा
+                  </button>
+                </div>
               </div>
 
               <div id="reportValidationStatus" style="font-size:12.5px; color:#4a5568;">
-                <div style="text-align:center; padding:8px; color:#718096;">महिना निवडा म्हणजे डेटा पडताळणी आपोआप होईल.</div>
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px 10px; background:#edf2f7; border-radius:8px; gap:8px; text-align:center;">
+                  <div style="color:#4a5568; font-size:12.5px; font-weight:600;">
+                    अहवालातील डेटा जुळणी व त्रुटी तपासण्यासाठी खालील 'Validator' बटणावर क्लिक करा:
+                  </div>
+                  <button type="button" class="sheet-btn" style="background:#2b6cb0; color:#ffffff; padding:6px 16px; font-size:12px; font-weight:700; border-radius:6px; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="triggerValidatorCheck()">
+                    🛡️ त्रुटी व्हॅलिडेट करा (Run Validator)
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -11122,14 +11190,42 @@
     }
 
     // ================= REPORT DATA VALIDATION & AUTO-ALIGN FUNCTIONS =================
+    function triggerValidatorCheck() {
+      const mSelect = document.getElementById('reportMonthSelect');
+      let monthName = mSelect ? mSelect.value : '';
+      if (!monthName && mSelect && mSelect.options.length > 1) {
+        for (let i = 0; i < mSelect.options.length; i++) {
+          if (mSelect.options[i].value) {
+            mSelect.selectedIndex = i;
+            monthName = mSelect.options[i].value;
+            break;
+          }
+        }
+      }
+      if (!monthName) {
+        alert("कृपया पडताळणी करण्यासाठी प्रथम महिना निवडा.");
+        return;
+      }
+      runReportValidationForMonth(monthName);
+    }
+
     function runReportValidationForMonth(monthName) {
       const box = document.getElementById('reportValidationStatus');
       if (!box) return;
       if (!monthName) {
-        box.innerHTML = '<div style="text-align:center; padding:8px; color:#718096;">महिना निवडा म्हणजे डेटा पडताळणी आपोआप होईल.</div>';
+        box.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px 10px; background:#edf2f7; border-radius:8px; gap:8px; text-align:center;">
+            <div style="color:#4a5568; font-size:12.5px; font-weight:600;">
+              अहवालातील डेटा जुळणी व त्रुटी तपासण्यासाठी खालील 'Validator' बटणावर क्लिक करा:
+            </div>
+            <button type="button" class="sheet-btn" style="background:#2b6cb0; color:#ffffff; padding:6px 16px; font-size:12px; font-weight:700; border-radius:6px; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="triggerValidatorCheck()">
+              🛡️ त्रुटी व्हॅलिडेट करा (Run Validator)
+            </button>
+          </div>
+        `;
         return;
       }
-      box.innerHTML = '<div style="color:#3182ce; font-weight:600; padding:6px 0; text-align:center;">डेटा पडताळणी सुरू आहे... ⏳</div>';
+      box.innerHTML = '<div style="color:#3182ce; font-weight:600; padding:10px 0; text-align:center;">🔍 अहवाल डेटा पडताळणी व त्रुटी शोधणे सुरू आहे... ⏳</div>';
 
       google.script.run.withSuccessHandler(res => {
         if (!res || !res.success) {
@@ -11152,6 +11248,18 @@
 
       let html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
 
+      // Header Validator Bar inside status
+      html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#edf2f7; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e0;">
+          <div style="font-size:12px; font-weight:700; color:#2b6cb0; display:flex; align-items:center; gap:4px;">
+            <span>🛡️</span> <span>महिना: <b>${res.monthName}</b> पडताळणी निकाल</span>
+          </div>
+          <button type="button" class="sheet-btn" style="background:#2b6cb0; color:#fff; padding:3px 10px; font-size:11px; font-weight:700; border-radius:4px; border:none; cursor:pointer;" onclick="runReportValidationForMonth('${res.monthName}')">
+            ⚡ Validator (पुन्हा व्हॅलिडेट करा)
+          </button>
+        </div>
+      `;
+
       // Check 1: तपशील ३ समानता (रक्त नमुने = तापाचे रुग्ण = उपचारीत रुग्ण)
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid ${r1.passed ? '#c6f6d5' : '#fed7d7'}; padding:8px 12px; border-radius:6px;">
@@ -11164,7 +11272,7 @@
             </div>
           </div>
           <span style="font-size:11px; font-weight:700; color:${r1.passed ? '#276749' : '#c53030'}; background:${r1.passed ? '#e6fffa' : '#fff5f5'}; padding:2px 8px; border-radius:10px;">
-            ${r1.passed ? 'तंतोतंत समान' : 'तफावत'}
+            ${r1.passed ? 'तंतोतंत समान' : 'तफावत (त्रुटी)'}
           </span>
         </div>
       `;
@@ -11181,7 +11289,7 @@
             </div>
           </div>
           <span style="font-size:11px; font-weight:700; color:${r2.passed ? '#276749' : '#c53030'}; background:${r2.passed ? '#e6fffa' : '#fff5f5'}; padding:2px 8px; border-radius:10px;">
-            ${r2.passed ? '१००% जुळले' : 'तफावत'}
+            ${r2.passed ? '१००% जुळले' : 'तफावत (त्रुटी)'}
           </span>
         </div>
       `;
@@ -11194,29 +11302,36 @@
               ${r3.passed ? '✅' : '❌'} ३. प्रगत संख्या (YTD Progressive) बेरीज
             </div>
             <div style="font-size:11.5px; color:#4a5568; margin-top:2px;">
-              मागील बेरीज (${r3.priorSmears}) + चालू (${r3.currentSmears}) = एकूण प्रगत: <b>${r3.actualProg}</b>
+              मागील बेरीज (${r3.priorSmears}) + चालू (${r3.currentSmears}) = अपेक्षा: <b>${r3.expectedProg}</b> (सध्या: <b>${r3.actualProg}</b>)
             </div>
           </div>
           <span style="font-size:11px; font-weight:700; color:${r3.passed ? '#276749' : '#c53030'}; background:${r3.passed ? '#e6fffa' : '#fff5f5'}; padding:2px 8px; border-radius:10px;">
-            ${r3.passed ? 'अचूक बेरीज' : 'तफावत'}
+            ${r3.passed ? 'अचूक बेरीज' : 'तफावत (त्रुटी)'}
           </span>
         </div>
       `;
 
-      // Overall status banner
+      // Overall status banner & Error List
       if (res.isValid) {
         html += `
-          <div style="background:#c6f6d5; border:1px solid #38a169; color:#22543d; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:6px; margin-top:4px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
-            <span>🎉</span> <span>अभिनंदन! सर्व डेटा १००% तंतोतंत जुळत आहे. अहवाल काढण्यास तयार!</span>
+          <div style="background:#c6f6d5; border:1px solid #38a169; color:#22543d; font-size:12.5px; font-weight:700; padding:10px 12px; border-radius:6px; margin-top:4px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <span>🎉</span> <span>अहवालात कोणतीही त्रुटी नाही! सर्व डेटा १००% तंतोतंत जुळत आहे. अहवाल काढण्यास तयार!</span>
           </div>
         `;
       } else {
         html += `
-          <div style="background:#feebc8; border:1px solid #dd6b20; color:#744210; font-size:12.5px; padding:10px 12px; border-radius:6px; margin-top:4px;">
-            <div style="font-weight:700; margin-bottom:4px;">⚠️ दैनंदिन नोंद व मासिक अहवालात बदल आढळले आहेत.</div>
-            <div style="font-size:11.5px; margin-bottom:8px;">खालील १-क्लिक बटनावर क्लिक करून सर्व संख्या त्वरित एका सेकंदात तंतोतंत समान व अचूक करा:</div>
-            <button type="button" class="submit-btn" style="margin:0; padding:8px 16px; font-size:12px; background:#dd6b20; width:100%; text-align:center;" onclick="autoAlignReportData('${res.monthName}')">
-              ⚡ १-क्लिकमध्ये आपोआप दुरुस्त व सिंक करा (Auto-Align & Fix All)
+          <div style="background:#fff5f5; border:1px solid #feb2b2; border-radius:8px; padding:10px 12px; margin-top:4px;">
+            <div style="font-weight:700; color:#c53030; font-size:13px; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+              <span>🚨</span> <span>अहवालातील त्रुटींची यादी (List of Report Errors):</span>
+            </div>
+            <ul style="margin:0; padding-left:18px; color:#9b2c2c; font-size:12px; line-height:1.6;">
+              ${!r1.passed ? `<li><b>त्रुटी १ (तपशील ३ तफावत):</b> रक्त नमुने (${r1.bloodSmears}), तापाचे रुग्ण (${r1.feverCases}) आणि उपचारीत रुग्ण (${r1.treatedCases}) एकमेकांशी जुळत नाहीत.</li>` : ''}
+              ${!r2.passed ? `<li><b>त्रुटी २ (OPD नमुने तफावत):</b> दैनिक OPD नोंद बेरीज (${r2.opdTotal}) आणि मासिक अहवाल नमुने (${r2.monthlySmears}) भिन्न आहेत.</li>` : ''}
+              ${!r3.passed ? `<li><b>त्रुटी ३ (प्रगत बेरीज तफावत):</b> मागील प्रगत (${r3.priorSmears}) + चालू महिना (${r3.currentSmears}) = ${r3.expectedProg}, परंतु नोंदवलेली प्रगत बेरीज ${r3.actualProg} आहे.</li>` : ''}
+            </ul>
+            <div style="margin-top:10px; font-size:11.5px; color:#744210; font-weight:600;">खालील १-क्लिक बटनावर क्लिक करून सर्व त्रुटी एका सेकंदात स्वयंचलित दुरुस्त व सिंक करा:</div>
+            <button type="button" class="submit-btn" style="margin-top:6px; padding:8px 16px; font-size:12px; background:#dd6b20; width:100%; text-align:center; border-radius:6px;" onclick="autoAlignReportData('${res.monthName}')">
+              ⚡ १-क्लिकमध्ये सर्व त्रुटी आपोआप दुरुस्त व सिंक करा (Auto-Fix All Errors)
             </button>
           </div>
         `;
