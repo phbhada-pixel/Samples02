@@ -37,7 +37,32 @@ function parseDateSafe(value) {
   return isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function cleanStr(str) { if (!str) return ""; return String(str).replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)).replace(/s+/g, "").toLowerCase().trim(); }
+function cleanStr(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d))
+    .replace(/\s+/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function matchEmpRow(r, emp) {
+  if (!r || !emp) return false;
+  const empBsCode = String(emp.bsCode || '').trim().toUpperCase();
+  const rowBsCode = String(r[5] || '').trim().toUpperCase();
+
+  if (empBsCode && rowBsCode && empBsCode === rowBsCode) return true;
+
+  const rowName = cleanStr(r[3]);
+  const empName = cleanStr(emp.employeeName);
+  if (rowName && empName) {
+    if (rowName === empName) return true;
+    const normRow = rowName.replace(/^(श्रीमती|श्री|डॉ|कु)\.?/, '');
+    const normEmp = empName.replace(/^(श्रीमती|श्री|डॉ|कु)\.?/, '');
+    if (normRow && normEmp && (normRow.includes(normEmp) || normEmp.includes(normRow))) return true;
+  }
+  return false;
+}
 
 function wrapReportPage(title, bodyContent) {
   return `<!DOCTYPE html>
@@ -650,14 +675,14 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
       if (total <= 0) return;
 
       const cat = getStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
-      const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(r[3])) || {};
+      const emp = masterData.find(m => matchEmpRow(r, m)) || masterData.find(m => cleanStr(m.employeeName) === cleanStr(r[3])) || {};
       const empVillages = (emp.villageList && emp.villageList.length > 0) 
         ? emp.villageList.map(normalizeVillageName) 
         : (villageListMap.filter(x => x.upkendra === r[2]).map(x => x.village));
 
       let matchingVils = monthVillageRows.filter(v => v[0] === r[0]);
       if (matchingVils.length === 0) {
-        matchingVils = monthVillageRows.filter(v => cleanStr(v[1]) === cleanStr(r[3]) && Math.abs(new Date(v[2]) - new Date(r[1])) < 86400000);
+        matchingVils = monthVillageRows.filter(v => (cleanStr(v[1]) === cleanStr(r[3]) || (emp.employeeName && cleanStr(v[1]) === cleanStr(emp.employeeName))) && Math.abs(new Date(v[2]) - new Date(r[1])) < 86400000);
       }
 
       if (matchingVils.length > 0) {
@@ -784,7 +809,7 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
       const empIsAsha = isAsha(emp.employeeName, emp.designation, emp.bsCode);
       if (isEmpOpd || empIsAsha) return null;
 
-      const empRows = monthBsRows.filter(r => cleanStr(r[3]) === cleanStr(emp.employeeName));
+      const empRows = monthBsRows.filter(r => matchEmpRow(r, emp));
       const totalCount = empRows.reduce((sum, r) => sum + (parseInt(r[9]) || 0), 0);
       const entryCount = empRows.length;
 

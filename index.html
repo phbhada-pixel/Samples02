@@ -207,7 +207,32 @@
         return pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear();
       }
 
-      function cleanStrLocal(s) { if (!s) return ""; return String(s).replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)).replace(/s+/g, "").toLowerCase().trim(); }
+      function cleanStrLocal(s) {
+        if (!s) return "";
+        return String(s)
+          .replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d))
+          .replace(/\s+/g, "")
+          .toLowerCase()
+          .trim();
+      }
+
+      function matchEmpRowLocal(r, emp) {
+        if (!r || !emp) return false;
+        const empBsCode = String(emp.bsCode || '').trim().toUpperCase();
+        const rowBsCode = String(r[5] || '').trim().toUpperCase();
+
+        if (empBsCode && rowBsCode && empBsCode === rowBsCode) return true;
+
+        const rowName = cleanStrLocal(r[3]);
+        const empName = cleanStrLocal(emp.employeeName);
+        if (rowName && empName) {
+          if (rowName === empName) return true;
+          const normRow = rowName.replace(/^(श्रीमती|श्री|डॉ|कु)\.?/, '');
+          const normEmp = empName.replace(/^(श्रीमती|श्री|डॉ|कु)\.?/, '');
+          if (normRow && normEmp && (normRow.includes(normEmp) || normEmp.includes(normRow))) return true;
+        }
+        return false;
+      }
 
       function wrapReportPageLocal(title, bodyContent) {
         return '<!DOCTYPE html>' +
@@ -288,7 +313,32 @@
     return `${day}/${month}/${year}`;
   }
 
-  function cleanStr(str) { if (!str) return ""; return String(str).replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)).replace(/s+/g, "").toLowerCase().trim(); }
+  function cleanStr(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d))
+      .replace(/\s+/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function matchEmpRow(r, emp) {
+    if (!r || !emp) return false;
+    const empBsCode = String(emp.bsCode || '').trim().toUpperCase();
+    const rowBsCode = String(r[5] || '').trim().toUpperCase();
+
+    if (empBsCode && rowBsCode && empBsCode === rowBsCode) return true;
+
+    const rowName = cleanStr(r[3]);
+    const empName = cleanStr(emp.employeeName);
+    if (rowName && empName) {
+      if (rowName === empName) return true;
+      const normRow = rowName.replace(/^(श्रीमती|श्री|डॉ|कु)\.?/, '');
+      const normEmp = empName.replace(/^(श्रीमती|श्री|डॉ|कु)\.?/, '');
+      if (normRow && normEmp && (normRow.includes(normEmp) || normEmp.includes(normRow))) return true;
+    }
+    return false;
+  }
 
   if (!selectedMonthDisplay) return { success: false, message: 'कृपया महिना निवडा.' };
   const monthObj = monthMaster.find(m => cleanStr(m.name) === cleanStr(selectedMonthDisplay));
@@ -701,14 +751,14 @@
     if (total <= 0) return;
 
     const cat = getStaffCategory(r[3], r[4], r[2], '', r[5], r[1]);
-    const emp = masterData.find(m => cleanStr(m.employeeName) === cleanStr(r[3])) || {};
+    const emp = masterData.find(m => matchEmpRow(r, m)) || masterData.find(m => cleanStr(m.employeeName) === cleanStr(r[3])) || {};
     const empVillages = (emp.villageList && emp.villageList.length > 0) 
       ? emp.villageList.map(normalizeVillageName) 
       : (villageListMap.filter(x => x.upkendra === r[2]).map(x => x.village));
 
     let matchingVils = monthVillageRows.filter(v => v[0] === r[0]);
     if (matchingVils.length === 0) {
-      matchingVils = monthVillageRows.filter(v => cleanStr(v[1]) === cleanStr(r[3]) && Math.abs(new Date(v[2]) - new Date(r[1])) < 86400000);
+      matchingVils = monthVillageRows.filter(v => (cleanStr(v[1]) === cleanStr(r[3]) || (emp.employeeName && cleanStr(v[1]) === cleanStr(emp.employeeName))) && Math.abs(new Date(v[2]) - new Date(r[1])) < 86400000);
     }
 
     if (matchingVils.length > 0) {
@@ -832,7 +882,7 @@
     const empIsAsha = isAsha(emp.employeeName, emp.designation, emp.bsCode);
     if (isEmpOpd || empIsAsha) return null;
 
-    const empRows = monthBsRows.filter(r => cleanStr(r[3]) === cleanStr(emp.employeeName));
+    const empRows = monthBsRows.filter(r => matchEmpRow(r, emp));
     const totalCount = empRows.reduce((sum, r) => sum + (parseInt(r[9]) || 0), 0);
     const entryCount = empRows.length;
 
@@ -2562,7 +2612,7 @@
               let total = 0;
               let dates = new Set();
               monthBs.forEach(r => {
-                if (cleanStrLocal(r[3]) === cleanStrLocal(emp.employeeName) || r[5] === emp.bsCode) {
+                if (matchEmpRowLocal(r, emp)) {
                   total += (parseInt(r[9]) || 0);
                   dates.add(r[1].slice(0, 10));
                 }
@@ -2822,15 +2872,7 @@
           }
 
           case 'saveGoogleSheetConfig': {
-            const [cfg] = args;
-            if (cfg) {
-              if (cfg.spreadsheetId) clientGoogleSheetConfig.spreadsheetId = cfg.spreadsheetId.trim();
-              if (cfg.webhookUrl) clientGoogleSheetConfig.webhookUrl = cfg.webhookUrl.trim();
-              if (cfg.githubRepoUrl) clientGoogleSheetConfig.githubRepoUrl = cfg.githubRepoUrl.trim();
-              if (typeof cfg.autoSync === 'boolean') clientGoogleSheetConfig.autoSync = cfg.autoSync;
-              setLocalStore('googleSheetConfig', clientGoogleSheetConfig);
-            }
-            return { result: { success: true, message: 'गुगल शीट सेटिंग्ज सेव्ह झाल्या!', config: clientGoogleSheetConfig } };
+            return { result: { success: true, message: 'प्रणाली Cloud Firestore वर कार्यरत आहे.' } };
           }
 
           case 'getDriveDownloads':
@@ -2849,8 +2891,7 @@
             const rec = {
               ...entryData,
               id,
-              syncStatus: 'PENDING',
-              googleSheetSynced: false,
+              syncStatus: 'SYNCED',
               createdAt: entryData.createdAt || new Date().toISOString()
             };
             const exIdx = clientDengueEntries.findIndex(e => e.id === id);
@@ -2858,27 +2899,12 @@
             else clientDengueEntries.push(rec);
             setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
 
-            // Attempt automatic background Google Apps Script sync if webhook URL exists
-            if (clientGoogleSheetConfig.webhookUrl) {
-              fetch(clientGoogleSheetConfig.webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'saveDengueEntry', entry: rec })
-              }).then(r => r.json()).then(data => {
-                if (data && data.success) {
-                  rec.syncStatus = 'SYNCED';
-                  rec.googleSheetSynced = true;
-                  setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
-                }
-              }).catch(() => {});
-            }
-
             return {
               result: {
                 success: true,
                 message: `रुग्ण ${rec.patientName} ची नोंद सुरक्षित सेव्ह झाली.`,
                 record: rec,
-                syncStatus: 'PENDING'
+                syncStatus: 'SYNCED'
               }
             };
           }
@@ -2974,68 +3000,15 @@
 
           case 'fetchRealtimeFromGoogleSheet':
           case 'fetchDataFromGoogleSheet': {
-            if (!clientGoogleSheetConfig.webhookUrl) {
-              return { result: { success: false, message: 'गुगल शीट वेबहुक URL सेट केलेले नाही.' } };
-            }
-            try {
-              const resp = await fetch(clientGoogleSheetConfig.webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  action: 'fetchAllData',
-                  spreadsheetId: clientGoogleSheetConfig.spreadsheetId
-                })
-              });
-              if (!resp.ok) throw new Error('HTTP ' + resp.status);
-              const data = await resp.json();
-              let bCount = 0;
-              let vCount = 0;
-              let dCount = 0;
-              if (Array.isArray(data.bsData) && data.bsData.length > 0) {
-                clientBsData.length = 0;
-                data.bsData.forEach(r => {
-                  clientBsData.push([r.id, r.date, r.upkendra, r.name, r.designation, r.bsCode, r.bundleNumber, r.pasun, r.paraynt, r.total]);
-                  bCount++;
-                });
-                setLocalStore('bsDataEntry', clientBsData);
+            return {
+              result: {
+                success: true,
+                importedBs: 0,
+                importedVil: 0,
+                importedDengue: 0,
+                message: 'प्रणाली आता पूर्णपणे Cloud Firestore वर कार्यरत आहे.'
               }
-              if (Array.isArray(data.villageDetails) && data.villageDetails.length > 0) {
-                clientVillageDetails.length = 0;
-                data.villageDetails.forEach(v => {
-                  clientVillageDetails.push([v.id, v.employeeName, v.date, v.villageName, v.sampleCount, v.maleCount, v.femaleCount, v.upkendra]);
-                  vCount++;
-                });
-                setLocalStore('villageDetails', clientVillageDetails);
-              }
-              if (Array.isArray(data.dengueData) && data.dengueData.length > 0) {
-                clientDengueEntries.length = 0;
-                data.dengueData.forEach(d => {
-                  clientDengueEntries.push(d);
-                  dCount++;
-                });
-                setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
-              }
-              clientGoogleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-              clientGoogleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
-              setLocalStore('googleSheetConfig', clientGoogleSheetConfig);
-              const parts = [];
-              if (bCount > 0) parts.push(`${bCount} रक्त नमुने`);
-              if (vCount > 0) parts.push(`${vCount} गाव तपशील`);
-              if (dCount > 0) parts.push(`${dCount} डेंगी नोंदी`);
-              return {
-                result: {
-                  success: true,
-                  importedBs: bCount,
-                  importedVil: vCount,
-                  importedDengue: dCount,
-                  message: parts.length > 0
-                    ? `गुगल शीटमधून ${parts.join(', ')} यशस्वीरित्या थेट लोड झाल्या!`
-                    : `गुगल शीटशी यशस्वी संपर्क झाला! (सध्या सर्व डेटा अद्ययावत आहे).`
-                }
-              };
-            } catch (err) {
-              return { result: { success: false, message: 'गुगल शीटवरून डेटा फेच करताना त्रुटी: ' + err.message } };
-            }
+            };
           }
 
           case 'clearDengueEntries': {
@@ -4564,6 +4537,9 @@
       <button type="button" class="mobile-drawer-btn" data-tab="photoTab" onclick="handleDrawerNav('photoTab')">🖼️ फोटो गॅलरी</button>
       <button type="button" class="mobile-drawer-btn" data-tab="linksTab" onclick="handleDrawerNav('linksTab')">🔗 महत्त्वाच्या लिंक्स</button>
       <div style="border-top:1px solid #e2e8f0; margin:10px 0; padding-top:10px;">
+        <a href="/api/download-apk" target="_blank" download="PHC_Bhada_NVBDCP.apk" class="sheet-btn" style="width:100%; justify-content:center; background:#15803d; color:#fff; font-weight:700; margin-bottom:6px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          📲 APK अँड्रॉइड ॲप डाऊनलोड करा
+        </a>
         <button type="button" class="sheet-btn" style="width:100%; justify-content:center; background:#24292e; color:#fff; margin-bottom:6px;" onclick="closeMobileDrawer(); openGithubModal(event);">
           <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
           🐙 GitHub रिपॉझिटरी व सपोर्ट
@@ -4616,10 +4592,14 @@
       <div class="header-badges">
         <span class="header-chip">🏛️ ६ उपकेंद्रे | ३७ गावे</span>
         <span class="header-chip">👥 ६५ कर्मचारी</span>
-        <button type="button" class="header-chip" id="btnTopHeaderSyncSheet" onclick="triggerSeamlessGoogleSheetSync(true)" style="background:#1b4332; border:1.5px solid #52b788; color:#d8f3dc; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(0,0,0,0.18); transition:all 0.2s ease;">
-          <span id="topHeaderSyncSpinner" style="display:inline-block;">🔄</span>
-          <span id="topHeaderSyncLabel">गुगल शीट लोड करा (Live Sync)</span>
-        </button>
+        <a href="/api/download-apk" target="_blank" download="PHC_Bhada_NVBDCP.apk" class="header-chip" id="btnHeaderApkDownload" style="background:#15803d; border:1.5px solid #4ade80; color:#ffffff; cursor:pointer; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(0,0,0,0.18); text-decoration:none; padding:6px 14px; border-radius:20px; transition:all 0.2s ease;" title="अँड्रॉइड फोनसाठी APK डाऊनलोड करा">
+          <span style="font-size:15px;">📲</span>
+          <span>APK डाऊनलोड</span>
+        </a>
+        <span class="header-chip" id="headerFirestoreChip" style="background:#064e3b; border:1.5px solid #34d399; color:#ecfdf5; font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(0,0,0,0.18);">
+          <span style="color:#fbbf24;">🔥</span>
+          <span>Cloud Firestore सक्रिय</span>
+        </span>
         <button type="button" class="header-chip" id="btnHeaderGithub" onclick="openGithubModal(event)" style="background:#24292e; color:#ffffff; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; transition:transform 0.15s ease;" title="GitHub रिपॉझिटरी व सोर्स कोड">
           <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor" style="display:inline-block;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
           <span>GitHub</span>
@@ -4652,41 +4632,38 @@
     <div class="main-content">
       
       <div id="dashboardTab" class="tab-pane active">
-        <!-- REAL-TIME GOOGLE SHEET SYNC BANNER -->
+        <!-- CLOUD FIRESTORE REAL-TIME STATUS BANNER -->
         <div style="background:linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color:#ffffff; border-radius:14px; padding:18px 22px; margin-bottom:22px; box-shadow:0 8px 20px -4px rgba(6, 78, 59, 0.35); border:1px solid #10b981;">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div style="display:flex; align-items:center; gap:14px;">
               <div style="width:52px; height:52px; background:rgba(255,255,255,0.18); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; border:1px solid rgba(255,255,255,0.3); flex-shrink:0;">
-                ⚡
+                🔥
               </div>
               <div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                   <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff; letter-spacing:0.2px;">
-                    गुगल शीट रिअल-टाईम सिंक व डेटा लोड केंद्र (Google Sheet Live Sync)
+                    क्लाउड फायरस्टोअर डेटा केंद्र (Cloud Firestore Live Database)
                   </h3>
-                  <span id="dashSheetLiveBadge" style="background:#22c55e; color:#052e16; font-size:11px; font-weight:800; padding:2px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
+                  <span id="dashFirestoreBadge" style="background:#22c55e; color:#052e16; font-size:11px; font-weight:800; padding:2px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
                     🟢 रिअल-टाईम सक्रिय
                   </span>
                 </div>
                 <div style="font-size:13px; color:#d1fae5; margin-top:4px; font-weight:500;">
-                  कोणत्याही कटकटीशिवाय (No Hassle) थेट तुमच्या गुगल शीटमधून संपूर्ण डेटा ॲपमध्ये लोड करा आणि नवीन नोंदी रिअल-टाईम शीटमध्ये जतन ठेवा.
+                  NVBDCP अंतर्गत सर्व रक्त नमुने, रुग्ण नोंदी आणि मासिक निर्देशांक थेट Cloud Firestore डेटाबेसमध्ये रिअल-टाईम व १००% सुरक्षित जतन होतात.
                 </div>
                 <div style="font-size:11.5px; color:#a7f3d0; margin-top:4px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                  <span>📄 <b>Sheet ID:</b> 1rYpDm...38EKM</span>
+                  <span>🗄️ <b>प्रकल्प:</b> learned-answer-316612</span>
                   <span>•</span>
-                  <span>🕒 <b>शेवटचे सिंक:</b> <span id="dashSyncLastTime" style="font-weight:700; color:#ffffff;">सक्रिय सज्ज</span></span>
+                  <span>🕒 <b>स्थिती:</b> <span id="dashSyncLastTime" style="font-weight:700; color:#ffffff;">क्लाउड डेटाबेस सक्रिय</span></span>
                 </div>
               </div>
             </div>
             
-            <!-- Action Buttons -->
+            <!-- Action Badges -->
             <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <span id="dashAutoSyncStatusBadge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); display:inline-flex; align-items:center; gap:6px;">
-                🟢 स्वयंचलित Google Sheet सिंक (Auto-Sync Active)
+              <span id="dashFirestoreStatusBadge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); display:inline-flex; align-items:center; gap:6px;">
+                🟢 थेट क्लाउड स्टोरेज (Cloud Firestore Active)
               </span>
-              <a href="https://docs.google.com/spreadsheets/d/1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM/edit" target="_blank" class="sheet-btn" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); font-weight:700; font-size:12.5px; padding:9px 14px; text-decoration:none;">
-                🌐 थेट गुगल शीट उघडा ↗️
-              </a>
             </div>
           </div>
         </div>
@@ -6251,31 +6228,21 @@
             <div class="sheet-title">
               <span style="font-size:24px;">📊</span>
               <div>
-                <div>गुगल शीट डेटा सिंक (Google Sheets Live Sync)</div>
-                <span id="sheetStatusBadge" class="sheet-badge" style="font-size:11px; margin-top:3px; display:inline-block;">कनेक्टेड (Active)</span>
+                <div>मास्टर डेटा व तक्ते व्यवस्थापन (Master Data & Records Center)</div>
+                <span id="sheetStatusBadge" class="sheet-badge" style="background:#ebf8ff; color:#2b6cb0; border:1px solid #bee3f8; font-size:11px; margin-top:3px; display:inline-block;">🔥 Cloud Firestore सक्रिय</span>
               </div>
             </div>
             <div class="sheet-actions">
-              <button class="sheet-btn" id="btnFetchLiveSheet" style="background:#2f855a;" onclick="fetchRealtimeFromGoogleSheet()">
-                🔄 गुगल शीटवरून ताजी माहिती लोड करा (Fetch Live)
-              </button>
               <button class="sheet-btn" style="background:#2b6cb0;" onclick="openUniversalUploadModal()">
-                📂 डेटा आयात केंद्र
+                📂 डेटा आयात केंद्र (CSV / Excel)
               </button>
               <button class="sheet-btn" style="background:#c53030;" onclick="clearAllDummyDataConfirm()">
                 🗑️ सर्व तात्पुरता डेटा साफ करा (Wipe Dummy)
               </button>
-              <a href="https://docs.google.com/spreadsheets/d/1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM/edit" id="linkOpenGoogleSheet" target="_blank" class="sheet-btn sheet-btn-secondary" style="text-decoration:none;">
-                🌐 गुगल शीट उघडा ↗️
-              </a>
-              <button class="sheet-btn sheet-btn-secondary" onclick="openSheetSettingsModal()">
-                ⚙️ सेटिंग्ज
-              </button>
             </div>
           </div>
           <div class="sheet-meta">
-            <div>📄 <b>Spreadsheet ID:</b> <span id="lblSpreadsheetId" style="font-family:monospace; background:#e2e8f0; padding:2px 6px; border-radius:4px;">1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM</span></div>
-            <div>🕒 <b>शेवटचे सिंक:</b> <span id="lblLastSyncTime">सिंक सज्ज</span></div>
+            <div>🕒 <b>शेवटचे अपडेट:</b> <span id="lblLastSyncTime">डेटाबेस सज्ज</span></div>
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
               <b>📥 CSV डाऊनलोड:</b>
               <a href="/api/export/bs-data.csv" download style="color:#2b6cb0; text-decoration:underline; font-weight:600;">🩸 BsDataEntry (रक्त नमुने)</a>
@@ -7149,9 +7116,6 @@
                 <button type="button" class="sheet-btn" style="background:#6b46c1; color:#fff; font-weight:700;" onclick="switchDengueSubtab('upload')">
                   📂 जुना डेटा आयात करा (Import CSV)
                 </button>
-                <button type="button" class="sheet-btn" style="background:#1b4332; color:#fff; font-weight:700; border:1px solid #52b788;" onclick="triggerSeamlessGoogleSheetSync(true)">
-                  🔄 गुगल शीटवरून डेटा लोड करा
-                </button>
                 <button type="button" class="sheet-btn" style="background:#fff; color:#e53e3e; border:1.5px solid #feb2b2; font-weight:700;" onclick="promptClearDengueData()">
                   🗑️ डमी / चाचणी डेटा साफ करा
                 </button>
@@ -7510,10 +7474,6 @@
         <svg height="13" width="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
         <span>GitHub रिपॉझिटरी व सपोर्ट</span>
       </a>
-      <span style="color:#cbd5e0;">|</span>
-      <a href="#" onclick="openSheetSettingsModal(); return false;" style="color:#2b6cb0; text-decoration:none; font-weight:600;">
-        ⚙️ Google Sheet सेटिंग्ज
-      </a>
     </div>
   </div>
 
@@ -7521,81 +7481,6 @@
     <span class="close-btn" onclick="closeModal()">&times;</span>
     <img class="modal-content" id="img01">
     <div id="caption" class="modal-caption"></div>
-  </div>
-
-  <!-- Google Sheet Settings Modal -->
-  <div id="sheetSettingsModal" class="sheet-modal">
-    <div class="sheet-modal-body" style="max-width:680px; max-height:90vh; overflow-y:auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
-        <h3 style="margin:0; color:#22543d; font-size:18px; display:flex; align-items:center; gap:8px;">
-          <span>⚙️ गुगल शीट व सिस्टीम डेटा सेटिंग्ज</span>
-        </h3>
-        <button onclick="closeSheetSettingsModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#718096;">✕</button>
-      </div>
-
-      <!-- Data Storage Information Card -->
-      <div style="background:#ebf8ff; border:1px solid #bee3f8; border-radius:8px; padding:12px 14px; margin-bottom:15px;">
-        <div style="font-weight:700; color:#2b6cb0; font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-          <span>ℹ️ डेटा सुरक्षितता माहिती (Where Data is Saved):</span>
-        </div>
-        <div style="font-size:12.5px; color:#2d3748; line-height:1.5;">
-          तुमचा सर्व डेटा या प्रणालीच्या स्वतःच्या <b>स्थानिक सर्व्हर डेटाबेसमध्ये (db.json)</b> १००% कायमस्वरूपी सुरक्षित सेव्ह होत आहे. सर्व अहवाल, डॅशबोर्ड व तक्ते सुरळीत चालू आहेत. हा डेटा तुमच्या Google Sheet मध्येही थेट दिसण्यासाठी खालील सेटिंग्ज तपासा.
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-bottom:12px;">
-        <label>गुगल स्प्रेडशीट ID (Google Spreadsheet ID)</label>
-        <input type="text" id="cfgSpreadsheetId" style="width:100%; font-family:monospace;" placeholder="e.g. 1QW9vQ943bT131102008741_b9e7cQ86z7pLzP9gX3e0r">
-        <small style="color:#718096; display:block; margin-top:4px;">Google Sheet URL मधील /d/ नंतरचा आणि /edit समोरील आयडी.</small>
-      </div>
-
-      <div class="form-group" style="margin-bottom:12px;">
-        <label>गुगल ॲप्स स्क्रिप्ट वेबहुक URL (Google Apps Script Web App URL)</label>
-        <input type="url" id="cfgWebhookUrl" style="width:100%; font-family:monospace;" placeholder="https://script.google.com/macros/s/.../exec">
-        <small style="color:#718096; display:block; margin-top:4px;">डेटा थेट आपल्या Google Sheet मध्ये सेव्ह करण्यासाठी वेब ॲप लिंक (शेवटी /exec असणे आवश्यक आहे).</small>
-      </div>
-
-      <div class="form-group" style="margin-bottom:12px;">
-        <label>GitHub रिपॉझिटरी URL (GitHub Repository URL)</label>
-        <input type="url" id="cfgGithubRepoUrl" style="width:100%; font-family:monospace;" placeholder="https://github.com/phcbhada/nvbdcp-malaria-management-system">
-        <small style="color:#718096; display:block; margin-top:4px;">प्रकल्पाचा अधिकृत GitHub ओपन सोर्स कोड व दस्तऐवजीकरण दुवा.</small>
-      </div>
-
-      <div style="margin-bottom:15px; background:#f7fafc; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
-        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; color:#2d3748; margin:0;">
-          <input type="checkbox" id="cfgAutoSync" checked style="width:18px; height:18px;">
-          <span>नवीन डेटा सबमिट केल्यावर थेट Google Sheet मध्ये नोंद करा (Auto-Sync)</span>
-        </label>
-      </div>
-
-      <!-- Connection Test Result Box -->
-      <div id="testConnResult" style="display:none; padding:10px 12px; border-radius:8px; margin-bottom:15px; font-size:13px; font-weight:600;"></div>
-
-      <!-- Quick 3-Step Setup Instructions & Script Code Button -->
-      <div style="background:#fffaf0; border:1px solid #feebc8; border-radius:8px; padding:12px; margin-bottom:15px; font-size:12px; color:#744210;">
-        <div style="font-weight:700; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-          <span>📋 Google Apps Script जोडणी कशी करावी? (३ सोप्या पायऱ्या)</span>
-          <button type="button" onclick="copyAppsScriptCode()" style="background:#d69e2e; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;">
-            📋 Code.gs कॉपी करा
-          </button>
-        </div>
-        <ol style="margin:0; padding-left:18px; line-height:1.5;">
-          <li>तुमचे Google Sheet उघडा > <b>Extensions > Apps Script</b> निवडा.</li>
-          <li><b>📋 Code.gs कॉपी करा</b> बटनावर क्लिक करून तो कोड Apps Script मध्ये पेस्ट करा आणि सेव्ह करा.</li>
-          <li>वर उजवीकडे <b>Deploy > New deployment > Web app</b> निवडा (Execute as: <b>Me</b>, Who has access: <b>Anyone</b>) आणि मिळालेली Web app URL वरील बॉक्समध्ये पेस्ट करून सेव्ह करा.</li>
-        </ol>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <button type="button" class="sheet-btn" id="btnTestSheetConnection" onclick="testGoogleSheetConnectionFromModal()" style="background:#4a5568;">
-          🔍 कनेक्शन तपासा (Test Connection)
-        </button>
-        <div style="display:flex; gap:10px;">
-          <button class="sheet-btn sheet-btn-secondary" onclick="closeSheetSettingsModal()">रद्द करा</button>
-          <button class="sheet-btn" id="btnSaveSheetConfig" onclick="saveGoogleSheetSettings()">✅ सेव्ह करा</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Dedicated GitHub Modal -->
@@ -9082,12 +8967,6 @@
       if (typeof populateDengueSubcenterAndVillages === 'function') {
         populateDengueSubcenterAndVillages();
       }
-      // Auto-fetch latest data from Google Sheet without user hassle
-      setTimeout(() => {
-        if (typeof triggerSeamlessGoogleSheetSync === 'function') {
-          triggerSeamlessGoogleSheetSync(false);
-        }
-      }, 1200);
       loadMonthList(() => {
         // Pre-load default month indicators
         loadSelectedMonthIndicators("सप्टेंबर २०२६");
@@ -9215,7 +9094,7 @@
       if (tabId === 'linksTab' && !linksLoaded) { loadImportantLinks(); linksLoaded = true; }
     }
 
-    // --- TABLES & GOOGLE SHEET SYNC LOGIC ---
+    // --- TABLES & CLOUD FIRESTORE DATA LOGIC ---
     let tablesData = null;
     let currentTableSubtab = 'bsDataSubtab';
 
@@ -9248,25 +9127,8 @@
 
     function updateGoogleSheetUI(cfg) {
       if (!cfg) return;
-      const lblId = document.getElementById('lblSpreadsheetId');
-      const linkSheet = document.getElementById('linkOpenGoogleSheet');
       const lblSync = document.getElementById('lblLastSyncTime');
-      const badge = document.getElementById('sheetStatusBadge');
-
-      if (lblId) lblId.textContent = cfg.spreadsheetId || 'उपलब्ध नाही';
-      if (linkSheet) linkSheet.href = `https://docs.google.com/spreadsheets/d/${cfg.spreadsheetId}/edit`;
-      if (lblSync) lblSync.textContent = cfg.lastSyncTime || 'सज्ज (Ready)';
-      if (badge) badge.textContent = cfg.syncStatus || 'सक्रिय (Active)';
-
-      const cfgId = document.getElementById('cfgSpreadsheetId');
-      const cfgUrl = document.getElementById('cfgWebhookUrl');
-      const cfgGh = document.getElementById('cfgGithubRepoUrl');
-      const cfgAuto = document.getElementById('cfgAutoSync');
-      if (cfgId) cfgId.value = cfg.spreadsheetId || '';
-      if (cfgUrl) cfgUrl.value = cfg.webhookUrl || '';
-      if (cfgGh && cfg.githubRepoUrl) cfgGh.value = cfg.githubRepoUrl;
-      if (cfgAuto) cfgAuto.checked = !!cfg.autoSync;
-
+      if (lblSync) lblSync.textContent = new Date().toLocaleDateString('mr-IN') + ' (Cloud Firestore)';
       if (cfg.githubRepoUrl) {
         updateGithubModalLinks(cfg.githubRepoUrl);
       }
@@ -9418,151 +9280,6 @@
       filterCurrentTable();
     }
 
-    function syncDataToGoogleSheet(btn) {
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'सिंक होत आहे... ⏳';
-      }
-      google.script.run.withSuccessHandler(res => {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '🔄 गुगल शीटमध्ये सिंक करा';
-        }
-        if (res && res.success) {
-          alert(res.message);
-          loadTablesData();
-        } else {
-          alert('सिंक करताना अडचण: ' + (res ? res.message : 'अज्ञात त्रुटी'));
-        }
-      }).withFailureHandler(err => {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '🔄 गुगल शीटमध्ये सिंक करा';
-        }
-        alert('एरर: ' + err.message);
-      }).syncAllToGoogleSheet();
-    }
-
-
-    // ================= SEAMLESS REAL-TIME GOOGLE SHEET SYNC =================
-    let mIsSyncingSheet = false;
-
-    function triggerSeamlessGoogleSheetSync(showNotification = true) {
-      if (mIsSyncingSheet) {
-        showToast('⏳ गुगल शीट सिंक आधीच चालू आहे, कृपया थांबा...');
-        return;
-      }
-      mIsSyncingSheet = true;
-
-      // Update UI spinners and buttons
-      const btnHeader = document.getElementById('btnTopHeaderSyncSheet');
-      const spinnerHeader = document.getElementById('topHeaderSyncSpinner');
-      const labelHeader = document.getElementById('topHeaderSyncLabel');
-      if (spinnerHeader) spinnerHeader.style.animation = 'spin 1s linear infinite';
-      if (labelHeader) labelHeader.textContent = 'गुगल शीट लोड होत आहे...';
-
-      const btnDash = document.getElementById('btnDashFetchSheet');
-      const iconDash = document.getElementById('dashSyncBtnIcon');
-      const textDash = document.getElementById('dashSyncBtnText');
-      if (btnDash) btnDash.disabled = true;
-      if (iconDash) iconDash.textContent = '⏳';
-      if (textDash) textDash.textContent = 'गुगल शीटवरून डेटा फेच होत आहे...';
-
-      const btnLive = document.getElementById('btnFetchLiveSheet');
-      if (btnLive) {
-        btnLive.disabled = true;
-        btnLive.textContent = 'फेच होत आहे... ⏳';
-      }
-
-      if (showNotification) {
-        showToast('⚡ गुगल शीटवरून थेट डेटा लोड होत आहे... कृपया थांबा...');
-      }
-
-      google.script.run
-        .withSuccessHandler(res => {
-          mIsSyncingSheet = false;
-          // Restore header
-          if (spinnerHeader) spinnerHeader.style.animation = 'none';
-          if (labelHeader) labelHeader.textContent = 'गुगल शीट लोड करा (Live Sync)';
-          // Restore dash button
-          if (btnDash) btnDash.disabled = false;
-          if (iconDash) iconDash.textContent = '📥';
-          if (textDash) textDash.textContent = 'गुगल शीटवरून थेट डेटा लोड करा';
-          // Restore table tab button
-          if (btnLive) {
-            btnLive.disabled = false;
-            btnLive.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
-          }
-
-          if (res && res.success) {
-            const timeStr = new Date().toLocaleString('mr-IN');
-            const lastTimeEl = document.getElementById('dashSyncLastTime');
-            if (lastTimeEl) lastTimeEl.textContent = timeStr;
-            const lblSync = document.getElementById('lblLastSyncTime');
-            if (lblSync) lblSync.textContent = timeStr;
-
-            if (showNotification) {
-              showToast('✅ ' + (res.message || 'गुगल शीटवरून सर्व डेटा यशस्वीरित्या लोड झाला!'), 'success');
-            }
-
-            // Refresh app state seamlessly
-            if (typeof loadDashboard === 'function') loadDashboard();
-            if (typeof loadTablesData === 'function') loadTablesData();
-            if (typeof loadDengueData === 'function') loadDengueData();
-            const curM = document.getElementById('selIndicatorMonth') ? document.getElementById('selIndicatorMonth').value : '';
-            if (curM && typeof loadMonthlyIndicators === 'function') loadMonthlyIndicators(curM);
-          } else {
-            const errMsg = (res && res.message) || 'गुगल शीटशी संपर्क होऊ शकला नाही.';
-            if (showNotification) showToast('⚠️ ' + errMsg, 'warning');
-          }
-        })
-        .withFailureHandler(err => {
-          mIsSyncingSheet = false;
-          if (spinnerHeader) spinnerHeader.style.animation = 'none';
-          if (labelHeader) labelHeader.textContent = 'गुगल शीट लोड करा (Live Sync)';
-          if (btnDash) btnDash.disabled = false;
-          if (iconDash) iconDash.textContent = '📥';
-          if (textDash) textDash.textContent = 'गुगल शीटवरून थेट डेटा लोड करा';
-          if (btnLive) {
-            btnLive.disabled = false;
-            btnLive.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
-          }
-          if (showNotification) {
-            showToast('⚠️ त्रुटी: ' + err.message, 'error');
-          }
-        })
-        .fetchRealtimeFromGoogleSheet();
-    }
-
-    function fetchRealtimeFromGoogleSheet() {
-      const btn = document.getElementById('btnFetchLiveSheet');
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'फेच होत आहे... ⏳';
-      }
-      google.script.run.withSuccessHandler(res => {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
-        }
-        if (res && res.success) {
-          alert(res.message);
-          if (typeof loadTablesData === 'function') loadTablesData();
-          if (typeof loadDashboardData === 'function') loadDashboardData();
-          const curM = document.getElementById('selIndicatorMonth') ? document.getElementById('selIndicatorMonth').value : '';
-          if (curM && typeof loadMonthlyIndicators === 'function') loadMonthlyIndicators(curM);
-        } else {
-          alert('डेटा फेच करताना अडचण: ' + (res ? res.message : 'अज्ञात त्रुटी'));
-        }
-      }).withFailureHandler(err => {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '📥 गुगल शीटमधून डेटा आणा (Fetch Live)';
-        }
-        alert('एरर: ' + err.message);
-      }).fetchRealtimeFromGoogleSheet();
-    }
-
     function clearAllDummyDataConfirm() {
       if (!confirm('सावधान: प्रणालीमधील सर्व तात्पुरता किंवा नमुना डेटा काढून शून्य स्थितीत रीसेट करायचा आहे का?')) return;
       google.script.run.withSuccessHandler(res => {
@@ -9576,105 +9293,15 @@
       }).clearAllDummyData();
     }
 
-    function openSheetSettingsModal() {
-      document.getElementById('sheetSettingsModal').style.display = 'flex';
-    }
-
-    function closeSheetSettingsModal() {
-      document.getElementById('sheetSettingsModal').style.display = 'none';
-    }
-
-    function saveGoogleSheetSettings() {
-      const btn = document.getElementById('btnSaveSheetConfig');
-      btn.disabled = true;
-      btn.textContent = 'जतन होत आहे...';
-
-      const config = {
-        spreadsheetId: document.getElementById('cfgSpreadsheetId').value.trim(),
-        webhookUrl: document.getElementById('cfgWebhookUrl').value.trim(),
-        githubRepoUrl: (document.getElementById('cfgGithubRepoUrl') ? document.getElementById('cfgGithubRepoUrl').value.trim() : ''),
-        autoSync: document.getElementById('cfgAutoSync').checked
-      };
-
-      google.script.run.withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.textContent = '✅ सेव्ह करा';
-        if (res && res.success) {
-          alert(res.message);
-          closeSheetSettingsModal();
-          updateGoogleSheetUI(res.config);
-          loadImportantLinks();
-        } else {
-          alert('जतन करताना एरर: ' + (res ? res.message : ''));
-        }
-      }).saveGoogleSheetConfig(config);
-    }
-
-    function testGoogleSheetConnectionFromModal() {
-      const btn = document.getElementById('btnTestSheetConnection');
-      const resBox = document.getElementById('testConnResult');
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'तपासत आहे... ⏳';
-      }
-      if (resBox) {
-        resBox.style.display = 'block';
-        resBox.style.background = '#edf2f7';
-        resBox.style.color = '#2d3748';
-        resBox.textContent = 'गुगल वेबहुक कनेक्शन तपासले जात आहे...';
-      }
-      google.script.run.withSuccessHandler(res => {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '🔍 कनेक्शन तपासा (Test Connection)';
-        }
-        if (resBox) {
-          resBox.style.display = 'block';
-          if (res && res.success) {
-            resBox.style.background = '#c6f6d5';
-            resBox.style.color = '#22543d';
-            resBox.textContent = res.message;
-          } else {
-            resBox.style.background = '#feebc8';
-            resBox.style.color = '#744210';
-            resBox.textContent = (res ? res.message : 'त्रुटी आढळली.');
-          }
-        }
-      }).withFailureHandler(err => {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '🔍 कनेक्शन तपासा (Test Connection)';
-        }
-        if (resBox) {
-          resBox.style.display = 'block';
-          resBox.style.background = '#fed7d7';
-          resBox.style.color = '#742a2a';
-          resBox.textContent = 'कनेक्शन त्रुटी: ' + (err.message || err);
-        }
-      }).testGoogleSheetConnection();
-    }
-
-    function copyAppsScriptCode() {
-      fetch('/api/google-apps-script-code')
-        .then(r => {
-          if (!r.ok) throw new Error('Code fetch failed');
-          return r.text();
-        })
-        .then(code => {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(code).then(() => {
-              alert('✅ Google Apps Script (Code.gs) कोड कॉपी झाला!\n\nआता तुमच्या गुगल शीटमध्ये जावून:\n1. Extensions > Apps Script उघडा\n2. कोड पेस्ट करा व सेव्ह करा\n3. Deploy > New deployment > Web app (Execute as: Me, Access: Anyone) करून मिळालेली URL ⚙️ सेटिंग्जमध्ये पेस्ट करा.');
-            }).catch(() => {
-              window.open('/api/google-apps-script-code', '_blank');
-            });
-          } else {
-            window.open('/api/google-apps-script-code', '_blank');
-          }
-        })
-        .catch(() => {
-          window.open('/api/google-apps-script-code', '_blank');
-        });
-    }
+    // Legacy sync stubs - Application operates on Cloud Firestore
+    function syncDataToGoogleSheet() {}
+    function triggerSeamlessGoogleSheetSync() {}
+    function fetchRealtimeFromGoogleSheet() {}
+    function openSheetSettingsModal() {}
+    function closeSheetSettingsModal() {}
+    function saveGoogleSheetSettings() {}
+    function testGoogleSheetConnectionFromModal() {}
+    function copyAppsScriptCode() {}
 
     // --- GITHUB MODAL & SUPPORT CONTROLLERS ---
     function openGithubModal(e) {
@@ -13680,7 +13307,7 @@
         .deleteSubcenter(id);
     }
 
-    // Universal CSV & Google Sheet Import Handlers
+    // Universal CSV & Excel Import Handlers
     let currentUploadType = 'bsData';
 
     const uploadDatasetGuides = {

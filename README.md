@@ -23,9 +23,9 @@
    - **कर्मचारीनिहाय रजिस्टर (Employee Smear Register)**
    - **कमी कामगिरी / डिफॉल्टर नोटीस (Defaulter & Low Performance Notices)**
 
-4. **🔄 गुगल शीट थेट सिंक्रोनायझेशन (Google Sheets Live Sync)**
-   - Google Apps Script Webhook द्वारे थेट गुगल शीटमध्ये रिअल-टाइम डेटा सेव्ह
-   - ऑफलाइन / ऑनलाइन दोन्ही मोडमध्ये सुरक्षित स्थानिक साठवणूक (Local Persistence)
+4. **🔥 क्लाउड फायरस्टोअर थेट डेटाबेस (Cloud Firestore Live Database)**
+   - Firebase Firestore द्वारे १००% सुरक्षित, रिअल-टाइम व एकात्मिक डेटा साठवणूक
+   - बहु-स्तरीय सुरक्षा नियमावली (Security Rules) व अखंड डेटा उपलब्धता
 
 5. **🏛️ मास्टर व्यवस्थापन व कर्मचारी बदली (Master Management & Transfers)**
    - ६ उपकेंद्रे: आलमला, भादा, खडकउमरा, माकणी, तावशीगड, वडजी

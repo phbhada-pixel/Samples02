@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "BsDataEntry": {
+      "title": "BS Data Entry",
+      "description": "Blood smear sample entry collected by healthcare staff",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique row ID" },
+        "date": { "type": "string", "description": "ISO date string" },
+        "upkendra": { "type": "string", "description": "Subcenter name" },
+        "employeeName": { "type": "string", "description": "Staff name" },
+        "designation": { "type": "string", "description": "Designation" },
+        "bsCode": { "type": "string", "description": "BS Code" },
+        "bundleNumber": { "type": "string", "description": "Bundle number" },
+        "pasun": { "type": "number", "description": "From sample number" },
+        "paraynt": { "type": "number", "description": "To sample number" },
+        "total": { "type": "number", "description": "Total sample count" },
+        "updatedAt": { "type": "string", "description": "Last updated timestamp" }
+      },
+      "required": ["id", "upkendra", "employeeName", "total"]
+    },
+    "VillageDetail": {
+      "title": "Village Detail",
+      "description": "Village-wise breakdown of blood smear samples",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Parent BS ID" },
+        "employeeName": { "type": "string", "description": "Staff name" },
+        "date": { "type": "string", "description": "ISO date string" },
+        "villageName": { "type": "string", "description": "Village name" },
+        "sampleCount": { "type": "number", "description": "Sample count" },
+        "maleCount": { "type": "number", "description": "Male count" },
+        "femaleCount": { "type": "number", "description": "Female count" },
+        "upkendra": { "type": "string", "description": "Subcenter" },
+        "updatedAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["id", "villageName", "sampleCount"]
+    },
+    "DengueEntry": {
+      "title": "Dengue Entry",
+      "description": "Dengue and Chikungunya patient serum sample entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Patient ID" },
+        "patientName": { "type": "string", "description": "Patient Name" },
+        "age": { "type": "number", "description": "Age" },
+        "gender": { "type": "string", "description": "Gender" },
+        "village": { "type": "string", "description": "Village" },
+        "upkendra": { "type": "string", "description": "Subcenter" },
+        "collectionDate": { "type": "string", "description": "Sample Collection Date" },
+        "sampleType": { "type": "string", "description": "Serum Sample Type" },
+        "ns1Result": { "type": "string", "description": "NS1 Result" },
+        "igmResult": { "type": "string", "description": "IgM Result" },
+        "chikungunyaResult": { "type": "string", "description": "Chikungunya Result" },
+        "syncStatus": { "type": "string", "description": "Sync Status" },
+        "updatedAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["id", "patientName", "village"]
+    },
+    "MonthMaster": {
+      "title": "Month Master",
+      "description": "Monthly targets and progressive indicators",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Month name" },
+        "newOpd": { "type": "number", "description": "OPD count" },
+        "bloodSmears": { "type": "number", "description": "Blood smears count" },
+        "feverCases": { "type": "number", "description": "Fever cases count" },
+        "treatedCases": { "type": "number", "description": "Treated cases count" },
+        "chloroquineSpent": { "type": "number", "description": "Chloroquine tablets spent" },
+        "mpwHomeVisits": { "type": "number", "description": "MPW visits" },
+        "anmHomeVisits": { "type": "number", "description": "ANM visits" },
+        "updatedAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/bsDataEntry/{entryId}": {
+      "schema": "BsDataEntry",
+      "description": "Collection of blood smear entries"
+    },
+    "/villageDetails/{detailId}": {
+      "schema": "VillageDetail",
+      "description": "Collection of village-wise breakdowns"
+    },
+    "/dengueEntries/{dengueId}": {
+      "schema": "DengueEntry",
+      "description": "Collection of Dengue and Chikungunya patient records"
+    },
+    "/monthMaster/{monthId}": {
+      "schema": "MonthMaster",
+      "description": "Collection of monthly performance indicators"
+    }
+  }
+}

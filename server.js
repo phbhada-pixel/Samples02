@@ -111,6 +111,14 @@ import {
   generateNivCaseHistorySheets
 } from './services/reports.js';
 
+import {
+  syncDengueEntryToFirestore,
+  deleteDengueEntryFromFirestore,
+  syncBsDataEntryToFirestore,
+  syncBatchBsDataToFirestore,
+  fetchAllDataFromFirestore
+} from './services/firebaseStore.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -534,138 +542,62 @@ app.get(['/api/download-dengue-english-template', '/dengue_chikungunya_sample_te
   }
 });
 
-// Primary sync helper to send rows directly to Google Sheet Webhook with 3-attempt retry
-async function triggerGoogleSheetSync(payload, maxAttempts = 3) {
-  if (!googleSheetConfig.webhookUrl) {
-    googleSheetConfig.syncStatus = 'स्थानिक प्रणालीमध्ये सुरक्षित (गुगल वेबहुक URL सेट नाही)';
-    return { success: false, error: 'गुगल शीट वेबहुक URL उपलब्ध नाही.' };
-  }
-
-  let lastError = null;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
-    try {
-      console.log(`[GoogleSheetSync] Sending real-time sync action: ${payload.action} (Attempt ${attempt}/${maxAttempts})`);
-      const response = await fetch(googleSheetConfig.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        redirect: 'follow',
-        signal: controller.signal
-      });
-      
-      const rawText = await response.text();
-      clearTimeout(timeout);
-
-      let respData = null;
-      try {
-        respData = JSON.parse(rawText);
-      } catch (_) {}
-
-      googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-
-      if (response.ok && respData && respData.success) {
-        googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
-        console.log(`[GoogleSheetSync] Success for action: ${payload.action} on attempt ${attempt}`);
-        return { success: true, data: respData };
-      } else {
-        let errMsg = 'गुगल वेबहुक प्रतिसाद प्रक्रिया करत आहे';
-        if (response.status === 404) {
-          errMsg = 'गुगल वेबहुक URL सापडली नाही (404 Not Found). स्थानिकात सेव्ह झाले.';
-          lastError = errMsg;
-          break;
-        } else if (respData && respData.message) {
-          errMsg = respData.message;
-        } else if (respData && respData.error) {
-          errMsg = respData.error;
-        }
-        lastError = errMsg;
-      }
-    } catch (err) {
-      clearTimeout(timeout);
-      if (err.name === 'AbortError' || (err.message && err.message.includes('abort'))) {
-        lastError = 'गुगल वेबहुक प्रतिसाद वेळेत मिळाला नाही (नेटवर्क विलंब/टाईमआऊट - स्थानिक डेटाबेसमध्ये जतन)';
-      } else {
-        lastError = err.message || 'नेटवर्क कनेक्शन त्रुटी';
-      }
-      console.warn(`[GoogleSheetSync] Attempt ${attempt} notice for action ${payload.action}:`, lastError);
-    }
-
-    if (attempt < maxAttempts) {
-      await new Promise(r => setTimeout(r, attempt * 500));
+// Endpoint to download Android APK file
+app.get(['/api/download-apk', '/download-apk', '/phc_bhada_nvbdcp.apk', '/nvbdcp_app.apk'], (req, res) => {
+  const possibleApkNames = ['phc_bhada_nvbdcp.apk', 'app-release.apk', 'app.apk', 'PHC_Bhada_NVBDCP.apk'];
+  let apkPath = null;
+  for (const name of possibleApkNames) {
+    const fullPath = path.join(__dirname, name);
+    if (fs.existsSync(fullPath)) {
+      apkPath = fullPath;
+      break;
     }
   }
 
-  googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-  googleSheetConfig.syncStatus = `स्थानिक डेटाबेसमध्ये सुरक्षित (गुगल शीट सिंक प्रलंबित: ${lastError})`;
-  console.warn(`[GoogleSheetSync] Sync status for action ${payload.action}: ${lastError}`);
-  return { success: true, localSaved: true, message: `स्थानिक डेटाबेसमध्ये सुरक्षित सेव्ह झाले (${lastError})` };
-}
-
-// Background queue processor to automatically synchronize pending records
-let isProcessingQueue = false;
-async function processPendingSyncQueue() {
-  if (isProcessingQueue || !googleSheetConfig.webhookUrl) return;
-  isProcessingQueue = true;
-  try {
-    const queue = getPendingSyncQueue();
-    // Also check any dengue records that are PENDING
-    const pendingDengue = getPendingDengueEntries();
-    pendingDengue.forEach(d => {
-      const existsInQueue = queue.some(q => q.id === d.id && q.action === 'saveDengueEntry');
-      if (!existsInQueue) {
-        queue.push({
-          type: 'dengue',
-          id: d.id,
-          action: 'saveDengueEntry',
-          entry: d,
-          status: 'PENDING'
-        });
-      }
-    });
-
-    if (queue.length > 0) {
-      console.log(`[PendingQueue] Attempting background sync for ${queue.length} pending items...`);
-      for (let i = queue.length - 1; i >= 0; i--) {
-        const item = queue[i];
-        let payload = null;
-        if (item.action === 'saveDengueEntry') {
-          const rec = dengueChikungunyaEntries.find(e => e.id === item.id) || item.entry;
-          if (rec) payload = { action: 'saveDengueEntry', spreadsheetId: googleSheetConfig.spreadsheetId, entry: rec };
-        } else if (item.action === 'deleteEntry') {
-          payload = { action: 'deleteEntry', spreadsheetId: googleSheetConfig.spreadsheetId, entryId: item.entryId || item.id };
-        } else if (item.action === 'appendEntries') {
-          payload = item.payload;
-        }
-
-        if (payload) {
-          const syncRes = await triggerGoogleSheetSync(payload, 2);
-          if (syncRes.success) {
-            if (item.type === 'dengue' || item.action === 'saveDengueEntry') {
-              markDengueEntrySyncStatus(item.id, 'SYNCED');
-            }
-            removePendingQueueItem(i);
-            console.log(`[PendingQueue] Successfully synced pending item: ${item.id || item.action}`);
-          } else {
-            console.log(`[PendingQueue] Item ${item.id || item.action} remains pending: ${syncRes.error}`);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[PendingQueue] Error during background queue processing:', err.message);
-  } finally {
-    isProcessingQueue = false;
+  if (apkPath) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', 'attachment; filename="PHC_Bhada_NVBDCP_v2.0.apk"');
+    return res.sendFile(apkPath);
+  } else {
+    // If APK binary is not present directly on disk, provide HTML APK installer page & PWA install instructions
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(`<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHC Bhada NVBDCP App - Android APK Download</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+    .card { background: #1e293b; padding: 32px 28px; border-radius: 20px; max-width: 500px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid #334155; text-align: center; }
+    .icon { font-size: 54px; margin-bottom: 12px; }
+    h2 { color: #38bdf8; margin: 0 0 8px 0; font-size: 22px; font-weight: 700; }
+    p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 10px 0; }
+    .highlight { background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; padding: 12px; border-radius: 8px; text-align: left; margin: 18px 0; font-size: 13.5px; color: #e2e8f0; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #10b981; color: #022c22; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.2s ease; margin-top: 10px; width: 100%; box-sizing: border-box; }
+    .btn:hover { background: #34d399; transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📱</div>
+    <h2>प्रा.आ.केंद्र भादा - NVBDCP Android App</h2>
+    <p>राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम अधिकृत मोबाईल ॲप्लिकेशन</p>
+    <div class="highlight">
+      <b>💡 अँड्रॉइड ॲप इन्स्टॉल पद्धत:</b><br>
+      १. क्रोम (Chrome) ब्राऊझरच्या मेनूवर <b>(⋮)</b> क्लिक करा.<br>
+      २. <b>'Add to Home screen'</b> किंवा <b>'Install app'</b> निवडा.<br>
+      ३. ॲप तुमच्या फोनवर थेट अँड्रॉइड नेटिव्ह ॲपप्रमाणे सेव्ह होईल.
+    </div>
+    <a href="/" class="btn">🏠 मुख्य ॲप उघडा (Open Application)</a>
+  </div>
+</body>
+</html>`);
   }
-}
+});
 
-// Start periodic background sync processor (every 60 seconds)
-setInterval(processPendingSyncQueue, 60000);
-// Run shortly after startup
-setTimeout(processPendingSyncQueue, 5000);
-
-// Central RPC endpoint for Google Apps Script client calls
+// Central RPC endpoint for client calls
 app.post('/api/rpc', async (req, res) => {
   try {
     const { method, args = [] } = req.body || {};
@@ -798,44 +730,30 @@ app.post('/api/rpc', async (req, res) => {
         recalculateAllMonthProgressives();
         saveDbToDisk();
 
-        // Direct Google Sheet Sync: Await webhook persistence with 3 attempts
-        let sheetSyncResult = { success: false, error: 'गुगल शीट वेबहुक URL उपलब्ध नाही' };
-        if (googleSheetConfig.webhookUrl) {
-          sheetSyncResult = await triggerGoogleSheetSync({
-            action: 'appendEntries',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            entries: newEntriesForSync,
-            villageDetails: newVillageDetailsForSync,
-            timestamp: new Date().toISOString()
-          }, 3);
+        // Direct Firestore Write (Single Source of Truth)
+        const fsBsRes = await syncBatchBsDataToFirestore(newEntriesForSync.map(e => [
+          e.id, e.date, e.upkendra, e.employeeName, e.designation, e.bsCode, e.bundleNumber, e.pasun, e.paraynt, e.total
+        ]));
+
+        if (newVillageDetailsForSync.length > 0) {
+          for (const v of newVillageDetailsForSync) {
+            await syncVillageDetailToFirestore([
+              v.id, v.employeeName, v.date, v.villageName, v.sampleCount, v.maleCount, v.femaleCount, v.upkendra
+            ]);
+          }
         }
 
-        if (!sheetSyncResult.success) {
-          addToPendingQueue({
-            type: 'bsData',
-            id: `BS_BATCH_${Date.now()}`,
-            action: 'appendEntries',
-            payload: {
-              action: 'appendEntries',
-              spreadsheetId: googleSheetConfig.spreadsheetId,
-              entries: newEntriesForSync,
-              villageDetails: newVillageDetailsForSync,
-              timestamp: new Date().toISOString()
-            }
-          });
+        if (fsBsRes.success) {
+          result = {
+            success: true,
+            message: '✅ नोंद Firestore क्लाउड डेटाबेसमध्ये थेट यशस्वीरित्या सेव्ह झाली 🟢'
+          };
+        } else {
+          result = {
+            success: false,
+            message: 'डेटा Firestore मध्ये जतन करणे शक्य झाले नाही. कृपया तुमचे इंटरनेट कनेक्शन तपासून पुन्हा प्रयत्न करा (' + (fsBsRes.error || 'Firestore Error') + ').'
+          };
         }
-
-        result = {
-          success: true,
-          message: sheetSyncResult.success
-            ? '✅ डेटा थेट गुगल शीटमध्ये यशस्वीरित्या सुरक्षित सेव्ह झाला 🟢'
-            : 'नोंद स्थानिक प्रणालीमध्ये सुरक्षित जतन झाली • Google Sheet Sync Pending 🟡',
-          sheetSynced: sheetSyncResult.success,
-          syncStatus: sheetSyncResult.success ? 'SYNCED' : 'PENDING',
-          syncError: sheetSyncResult.error || null,
-          sheetUrl: `https://docs.google.com/spreadsheets/d/${googleSheetConfig.spreadsheetId}/edit`,
-          lastSyncTime: googleSheetConfig.lastSyncTime
-        };
         break;
       }
 
@@ -881,180 +799,15 @@ app.post('/api/rpc', async (req, res) => {
         break;
       }
 
-      case 'saveGoogleSheetConfig': {
-        const [config] = args;
-        if (config) {
-          if (config.spreadsheetId) googleSheetConfig.spreadsheetId = config.spreadsheetId.trim();
-          if (config.webhookUrl) googleSheetConfig.webhookUrl = config.webhookUrl.trim();
-          if (config.githubRepoUrl) {
-            googleSheetConfig.githubRepoUrl = config.githubRepoUrl.trim();
-            const ghLink = importantLinks.find(l => l.isGithub || l.name.includes("GitHub"));
-            if (ghLink) ghLink.url = googleSheetConfig.githubRepoUrl;
-          }
-          if (typeof config.autoSync === 'boolean') googleSheetConfig.autoSync = config.autoSync;
-        }
-        saveDbToDisk();
-        result = {
-          success: true,
-          message: 'गुगल शीट व GitHub सेटिंग्ज यशस्वीरित्या अपडेट करण्यात आल्या!',
-          config: googleSheetConfig
-        };
-        break;
-      }
-
-      case 'testGoogleSheetConnection': {
-        const payload = {
-          action: 'ping',
-          spreadsheetId: googleSheetConfig.spreadsheetId,
-          timestamp: new Date().toISOString(),
-          message: 'PHC Bhada NVBDCP Real-time Sync Test'
-        };
-        const syncRes = await triggerGoogleSheetSync(payload);
-        result = {
-          success: syncRes.success,
-          message: syncRes.success
-            ? '✅ गुगल शीट वेबहुक कनेक्शन यशस्वी! थेट रिअल-टाईम डेटा स्टोरेज सक्रिय आहे.'
-            : `⚠️ गुगल शीट कनेक्शन त्रुटी: ${syncRes.error || 'वेबहुक प्रतिसाद मिळाला नाही.'}`,
-          config: googleSheetConfig
-        };
-        break;
-      }
-
-      case 'syncAllToGoogleSheet': {
-        const payload = {
-          action: 'syncAllData',
-          spreadsheetId: googleSheetConfig.spreadsheetId,
-          timestamp: new Date().toISOString(),
-          bsDataCount: bsDataEntry.length,
-          villageDetailsCount: villageDetails.length,
-          bsData: bsDataEntry.map(formatBsEntry),
-          villageDetails: villageDetails.map(formatVillageDetail)
-        };
-
-        const syncRes = await triggerGoogleSheetSync(payload);
-        result = {
-          success: true,
-          message: syncRes.success
-            ? `गुगल शीटमध्ये ${bsDataEntry.length} नोंदी यशस्वीरित्या सिंक झाल्या!`
-            : `डेटा सिंक प्रक्रिया पूर्ण झाली (स्थिती: ${googleSheetConfig.syncStatus})`,
-          lastSyncTime: googleSheetConfig.lastSyncTime,
-          spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${googleSheetConfig.spreadsheetId}/edit`
-        };
-        break;
-      }
-
+      case 'saveGoogleSheetConfig':
+      case 'testGoogleSheetConnection':
+      case 'syncAllToGoogleSheet':
       case 'fetchRealtimeFromGoogleSheet':
       case 'fetchDataFromGoogleSheet': {
-        if (!googleSheetConfig.webhookUrl) {
-          result = { success: false, message: 'गुगल शीट वेबहूक URL कॉन्फिगर केलेले नाही.' };
-          break;
-        }
-
-        try {
-          console.log('[Server] Fetching live data from Google Sheet webhook...');
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 35000);
-          const fetchRes = await fetch(googleSheetConfig.webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'fetchAllData',
-              spreadsheetId: googleSheetConfig.spreadsheetId
-            }),
-            redirect: 'follow',
-            signal: controller.signal
-          });
-          clearTimeout(timeout);
-
-          if (!fetchRes.ok) {
-            throw new Error(`HTTP Error ${fetchRes.status}: ${fetchRes.statusText}`);
-          }
-
-          const fetchedData = await fetchRes.json();
-          let importedBs = 0;
-          let importedVil = 0;
-          let importedDengue = 0;
-
-          if (Array.isArray(fetchedData.bsData) && fetchedData.bsData.length > 0) {
-            bsDataEntry.length = 0;
-            fetchedData.bsData.forEach(r => {
-              bsDataEntry.push([
-                r.id,
-                new Date(r.date || Date.now()),
-                r.upkendra || '',
-                r.name || '',
-                r.designation || '',
-                r.bsCode || '',
-                r.bundleNumber || '',
-                parseInt(r.pasun) || 1,
-                parseInt(r.paraynt) || 1,
-                parseInt(r.total) || 1
-              ]);
-              importedBs++;
-            });
-          }
-
-          if (Array.isArray(fetchedData.villageDetails) && fetchedData.villageDetails.length > 0) {
-            villageDetails.length = 0;
-            fetchedData.villageDetails.forEach(v => {
-              villageDetails.push([
-                v.id,
-                v.employeeName || '',
-                new Date(v.date || Date.now()),
-                v.villageName || '',
-                parseInt(v.sampleCount) || 1,
-                parseInt(v.maleCount) || 0,
-                parseInt(v.femaleCount) || 0,
-                v.upkendra || ''
-              ]);
-              importedVil++;
-            });
-          }
-
-          if (Array.isArray(fetchedData.dengueData) && fetchedData.dengueData.length > 0) {
-            dengueChikungunyaEntries.length = 0;
-            fetchedData.dengueData.forEach(d => {
-              dengueChikungunyaEntries.push(d);
-              importedDengue++;
-            });
-          }
-
-          if (importedBs > 0 || importedVil > 0 || importedDengue > 0) {
-            saveDbToDisk();
-          }
-
-          googleSheetConfig.lastSyncTime = new Date().toLocaleString('mr-IN');
-          googleSheetConfig.syncStatus = '✅ थेट गुगल शीटमध्ये रिअल-टाईम जतन (Live Synced in Google Sheet)';
-
-          const parts = [];
-          if (importedBs > 0) parts.push(`${importedBs} रक्त नमुने`);
-          if (importedVil > 0) parts.push(`${importedVil} गाव तपशील`);
-          if (importedDengue > 0) parts.push(`${importedDengue} डेंगी/चिकनगुनिया नोंदी`);
-
-          result = {
-            success: true,
-            importedBs,
-            importedVil,
-            importedDengue,
-            totalRecords: bsDataEntry.length,
-            message: parts.length > 0
-              ? `गुगल शीटमधून ${parts.join(', ')} यशस्वीरित्या प्राप्त झाले!`
-              : `गुगल शीटशी यशस्वी संपर्क झाला! (सध्या सर्व डेटा अद्ययावत आहे).`
-          };
-        } catch (err) {
-          const isAbort = err.name === 'AbortError' || (err.message && err.message.includes('abort'));
-          console.warn('[Server] Notice fetching from Google Sheet:', isAbort ? 'Request timed out' : err.message);
-          result = {
-            success: true,
-            importedBs: 0,
-            importedVil: 0,
-            importedDengue: 0,
-            totalRecords: bsDataEntry.length,
-            message: isAbort
-              ? 'स्थानिक डेटाबेस अद्ययावत आहे (गुगल शीट संपर्क वेळेत झाला नाही, पार्श्वभूमीत सिंक सुरू राहील).'
-              : `स्थानिक डेटाबेस अद्ययावत आहे (${err.message})`
-          };
-        }
+        result = {
+          success: true,
+          message: 'प्रणाली आता पूर्णपणे Cloud Firestore कडून संचलित आहे. (Google Sheet सेवा पूर्णपणे बंद करण्यात आली आहे).'
+        };
         break;
       }
 
@@ -1080,23 +833,8 @@ app.post('/api/rpc', async (req, res) => {
             }
           }
           saveDbToDisk();
-          if (googleSheetConfig.webhookUrl) {
-            const delSync = await triggerGoogleSheetSync({
-              action: 'deleteEntry',
-              spreadsheetId: googleSheetConfig.spreadsheetId,
-              entryId: entryId,
-              timestamp: new Date().toISOString()
-            }, 3);
-            if (!delSync.success) {
-              addToPendingQueue({
-                type: 'deleteBs',
-                id: entryId,
-                action: 'deleteEntry',
-                entryId: entryId
-              });
-            }
-          }
-          result = { success: true, message: `नोंद ${entryId} यशस्वीरित्या हटवली!` };
+          await deleteBsDataEntryFromFirestore(entryId);
+          result = { success: true, message: `नोंद ${entryId} Firestore क्लाउड डेटाबेसमधून यशस्वीरित्या हटवली!` };
         } else {
           result = { success: false, message: 'नोंद सापडली नाही.' };
         }
@@ -1530,32 +1268,12 @@ app.post('/api/rpc', async (req, res) => {
         result = saveDengueEntry(entryData);
         if (result.success) {
           const rec = result.record || entryData;
-          let sheetSyncResult = { success: false, error: 'गुगल शीट वेबहुक उपलब्ध नाही' };
-          if (googleSheetConfig.webhookUrl) {
-            sheetSyncResult = await triggerGoogleSheetSync({
-              action: 'saveDengueEntry',
-              spreadsheetId: googleSheetConfig.spreadsheetId,
-              entry: rec
-            }, 3);
-          }
-
-          if (sheetSyncResult.success) {
-            markDengueEntrySyncStatus(rec.id, 'SYNCED');
-            result.sheetSynced = true;
-            result.syncStatus = 'SYNCED';
-            result.message = `रुग्ण ${rec.patientName} ची नोंद जतन झाली • Google Sheet मध्ये थेट Sync झाली 🟢`;
+          const fsRes = await syncDengueEntryToFirestore(rec);
+          if (fsRes.success) {
+            result.message = `रुग्ण ${rec.patientName} ची नोंद Firestore क्लाउड डेटाबेसमध्ये थेट यशस्वीरित्या जतन झाली 🟢`;
           } else {
-            markDengueEntrySyncStatus(rec.id, 'PENDING', sheetSyncResult.error);
-            addToPendingQueue({
-              type: 'dengue',
-              id: rec.id,
-              action: 'saveDengueEntry',
-              entry: rec
-            });
-            result.sheetSynced = false;
-            result.syncStatus = 'PENDING';
-            result.syncError = sheetSyncResult.error;
-            result.message = `रुग्ण ${rec.patientName} ची नोंद स्थानिक डेटाबेसमध्ये सुरक्षित जतन झाली; मात्र Google Sheet synchronization प्रलंबित आहे (Pending) 🟡`;
+            result.success = false;
+            result.message = `डेटा Firestore मध्ये जतन करणे शक्य झाले नाही. कृपया तुमचे इंटरनेट कनेक्शन तपासून पुन्हा प्रयत्न करा (${fsRes.error || 'Connection Error'}).`;
           }
         }
         break;
@@ -1566,32 +1284,12 @@ app.post('/api/rpc', async (req, res) => {
         result = updateDengueLabReport(reportData);
         if (result.success) {
           const rec = result.record;
-          let sheetSyncResult = { success: false, error: 'गुगल शीट वेबहुक उपलब्ध नाही' };
-          if (googleSheetConfig.webhookUrl) {
-            sheetSyncResult = await triggerGoogleSheetSync({
-              action: 'saveDengueEntry',
-              spreadsheetId: googleSheetConfig.spreadsheetId,
-              entry: rec
-            }, 3);
-          }
-
-          if (sheetSyncResult.success) {
-            markDengueEntrySyncStatus(rec.id, 'SYNCED');
-            result.sheetSynced = true;
-            result.syncStatus = 'SYNCED';
-            result.message = `रुग्ण ${rec.patientName} चा प्रयोगशाळा अहवाल सेव्ह झाला • Google Sheet मध्ये थेट Sync झाला 🟢`;
+          const fsRes = await syncDengueEntryToFirestore(rec);
+          if (fsRes.success) {
+            result.message = `रुग्ण ${rec.patientName} चा प्रयोगशाळा अहवाल Firestore क्लाउड डेटाबेसमध्ये थेट जतन झाला 🟢`;
           } else {
-            markDengueEntrySyncStatus(rec.id, 'PENDING', sheetSyncResult.error);
-            addToPendingQueue({
-              type: 'dengue',
-              id: rec.id,
-              action: 'saveDengueEntry',
-              entry: rec
-            });
-            result.sheetSynced = false;
-            result.syncStatus = 'PENDING';
-            result.syncError = sheetSyncResult.error;
-            result.message = `प्रयोगशाळा अहवाल स्थानिक डेटाबेसमध्ये सुरक्षित जतन झाला; मात्र Google Sheet synchronization प्रलंबित आहे (Pending) 🟡`;
+            result.success = false;
+            result.message = `अहवाल Firestore मध्ये अपडेट झाला नाही. इंटरनेट कनेक्शन तपासून पुन्हा प्रयत्न करा (${fsRes.error || 'Connection Error'}).`;
           }
         }
         break;
@@ -1600,20 +1298,6 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveDengueBatchLabReport': {
         const [batchData] = args;
         result = saveDengueBatchLabReport(batchData);
-        if (result.success && googleSheetConfig.webhookUrl) {
-          const sheetSyncResult = await triggerGoogleSheetSync({
-            action: 'saveDengueBatch',
-            batchData
-          }, 3);
-          if (!sheetSyncResult.success) {
-            addToPendingQueue({
-              type: 'dengueBatch',
-              id: `BATCH_${Date.now()}`,
-              action: 'saveDengueBatch',
-              batchData
-            });
-          }
-        }
         break;
       }
 
@@ -1631,21 +1315,13 @@ app.post('/api/rpc', async (req, res) => {
       case 'deleteDengueEntry': {
         const [id] = args;
         result = deleteDengueEntry(id);
-        if (result.success && googleSheetConfig.webhookUrl) {
-          const delSync = await triggerGoogleSheetSync({
-            action: 'deleteEntry',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            entryId: id,
-            timestamp: new Date().toISOString()
-          }, 3);
-          if (!delSync.success) {
-            addToPendingQueue({
-              type: 'deleteDengue',
-              id: id,
-              action: 'deleteEntry',
-              entryId: id
-            });
-          }
+        const fsRes = await deleteDengueEntryFromFirestore(id);
+        if (fsRes.success || result.success) {
+          result.success = true;
+          result.message = 'नोंद Firestore क्लाउड डेटाबेसमधून यशस्वीरित्या हटवली गेली 🗑️';
+        } else {
+          result.success = false;
+          result.message = 'नोंद हटवणे शक्य झाले नाही. इंटरनेट कनेक्शन तपासून पुन्हा प्रयत्न करा.';
         }
         break;
       }
@@ -1869,44 +1545,12 @@ app.post('/api/rpc', async (req, res) => {
         recalculateAllMonthProgressives();
         saveDbToDisk();
 
-        // Direct Google Sheet Sync for Monthly Indicators
-        let sheetSyncRes = { success: false };
-        if (googleSheetConfig.webhookUrl) {
-          sheetSyncRes = await triggerGoogleSheetSync({
-            action: 'saveMonthIndicators',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            monthName: monthObj.name,
-            indicators: {
-              name: monthObj.name,
-              newOpd: monthObj.newOpd,
-              progNewOpd: monthObj.progNewOpd,
-              feverCases: monthObj.feverCases,
-              progFeverCases: monthObj.progFeverCases,
-              bloodSmears: monthObj.bloodSmears,
-              progBloodSmears: monthObj.progBloodSmears,
-              treatedCases: monthObj.treatedCases,
-              progTreatedCases: monthObj.progTreatedCases,
-              chloroquineSpent: monthObj.chloroquineSpent,
-              progChloroquineSpent: monthObj.progChloroquineSpent,
-              mpwFn1: monthObj.mpwFn1,
-              mpwFn2: monthObj.mpwFn2,
-              mpwHomeVisits: monthObj.mpwHomeVisits,
-              progMpwHomeVisits: monthObj.progMpwHomeVisits,
-              anmFn1: monthObj.anmFn1,
-              anmFn2: monthObj.anmFn2,
-              anmHomeVisits: monthObj.anmHomeVisits,
-              progAnmHomeVisits: monthObj.progAnmHomeVisits
-            },
-            timestamp: new Date().toISOString()
-          });
-        }
+        // Direct Firestore Sync
+        await syncMonthMasterToFirestore(monthObj);
 
         result = {
           success: true,
-          message: sheetSyncRes.success
-            ? `✅ माहे ${monthObj.name} चे मासिक अहवाल निर्देशांक थेट गुगल शीटमध्ये सुरक्षित जतन झाले!`
-            : `माहे ${monthObj.name} चे मासिक अहवाल निर्देशांक (नवीन बाह्यरुग्ण, तापाचे रुग्ण, उपचारीत रुग्ण, क्लोरोक्वीन गोळ्या खर्च, MPW/ANM गृहभेटी पंधरवडा १ व २) यशस्वीरित्या जतन झाले!`,
-          sheetSynced: sheetSyncRes.success,
+          message: `माहे ${monthObj.name} चे मासिक अहवाल निर्देशांक Firestore क्लाउड डेटाबेसमध्ये यशस्वीरित्या जतन झाले!`,
           data: {
             name: monthObj.name,
             newOpd: monthObj.newOpd,
@@ -2045,28 +1689,12 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveSubcenter': {
         const [scData] = args;
         result = saveSubcenter(scData);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'saveSubcenter',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            subcenter: scData,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing saveSubcenter:', e));
-        }
         break;
       }
 
       case 'deleteSubcenter': {
         const [scId] = args;
         result = deleteSubcenter(scId);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'deleteSubcenter',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            subcenterId: scId,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing deleteSubcenter:', e));
-        }
         break;
       }
 
@@ -2078,28 +1706,12 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveVillage': {
         const [vilData] = args;
         result = saveVillage(vilData);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'saveVillage',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            village: vilData,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing saveVillage:', e));
-        }
         break;
       }
 
       case 'deleteVillage': {
         const [vilId] = args;
         result = deleteVillage(vilId);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'deleteVillage',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            villageId: vilId,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing deleteVillage:', e));
-        }
         break;
       }
 
@@ -2111,57 +1723,24 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveEmployee': {
         const [empData] = args;
         result = saveEmployee(empData);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'saveEmployee',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            employee: empData,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing saveEmployee:', e));
-        }
         break;
       }
 
       case 'deleteEmployee': {
         const [empId] = args;
         result = deleteEmployee(empId);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'deleteEmployee',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            employeeId: empId,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing deleteEmployee:', e));
-        }
         break;
       }
 
       case 'transferEmployee': {
         const [empId, targetUpkendra, newVillages, newBsCode, reason, orderNo] = args;
         result = transferEmployee(empId, targetUpkendra, newVillages, newBsCode, reason, orderNo);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'transferEmployee',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            transfer: { empId, targetUpkendra, newVillages, newBsCode, reason, orderNo },
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing transferEmployee:', e));
-        }
         break;
       }
 
       case 'updateEmployeeVillages': {
         const [empId, villageList] = args;
         result = updateEmployeeVillages(empId, villageList);
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'updateEmployeeVillages',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            empId,
-            villageList,
-            timestamp: new Date().toISOString()
-          }).catch(e => console.error('Error syncing updateEmployeeVillages:', e));
-        }
         break;
       }
 
@@ -2175,16 +1754,6 @@ app.post('/api/rpc', async (req, res) => {
         const [csvText] = args;
         result = importMasterDataFromCsv(csvText);
         saveDbToDisk();
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'syncMasterData',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            timestamp: new Date().toISOString(),
-            employeeMaster,
-            subcenterMaster,
-            villagesMaster
-          }).catch(e => console.error('Error syncing master data to sheet:', e));
-        }
         break;
       }
 
@@ -2193,17 +1762,6 @@ app.post('/api/rpc', async (req, res) => {
         const [csvText, replace] = args;
         result = importBsDataEntryCsv(csvText, !!replace);
         saveDbToDisk();
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'syncAllData',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            timestamp: new Date().toISOString(),
-            bsDataCount: bsDataEntry.length,
-            villageDetailsCount: villageDetails.length,
-            bsData: bsDataEntry.map(formatBsEntry),
-            villageDetails: villageDetails.map(formatVillageDetail)
-          }).catch(e => console.error('Error syncing bs data import to sheet:', e));
-        }
         break;
       }
 
@@ -2212,17 +1770,6 @@ app.post('/api/rpc', async (req, res) => {
         const [csvText, replace] = args;
         result = importVillageDetailsCsv(csvText, !!replace);
         saveDbToDisk();
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'syncAllData',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            timestamp: new Date().toISOString(),
-            bsDataCount: bsDataEntry.length,
-            villageDetailsCount: villageDetails.length,
-            bsData: bsDataEntry.map(formatBsEntry),
-            villageDetails: villageDetails.map(formatVillageDetail)
-          }).catch(e => console.error('Error syncing village details import to sheet:', e));
-        }
         break;
       }
 
@@ -2231,14 +1778,6 @@ app.post('/api/rpc', async (req, res) => {
         const [csvText] = args;
         result = importMonthMasterCsv(csvText);
         saveDbToDisk();
-        if (googleSheetConfig.webhookUrl) {
-          triggerGoogleSheetSync({
-            action: 'syncMonthMaster',
-            spreadsheetId: googleSheetConfig.spreadsheetId,
-            timestamp: new Date().toISOString(),
-            monthMaster: monthMaster.map(m => ({ ...m }))
-          }).catch(e => console.error('Error syncing month master to sheet:', e));
-        }
         break;
       }
 
@@ -2276,77 +1815,4 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PHC Bhada Malaria Management System running on http://0.0.0.0:${PORT}`);
-  
-  // Background live sync from Google Sheet on server startup
-  if (googleSheetConfig && googleSheetConfig.webhookUrl) {
-    console.log('[Server Startup] Triggering background live sync from Google Sheet...');
-    fetch(googleSheetConfig.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'fetchAllData',
-        spreadsheetId: googleSheetConfig.spreadsheetId
-      }),
-      redirect: 'follow'
-    }).then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    }).then(fetchedData => {
-      if (!fetchedData) return;
-      let importedBs = 0;
-      let importedVil = 0;
-      let importedDengue = 0;
-
-      if (Array.isArray(fetchedData.bsData) && fetchedData.bsData.length > 0) {
-        bsDataEntry.length = 0;
-        fetchedData.bsData.forEach(r => {
-          bsDataEntry.push([
-            r.id,
-            new Date(r.date || Date.now()),
-            r.upkendra || '',
-            r.name || '',
-            r.designation || '',
-            r.bsCode || '',
-            r.bundleNumber || '',
-            parseInt(r.pasun) || 1,
-            parseInt(r.paraynt) || 1,
-            parseInt(r.total) || 1
-          ]);
-          importedBs++;
-        });
-      }
-
-      if (Array.isArray(fetchedData.villageDetails) && fetchedData.villageDetails.length > 0) {
-        villageDetails.length = 0;
-        fetchedData.villageDetails.forEach(v => {
-          villageDetails.push([
-            v.id,
-            v.employeeName || '',
-            new Date(v.date || Date.now()),
-            v.villageName || '',
-            parseInt(v.sampleCount) || 1,
-            parseInt(v.maleCount) || 0,
-            parseInt(v.femaleCount) || 0,
-            v.upkendra || ''
-          ]);
-          importedVil++;
-        });
-      }
-
-      if (Array.isArray(fetchedData.dengueData) && fetchedData.dengueData.length > 0) {
-        dengueChikungunyaEntries.length = 0;
-        fetchedData.dengueData.forEach(d => {
-          dengueChikungunyaEntries.push(d);
-          importedDengue++;
-        });
-      }
-
-      if (importedBs > 0 || importedVil > 0 || importedDengue > 0) {
-        saveDbToDisk();
-        console.log(`[Server Startup] Synced from Google Sheet: ${importedBs} BS, ${importedVil} Vil, ${importedDengue} Dengue entries.`);
-      }
-    }).catch(err => {
-      console.warn('[Server Startup] Google Sheet initial sync note:', err.message);
-    });
-  }
 });

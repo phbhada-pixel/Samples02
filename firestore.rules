@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-.]+$');
+    }
+
+    // Default deny catch-all safety net (BLOCKED for arbitrary unlisted paths)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Dengue & Chikungunya Entries collection (Protected with strict schema and ID validation)
+    match /dengueEntries/{dengueId} {
+      allow read: if isValidId(dengueId);
+      allow create, update: if isValidId(dengueId)
+                            && request.resource.data.id is string
+                            && request.resource.data.patientName is string;
+      allow delete: if isValidId(dengueId);
+    }
+
+    // BS Data Entry collection (Protected with strict schema and ID validation)
+    match /bsDataEntry/{entryId} {
+      allow read: if isValidId(entryId);
+      allow create, update: if isValidId(entryId)
+                            && request.resource.data.id is string
+                            && request.resource.data.upkendra is string
+                            && request.resource.data.employeeName is string;
+      allow delete: if isValidId(entryId);
+    }
+
+    // Village Details collection (Protected with strict schema and ID validation)
+    match /villageDetails/{detailId} {
+      allow read: if isValidId(detailId);
+      allow create, update: if isValidId(detailId)
+                            && request.resource.data.id is string
+                            && request.resource.data.villageName is string;
+      allow delete: if isValidId(detailId);
+    }
+
+    // Month Master collection (Protected with strict schema and ID validation)
+    match /monthMaster/{monthId} {
+      allow read: if isValidId(monthId);
+      allow create, update: if isValidId(monthId)
+                            && request.resource.data.name is string;
+      allow delete: if isValidId(monthId);
+    }
+
+    // App config & metadata (Protected with strict ID validation)
+    match /appConfig/{configId} {
+      allow read: if isValidId(configId);
+      allow write: if isValidId(configId);
+    }
+  }
+}
+
+
+

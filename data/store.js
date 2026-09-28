@@ -2427,7 +2427,7 @@ export function deleteVillage(vilId) {
   return { success: true, message: `गाव '${removed.villageName}' हटवण्यात आले.`, village: removed };
 }
 
-// Import Google Sheet / CSV Master Data
+// Import CSV / Master Data Records
 export function importMasterDataFromCsv(csvText) {
   if (!csvText || typeof csvText !== 'string') {
     return { success: false, message: "CSV डेटा रिकामा आहे." };
@@ -2785,54 +2785,13 @@ export const villageDetails = [];
 // ================= DENGUE & CHIKUNGUNYA SAMPLE ENTRIES =================
 export const dengueChikungunyaEntries = [];
 
-// ================= PENDING GOOGLE SHEET SYNC QUEUE =================
+// ================= FIRESTORE-ONLY ARCHITECTURE (NO LOCAL QUEUE) =================
 export const pendingSyncQueue = [];
-
-export function addToPendingQueue(item) {
-  if (!item || !item.id) return;
-  const exIdx = pendingSyncQueue.findIndex(q => q.id === item.id && q.action === item.action);
-  const queueEntry = {
-    ...item,
-    queuedAt: item.queuedAt || new Date().toISOString(),
-    attempts: item.attempts || 0,
-    lastAttempt: new Date().toISOString(),
-    status: 'PENDING'
-  };
-  if (exIdx !== -1) {
-    pendingSyncQueue[exIdx] = queueEntry;
-  } else {
-    pendingSyncQueue.push(queueEntry);
-  }
-  saveDbToDisk();
-}
-
-export function getPendingSyncQueue() {
-  return pendingSyncQueue;
-}
-
-export function removePendingQueueItem(index) {
-  if (index >= 0 && index < pendingSyncQueue.length) {
-    pendingSyncQueue.splice(index, 1);
-    saveDbToDisk();
-  }
-}
-
-export function markDengueEntrySyncStatus(id, status, error = null) {
-  const rec = dengueChikungunyaEntries.find(e => e.id === id);
-  if (rec) {
-    rec.syncStatus = status;
-    rec.googleSheetSynced = (status === 'SYNCED');
-    rec.lastSyncAttempt = new Date().toISOString();
-    rec.syncError = error || null;
-    saveDbToDisk();
-    return true;
-  }
-  return false;
-}
-
-export function getPendingDengueEntries() {
-  return dengueChikungunyaEntries.filter(e => e.syncStatus === 'PENDING' || !e.googleSheetSynced);
-}
+export function addToPendingQueue() {}
+export function getPendingSyncQueue() { return []; }
+export function removePendingQueueItem() {}
+export function markDengueEntrySyncStatus() {}
+export function getPendingDengueEntries() { return []; }
 
 export function saveDengueEntry(entryData) {
   try {
@@ -2894,8 +2853,7 @@ export function saveDengueEntry(entryData) {
       chikungunyaReportFile: entryData.chikungunyaReportFile || "",
       chikungunyaReportFileName: entryData.chikungunyaReportFileName || "",
       chikungunyaRemarks: entryData.chikungunyaRemarks || "",
-      syncStatus: entryData.syncStatus || "PENDING",
-      googleSheetSynced: entryData.googleSheetSynced || false,
+      syncStatus: entryData.syncStatus || "SYNCED",
       lastSyncAttempt: entryData.lastSyncAttempt || null,
       syncError: entryData.syncError || null,
       createdAt: entryData.createdAt || new Date().toISOString()
@@ -3843,12 +3801,7 @@ export const photosData = {
 export const generatedReports = new Map();
 
 export const googleSheetConfig = {
-  spreadsheetId: process.env.GOOGLE_SHEET_ID || "1rYpDm1xjCAnf9LvpCZcK3E6U5zGyEkFEM5A4DQ38EKM",
-  webhookUrl: process.env.GOOGLE_SHEET_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzJ0JAGctl88Fu_GY5kDOAcvWfiHyR3G_PDnvohCgDHcoQnNa9OlUSnSRgSE-mg-0q96w/exec",
-  githubRepoUrl: process.env.GITHUB_REPO_URL || "https://phbhada-pixel.github.io/Samples01/",
-  autoSync: true,
-  lastSyncTime: null,
-  syncStatus: "रिअल-टाईम सिंक सक्षम (Real-time Synced)"
+  githubRepoUrl: process.env.GITHUB_REPO_URL || "https://phbhada-pixel.github.io/Samples01/"
 };
 
 export function formatBsEntry(row) {
