@@ -37,9 +37,7 @@ function parseDateSafe(value) {
   return isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function cleanStr(str) {
-  return String(str).replace(/\s+/g, '').toLowerCase().trim();
-}
+function cleanStr(str) { if (!str) return ""; return String(str).replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)).replace(/s+/g, "").toLowerCase().trim(); }
 
 function wrapReportPage(title, bodyContent) {
   return `<!DOCTYPE html>

@@ -543,10 +543,10 @@ async function triggerGoogleSheetSync(payload, maxAttempts = 3) {
 
   let lastError = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 35000);
     try {
       console.log(`[GoogleSheetSync] Sending real-time sync action: ${payload.action} (Attempt ${attempt}/${maxAttempts})`);
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(googleSheetConfig.webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -554,9 +554,10 @@ async function triggerGoogleSheetSync(payload, maxAttempts = 3) {
         redirect: 'follow',
         signal: controller.signal
       });
-      clearTimeout(timeout);
       
       const rawText = await response.text();
+      clearTimeout(timeout);
+
       let respData = null;
       try {
         respData = JSON.parse(rawText);
@@ -582,8 +583,13 @@ async function triggerGoogleSheetSync(payload, maxAttempts = 3) {
         lastError = errMsg;
       }
     } catch (err) {
-      lastError = err.message;
-      console.warn(`[GoogleSheetSync] Attempt ${attempt} failed for action ${payload.action}:`, err.message);
+      clearTimeout(timeout);
+      if (err.name === 'AbortError' || err.message.includes('aborted') || err.message.includes('abort')) {
+        lastError = 'गुगल वेबहुक प्रतिसाद वेळेत मिळाला नाही (35 सेकंदांची मुदत संपली - Timeout)';
+      } else {
+        lastError = err.message;
+      }
+      console.warn(`[GoogleSheetSync] Attempt ${attempt} failed for action ${payload.action}:`, lastError);
     }
 
     if (attempt < maxAttempts) {

@@ -207,9 +207,7 @@
         return pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear();
       }
 
-      function cleanStrLocal(s) {
-        return String(s || '').replace(/\s+/g, '').toLowerCase().trim();
-      }
+      function cleanStrLocal(s) { if (!s) return ""; return String(s).replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)).replace(/s+/g, "").toLowerCase().trim(); }
 
       function wrapReportPageLocal(title, bodyContent) {
         return '<!DOCTYPE html>' +
@@ -290,9 +288,7 @@
     return `${day}/${month}/${year}`;
   }
 
-  function cleanStr(str) {
-    return String(str || '').replace(/\s+/g, '').toLowerCase().trim();
-  }
+  function cleanStr(str) { if (!str) return ""; return String(str).replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)).replace(/s+/g, "").toLowerCase().trim(); }
 
   if (!selectedMonthDisplay) return { success: false, message: 'कृपया महिना निवडा.' };
   const monthObj = monthMaster.find(m => cleanStr(m.name) === cleanStr(selectedMonthDisplay));
@@ -1984,96 +1980,50 @@
   `;
 
   function wrapReportPage(title, bodyContent) {
-    return `<!DOCTYPE html>
-<html lang="mr">
-<head>
-  <meta charset="UTF-8">
-  <title>${title} - प्रा.आ.केंद्र भादा</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    @page { size: A4; margin: 12mm; }
-    body {
-      font-family: 'Poppins', Arial, sans-serif;
-      color: #1a202c;
-      background: #f7fafc;
-      margin: 0;
-      padding: 20px;
+    if (typeof wrapReportPageLocal === "function") {
+      return wrapReportPageLocal(title, bodyContent);
     }
-    .print-actions {
-      max-width: 850px;
-      margin: 0 auto 20px auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #ffffff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-    }
-    .print-btn {
-      background: #00796b;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .print-btn:hover { background: #004d40; }
-    .close-btn {
-      background: #e2e8f0;
-      color: #4a5568;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .report-sheet {
-      max-width: 850px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 35px 40px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      border-radius: 8px;
-      min-height: 1000px;
-      box-sizing: border-box;
-    }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
-    th, td { border: 1px solid #2d3748; padding: 8px 10px; font-size: 13px; text-align: center; }
-    th { background: #edf2f7; font-weight: 600; }
-    .text-left { text-align: left; }
-    .text-right { text-align: right; }
-    .header-box { text-align: center; border-bottom: 2px solid #2d3748; padding-bottom: 12px; margin-bottom: 20px; }
-    .main-title { font-size: 20px; font-weight: 700; color: #1a202c; margin: 0 0 4px 0; }
-    .sub-title { font-size: 15px; font-weight: 600; color: #4a5568; margin: 0; }
-    .subject { font-weight: 700; text-decoration: underline; margin: 15px 0 10px 0; font-size: 14px; }
-    .footer-sign { margin-top: 45px; text-align: right; line-height: 1.6; font-size: 14px; font-weight: 600; }
-    .page-break { page-break-after: always; }
-    @media print {
-      body { background: #ffffff; padding: 0; }
-      .print-actions { display: none !important; }
-      .report-sheet { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
-    }
-  </style>
-</head>
-<body>
-  <div class="print-actions">
-    <div><strong>प्रा.आ.केंद्र भादा</strong> - अधिकृत अहवाल / पत्र</div>
-    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-      <button class="print-btn" onclick="window.print()">🖨️ प्रिंट करा / PDF सेव्ह करा</button>
-      <button class="close-btn" onclick="window.close()">बंद करा</button>
-    </div>
-  </div>
-  <div class="report-sheet">
-    ${bodyContent}
-  </div>
-</body>
-</html>`;
+    return "<" + "!DOCTYPE html>" +
+      "<" + "html lang=\"mr\">" +
+      "<" + "head>" +
+      "<" + "meta charset=\"UTF-8\">" +
+      "<" + "title>" + title + " - प्रा.आ.केंद्र भादा" + "<" + "/title>" +
+      "<" + "link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">" +
+      "<" + "style>" +
+      "@page { size: A4; margin: 12mm; }" +
+      "body { font-family: 'Poppins', Arial, sans-serif; color: #1a202c; background: #f7fafc; margin: 0; padding: 20px; }" +
+      ".print-actions { max-width: 850px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }" +
+      ".print-btn { background: #00796b; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }" +
+      ".print-btn:hover { background: #004d40; }" +
+      ".close-btn { background: #e2e8f0; color: #4a5568; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; }" +
+      ".report-sheet { max-width: 850px; margin: 0 auto; background: #ffffff; padding: 35px 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 8px; min-height: 1000px; box-sizing: border-box; }" +
+      "table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }" +
+      "th, td { border: 1px solid #2d3748; padding: 8px 10px; font-size: 13px; text-align: center; }" +
+      "th { background: #edf2f7; font-weight: 600; }" +
+      ".text-left { text-align: left; }" +
+      ".text-right { text-align: right; }" +
+      ".header-box { text-align: center; border-bottom: 2px solid #2d3748; padding-bottom: 12px; margin-bottom: 20px; }" +
+      ".main-title { font-size: 20px; font-weight: 700; color: #1a202c; margin: 0 0 4px 0; }" +
+      ".sub-title { font-size: 15px; font-weight: 600; color: #4a5568; margin: 0; }" +
+      ".subject { font-weight: 700; text-decoration: underline; margin: 15px 0 10px 0; font-size: 14px; }" +
+      ".footer-sign { margin-top: 45px; text-align: right; line-height: 1.6; font-size: 14px; font-weight: 600; }" +
+      ".page-break { page-break-after: always; }" +
+      "@media print { body { background: #ffffff; padding: 0; } .print-actions { display: none !important; } .report-sheet { box-shadow: none; padding: 0; margin: 0; max-width: 100%; } }" +
+      "<" + "/style>" +
+      "<" + "/head>" +
+      "<" + "body>" +
+      "<div class=\"print-actions\">" +
+      "<div><strong>प्रा.आ.केंद्र भादा</strong> - अधिकृत अहवाल / पत्र</div>" +
+      "<div style=\"display:flex; gap:10px; align-items:center; flex-wrap:wrap;\">" +
+      "<button class=\"print-btn\" onclick=\"window.print()\">🖨️ प्रिंट करा / PDF सेव्ह करा</button>" +
+      "<button class=\"close-btn\" onclick=\"window.close()\">बंद करा</button>" +
+      "</div>" +
+      "</div>" +
+      "<div class=\"report-sheet\">" +
+      bodyContent +
+      "</div>" +
+      "<" + "/body>" +
+      "<" + "/html>";
   }
 
   const reportHtml = wrapReportPage(`मासिक हिवताप अहवाल - ${selectedMonthDisplay}`, bodyHtml);
@@ -16748,120 +16698,120 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
     let mDengueRawCsvContent = '';
 
     function downloadDengueExcelTemplate() {
-      const templateHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Dengue_Template</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-<style>
-th { background-color: #2b6cb0; color: #ffffff; font-weight: bold; border: 1px solid #cbd5e0; padding: 8px; font-family: Calibri, sans-serif; font-size: 11pt; text-align: center; }
-td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-family: Calibri, sans-serif; font-size: 10pt; }
-</style>
-</head>
-<body>
-<table>
-<thead>
-<tr>
-  <th>नोंदणी क्र. (Reg_No)</th>
-  <th>रुग्णाचे नाव (Patient_Name)</th>
-  <th>गाव (Village)</th>
-  <th>वय (Age)</th>
-  <th>लिंग (Sex)</th>
-  <th>मोबाईल (Mobile)</th>
-  <th>घर क्र. (House_No)</th>
-  <th>नमुना दिनांक (Collection_Date DD-MM-YYYY)</th>
-  <th>लक्षणे सुरू दिनांक (Onset_Date DD-MM-YYYY)</th>
-  <th>ताप दिवस (Fever_Days)</th>
-  <th>डोकेदुखी (Headache_Days)</th>
-  <th>अंगदुखी (Bodyache_Days)</th>
-  <th>सांधेदुखी (Joint_Pain_Days)</th>
-  <th>रक्तस्राव (Haemorrhagic Yes/No)</th>
-  <th>डेंगी निष्कर्ष (Dengue_Result)</th>
-  <th>डेंगी चाचणी प्रकार (Dengue_Test_Type)</th>
-  <th>डेंगी लॅब संदर्भ क्र. (Dengue_Report_Ref)</th>
-  <th>डेंगी अहवाल दिनांक (Dengue_Report_Date)</th>
-  <th>चिकनगुनिया निष्कर्ष (Chik_Result)</th>
-  <th>चिकनगुनिया चाचणी प्रकार (Chik_Test_Type)</th>
-  <th>चिकनगुनिया लॅब संदर्भ क्र. (Chik_Report_Ref)</th>
-  <th>चिकनगुनिया अहवाल दिनांक (Chik_Report_Date)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td>101</td>
-  <td>रमेश विठ्ठल पाटील</td>
-  <td>भादा</td>
-  <td>34</td>
-  <td>पुरुष</td>
-  <td>9876543210</td>
-  <td>12</td>
-  <td>01-09-2026</td>
-  <td>28-08-2026</td>
-  <td>4</td>
-  <td>1</td>
-  <td>1</td>
-  <td>1</td>
-  <td>No</td>
-  <td>Positive</td>
-  <td>NS1 Ag ELISA</td>
-  <td>GMC/MICRO/2026/DEN-145</td>
-  <td>15-09-2026</td>
-  <td>Negative</td>
-  <td>Chikungunya IgM ELISA</td>
-  <td>GMC/MICRO/2026/CHIK-89</td>
-  <td>20-09-2026</td>
-</tr>
-<tr>
-  <td>102</td>
-  <td>अनिता प्रकाश गायकवाड</td>
-  <td>भादा</td>
-  <td>28</td>
-  <td>स्त्री</td>
-  <td>9855512345</td>
-  <td>45</td>
-  <td>01-09-2026</td>
-  <td>29-08-2026</td>
-  <td>3</td>
-  <td>1</td>
-  <td>1</td>
-  <td>1</td>
-  <td>No</td>
-  <td>Negative</td>
-  <td>NS1 Ag ELISA</td>
-  <td>GMC/MICRO/2026/DEN-145</td>
-  <td>15-09-2026</td>
-  <td>Negative</td>
-  <td>Chikungunya IgM ELISA</td>
-  <td>GMC/MICRO/2026/CHIK-89</td>
-  <td>20-09-2026</td>
-</tr>
-<tr>
-  <td>103</td>
-  <td>सुधाकर मारुती शिंदे</td>
-  <td>तपसेचिंचोली</td>
-  <td>45</td>
-  <td>पुरुष</td>
-  <td>9766623456</td>
-  <td>88</td>
-  <td>01-09-2026</td>
-  <td>27-08-2026</td>
-  <td>5</td>
-  <td>1</td>
-  <td>1</td>
-  <td>1</td>
-  <td>No</td>
-  <td>Negative</td>
-  <td>NS1 Ag ELISA</td>
-  <td>GMC/MICRO/2026/DEN-145</td>
-  <td>15-09-2026</td>
-  <td>Positive</td>
-  <td>Chikungunya IgM ELISA</td>
-  <td>GMC/MICRO/2026/CHIK-89</td>
-  <td>20-09-2026</td>
-</tr>
-</tbody>
-</table>
-</body>
-</html>`;
+      const templateHtml = '<' + 'html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+'<' + 'head>' +
+'<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
+'<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Dengue_Template</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+'<' + 'style>' +
+'th { background-color: #2b6cb0; color: #ffffff; font-weight: bold; border: 1px solid #cbd5e0; padding: 8px; font-family: Calibri, sans-serif; font-size: 11pt; text-align: center; }' +
+'td { border: 1px solid #cbd5e0; padding: 6px; mso-number-format: "\\@"; font-family: Calibri, sans-serif; font-size: 10pt; }' +
+'<' + '/style>' +
+'<' + '/head>' +
+'<' + 'body>' +
+'<table>' +
+'<thead>' +
+'<tr>' +
+'  <th>नोंदणी क्र. (Reg_No)</th>' +
+'  <th>रुग्णाचे नाव (Patient_Name)</th>' +
+'  <th>गाव (Village)</th>' +
+'  <th>वय (Age)</th>' +
+'  <th>लिंग (Sex)</th>' +
+'  <th>मोबाईल (Mobile)</th>' +
+'  <th>घर क्र. (House_No)</th>' +
+'  <th>नमुना दिनांक (Collection_Date DD-MM-YYYY)</th>' +
+'  <th>लक्षणे सुरू दिनांक (Onset_Date DD-MM-YYYY)</th>' +
+'  <th>ताप दिवस (Fever_Days)</th>' +
+'  <th>डोकेदुखी (Headache_Days)</th>' +
+'  <th>अंगदुखी (Bodyache_Days)</th>' +
+'  <th>सांधेदुखी (Joint_Pain_Days)</th>' +
+'  <th>रक्तस्राव (Haemorrhagic Yes/No)</th>' +
+'  <th>डेंगी निष्कर्ष (Dengue_Result)</th>' +
+'  <th>डेंगी चाचणी प्रकार (Dengue_Test_Type)</th>' +
+'  <th>डेंगी लॅब संदर्भ क्र. (Dengue_Report_Ref)</th>' +
+'  <th>डेंगी अहवाल दिनांक (Dengue_Report_Date)</th>' +
+'  <th>चिकनगुनिया निष्कर्ष (Chik_Result)</th>' +
+'  <th>चिकनगुनिया चाचणी प्रकार (Chik_Test_Type)</th>' +
+'  <th>चिकनगुनिया लॅब संदर्भ क्र. (Chik_Report_Ref)</th>' +
+'  <th>चिकनगुनिया अहवाल दिनांक (Chik_Report_Date)</th>' +
+'</tr>' +
+'</thead>' +
+'<tbody>' +
+'<tr>' +
+'  <td>101</td>' +
+'  <td>रमेश विठ्ठल पाटील</td>' +
+'  <td>भादा</td>' +
+'  <td>34</td>' +
+'  <td>पुरुष</td>' +
+'  <td>9876543210</td>' +
+'  <td>12</td>' +
+'  <td>01-09-2026</td>' +
+'  <td>28-08-2026</td>' +
+'  <td>4</td>' +
+'  <td>1</td>' +
+'  <td>1</td>' +
+'  <td>1</td>' +
+'  <td>No</td>' +
+'  <td>Positive</td>' +
+'  <td>NS1 Ag ELISA</td>' +
+'  <td>GMC/MICRO/2026/DEN-145</td>' +
+'  <td>15-09-2026</td>' +
+'  <td>Negative</td>' +
+'  <td>Chikungunya IgM ELISA</td>' +
+'  <td>GMC/MICRO/2026/CHIK-89</td>' +
+'  <td>20-09-2026</td>' +
+'</tr>' +
+'<tr>' +
+'  <td>102</td>' +
+'  <td>अनिता प्रकाश गायकवाड</td>' +
+'  <td>भादा</td>' +
+'  <td>28</td>' +
+'  <td>स्त्री</td>' +
+'  <td>9855512345</td>' +
+'  <td>45</td>' +
+'  <td>01-09-2026</td>' +
+'  <td>29-08-2026</td>' +
+'  <td>3</td>' +
+'  <td>1</td>' +
+'  <td>1</td>' +
+'  <td>1</td>' +
+'  <td>No</td>' +
+'  <td>Negative</td>' +
+'  <td>NS1 Ag ELISA</td>' +
+'  <td>GMC/MICRO/2026/DEN-145</td>' +
+'  <td>15-09-2026</td>' +
+'  <td>Negative</td>' +
+'  <td>Chikungunya IgM ELISA</td>' +
+'  <td>GMC/MICRO/2026/CHIK-89</td>' +
+'  <td>20-09-2026</td>' +
+'</tr>' +
+'<tr>' +
+'  <td>103</td>' +
+'  <td>सुधाकर मारुती शिंदे</td>' +
+'  <td>तपसेचिंचोली</td>' +
+'  <td>45</td>' +
+'  <td>पुरुष</td>' +
+'  <td>9766623456</td>' +
+'  <td>88</td>' +
+'  <td>01-09-2026</td>' +
+'  <td>27-08-2026</td>' +
+'  <td>5</td>' +
+'  <td>1</td>' +
+'  <td>1</td>' +
+'  <td>1</td>' +
+'  <td>No</td>' +
+'  <td>Negative</td>' +
+'  <td>NS1 Ag ELISA</td>' +
+'  <td>GMC/MICRO/2026/DEN-145</td>' +
+'  <td>15-09-2026</td>' +
+'  <td>Positive</td>' +
+'  <td>Chikungunya IgM ELISA</td>' +
+'  <td>GMC/MICRO/2026/CHIK-89</td>' +
+'  <td>20-09-2026</td>' +
+'</tr>' +
+'</tbody>' +
+'</table>' +
+'<' + '/body>' +
+'<' + '/html>';
 
       const blob = new Blob([templateHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
       const link = document.createElement('a');
