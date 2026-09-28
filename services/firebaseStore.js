@@ -61,6 +61,19 @@ export async function deleteDengueEntryFromFirestore(id) {
   }
 }
 
+export async function deleteBatchDengueEntriesFromFirestore(idsArray) {
+  if (!Array.isArray(idsArray) || idsArray.length === 0) return { success: true };
+  try {
+    for (const id of idsArray) {
+      if (id) await deleteDengueEntryFromFirestore(id);
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('[FirebaseStore] Error deleting batch Dengue entries from Firestore:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 // -------------------------------------------------------------
 // BS DATA ENTRIES (BLOOD SLIDES)
 // -------------------------------------------------------------

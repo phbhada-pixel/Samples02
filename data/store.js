@@ -3279,15 +3279,54 @@ export function importDengueOldDataCsv(csvText, replace = false) {
 
 export function deleteDengueEntry(id) {
   try {
-    const idx = dengueChikungunyaEntries.findIndex(e => e.id === id);
+    if (!id) return { success: false, message: "अवैध आयडी (Invalid ID)." };
+    const cleanId = String(id).trim().toLowerCase();
+    const idx = dengueChikungunyaEntries.findIndex(e => {
+      if (!e) return false;
+      const eid = String(e.id || '').trim().toLowerCase();
+      const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+      return eid === cleanId || (reg && reg === cleanId);
+    });
+
     if (idx === -1) {
       return { success: false, message: "नोंद सापडली नाही (Record not found)." };
     }
     const removed = dengueChikungunyaEntries.splice(idx, 1)[0];
     saveDbToDisk();
-    return { success: true, message: `रुग्ण ${removed.patientName} ची नोंद यशस्वीरित्या हटवली.` };
+    return { success: true, message: `रुग्ण ${removed.patientName || 'निवडलेला'} ची नोंद यशस्वीरित्या हटवली.` };
   } catch (err) {
     return { success: false, message: `हटवताना त्रुटी: ${err.message}` };
+  }
+}
+
+export function deleteBatchDengueEntries(idsArray) {
+  if (!Array.isArray(idsArray) || idsArray.length === 0) {
+    return { success: false, message: "हटवण्यासाठी कोणत्याही नोंदींची निवड केली नाही." };
+  }
+  try {
+    let deletedCount = 0;
+    idsArray.forEach(id => {
+      if (!id) return;
+      const cleanId = String(id).trim().toLowerCase();
+      const idx = dengueChikungunyaEntries.findIndex(e => {
+        if (!e) return false;
+        const eid = String(e.id || '').trim().toLowerCase();
+        const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+        return eid === cleanId || (reg && reg === cleanId);
+      });
+      if (idx !== -1) {
+        dengueChikungunyaEntries.splice(idx, 1);
+        deletedCount++;
+      }
+    });
+    saveDbToDisk();
+    return {
+      success: true,
+      count: deletedCount,
+      message: `निवडलेल्या एकूण ${deletedCount} डेंगी/चिकनगुनिया नोंदी यशस्वीरित्या हटवण्यात आल्या 🗑️`
+    };
+  } catch (err) {
+    return { success: false, message: `बॅच डिलीट करताना त्रुटी: ${err.message}` };
   }
 }
 

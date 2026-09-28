@@ -86,6 +86,7 @@ import {
   dengueChikungunyaEntries,
   saveDengueEntry,
   deleteDengueEntry,
+  deleteBatchDengueEntries,
   getDengueEntries,
   updateDengueLabReport,
   saveDengueBatchLabReport,
@@ -115,6 +116,7 @@ import {
 import {
   syncDengueEntryToFirestore,
   deleteDengueEntryFromFirestore,
+  deleteBatchDengueEntriesFromFirestore,
   syncBsDataEntryToFirestore,
   syncBatchBsDataToFirestore,
   syncSubcenterMasterToFirestore,
@@ -1387,13 +1389,18 @@ app.post('/api/rpc', async (req, res) => {
       case 'deleteDengueEntry': {
         const [id] = args;
         result = deleteDengueEntry(id);
-        const fsRes = await deleteDengueEntryFromFirestore(id);
-        if (fsRes.success || result.success) {
-          result.success = true;
-          result.message = 'नोंद Firestore क्लाउड डेटाबेसमधून यशस्वीरित्या हटवली गेली 🗑️';
-        } else {
-          result.success = false;
-          result.message = 'नोंद हटवणे शक्य झाले नाही. इंटरनेट कनेक्शन तपासून पुन्हा प्रयत्न करा.';
+        if (result.success) {
+          await deleteDengueEntryFromFirestore(id);
+        }
+        break;
+      }
+
+      case 'deleteBatchDengueEntries': {
+        const [idsArray] = args;
+        const ids = Array.isArray(idsArray) ? idsArray : (idsArray ? [idsArray] : []);
+        result = deleteBatchDengueEntries(ids);
+        if (result.success && result.count > 0) {
+          await deleteBatchDengueEntriesFromFirestore(ids);
         }
         break;
       }

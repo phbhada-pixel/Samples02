@@ -3019,10 +3019,27 @@
 
           case 'deleteDengueEntry': {
             const [id] = args;
-            const exIdx = clientDengueEntries.findIndex(e => e.id === id);
-            if (exIdx !== -1) clientDengueEntries.splice(exIdx, 1);
+            const cleanId = String(id || '').trim().toLowerCase();
+            clientDengueEntries = clientDengueEntries.filter(e => {
+              if (!e) return false;
+              const eid = String(e.id || '').trim().toLowerCase();
+              return eid !== cleanId && (!e.patientRegNo || String(e.patientRegNo).trim().toLowerCase() !== cleanId);
+            });
             setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
             return { result: { success: true, message: 'नोंद यशस्वीरित्या हटवली.' } };
+          }
+
+          case 'deleteBatchDengueEntries': {
+            const [idsArray] = args;
+            const ids = Array.isArray(idsArray) ? idsArray.map(i => String(i).trim().toLowerCase()) : [];
+            clientDengueEntries = clientDengueEntries.filter(e => {
+              if (!e) return false;
+              const eid = String(e.id || '').trim().toLowerCase();
+              const reg = e.patientRegNo ? String(e.patientRegNo).trim().toLowerCase() : '';
+              return !ids.includes(eid) && (!reg || !ids.includes(reg));
+            });
+            setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+            return { result: { success: true, count: ids.length, message: `निवडलेल्या एकूण ${ids.length} नोंदी यशस्वीरित्या हटवल्या.` } };
           }
 
           case 'getSubcenterMaster': {
@@ -7241,8 +7258,13 @@
                   <option value="Pending">⏳ चिकनगुनिया प्रलंबित (Pending - अहवाल अप्राप्त)</option>
                 </select>
               </div>
-              <div style="font-size:12.5px; font-weight:700; color:#4a5568;">
-                एकूण नोंदी: <span id="dgRegisterCount" style="color:#c05621; font-size:15px;">0</span>
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="sheet-btn" style="background:#fff5f5; color:#e53e3e; border:1px solid #feb2b2; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;" onclick="deleteSelectedDengueRecords()" title="निवडलेल्या रुग्णांच्या नोंदी एकाच वेळी हटवा">
+                  <span>🗑️</span> <span>निवडलेल्या नोंदी हटवा (Bulk Delete)</span>
+                </button>
+                <div style="font-size:12.5px; font-weight:700; color:#4a5568;">
+                  एकूण नोंदी: <span id="dgRegisterCount" style="color:#c05621; font-size:15px;">0</span>
+                </div>
               </div>
             </div>
 
@@ -15453,25 +15475,102 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
     }
 
     function deleteDengueRecord(id) {
-      const rec = mDengueData.find(e => e.id === id);
+      if (!id) return;
+      const cleanId = String(id).trim().toLowerCase();
+      const rec = mDengueData.find(e => {
+        if (!e) return false;
+        const eid = String(e.id || '').trim().toLowerCase();
+        const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+        return eid === cleanId || (reg && reg === cleanId);
+      });
       const name = rec ? rec.patientName : 'हा रुग्ण';
+      const targetId = rec ? rec.id : id;
+
       if (!confirm(`खात्री आहे का? ${name} ची डेंगी/चिकनगुनिया नोंद हटवायची आहे?`)) {
         return;
       }
 
+      // Optimistic local update in UI
+      const targetClean = String(targetId).trim().toLowerCase();
+      mDengueData = mDengueData.filter(e => {
+        if (!e) return false;
+        const eid = String(e.id || '').trim().toLowerCase();
+        return eid !== targetClean;
+      });
+      filterDengueTable();
+
       google.script.run
         .withSuccessHandler(res => {
           if (res && res.success) {
-            alert(`✅ ${res.message}`);
+            alert(`✅ ${res.message || 'नोंद हटवण्यात आली.'}`);
             loadDengueData();
           } else {
-            alert('⚠️ अयशस्वी: ' + (res ? res.message : ''));
+            alert('⚠️ अयशस्वी: ' + (res ? (res.message || res.error) : 'नोंद हटवणे शक्य झाले नाही.'));
+            loadDengueData();
           }
         })
         .withFailureHandler(err => {
           alert('⚠️ सर्व्हर एरर: ' + err.message);
+          loadDengueData();
         })
-        .deleteDengueEntry(id);
+        .deleteDengueEntry(targetId);
+    }
+
+    function deleteSelectedDengueRecords() {
+      const checkedBoxes = document.querySelectorAll('.dg-row-cb:checked');
+      if (checkedBoxes.length === 0) {
+        alert('⚠️ कृपया हटवण्यासाठी किमान एका रुग्णाची (Checkbox) निवड करा.');
+        return;
+      }
+      const rawIds = Array.from(checkedBoxes).map(cb => cb.value).filter(Boolean);
+      if (rawIds.length === 0) return;
+
+      const targetIds = [];
+      rawIds.forEach(idVal => {
+        const cleanVal = String(idVal).trim().toLowerCase();
+        const found = mDengueData.find(e => {
+          if (!e) return false;
+          const eid = String(e.id || '').trim().toLowerCase();
+          const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+          return eid === cleanVal || (reg && reg === cleanVal);
+        });
+        if (found && found.id) {
+          if (!targetIds.includes(found.id)) targetIds.push(found.id);
+        } else if (!targetIds.includes(idVal)) {
+          targetIds.push(idVal);
+        }
+      });
+
+      if (!confirm(`⚠️ खात्री आहे का? निवडलेल्या एकूण ${targetIds.length} रुग्णांच्या डेंगी/चिकनगुनिया नोंदी डेटाबेसमधून कायमस्वरूपी हटवायच्या आहेत?`)) {
+        return;
+      }
+
+      // Optimistic local update in UI
+      const cleanTargetIds = targetIds.map(i => String(i).trim().toLowerCase());
+      mDengueData = mDengueData.filter(e => {
+        if (!e || !e.id) return false;
+        const eid = String(e.id).trim().toLowerCase();
+        return !cleanTargetIds.includes(eid);
+      });
+      filterDengueTable();
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.success) {
+            alert(`✅ ${res.message || 'निवडलेल्या नोंदी यशस्वीरित्या हटवण्यात आल्या.'}`);
+            const selectAllCb = document.getElementById('dgSelectAllCb');
+            if (selectAllCb) selectAllCb.checked = false;
+            loadDengueData();
+          } else {
+            alert('⚠️ अयशस्वी: ' + (res ? (res.message || res.error) : 'नोंदी हटवणे शक्य झाले नाही.'));
+            loadDengueData();
+          }
+        })
+        .withFailureHandler(err => {
+          alert('⚠️ सर्व्हर एरर: ' + err.message);
+          loadDengueData();
+        })
+        .deleteBatchDengueEntries(targetIds);
     }
 
     function printSingleNivSheet(id) {
