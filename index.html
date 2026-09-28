@@ -3841,6 +3841,17 @@
       border-bottom: none;
     }
 
+    /* Zebra-striping effect for Dengue Register table (#tblDengueRegister) */
+    #tblDengueRegister tbody tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    #tblDengueRegister tbody tr:nth-child(odd) {
+      background-color: #ffffff;
+    }
+    #tblDengueRegister tbody tr:hover {
+      background-color: #edf2f7 !important;
+    }
+
     .table-scroll-hint {
       display: none;
       font-size: 11.5px;
@@ -7279,10 +7290,16 @@
                     <th style="width:36px; text-align:center;"><input type="checkbox" id="dgSelectAllCb" onchange="toggleAllDengueCb(this)"></th>
                     <th style="width:45px; text-align:center;">अ.क्र.</th>
                     <th>नोंदणी क्र. (Reg No)</th>
-                    <th class="text-left">रुग्णाचे नाव (Patient Name)</th>
-                    <th>गाव (Village)</th>
+                    <th class="text-left sortable-th" onclick="sortDengueRegister('patientName')" title="रुग्णाच्या नावाने क्रमवारी लावा (Click to sort by Patient Name)" style="cursor:pointer; white-space:nowrap; user-select:none;">
+                      रुग्णाचे नाव (Patient Name) <span id="sortIcon_patientName" style="font-size:11px; opacity:0.35;">↕️</span>
+                    </th>
+                    <th class="sortable-th" onclick="sortDengueRegister('village')" title="गावाने क्रमवारी लावा (Click to sort by Village)" style="cursor:pointer; white-space:nowrap; user-select:none;">
+                      गाव (Village) <span id="sortIcon_village" style="font-size:11px; opacity:0.35;">↕️</span>
+                    </th>
                     <th>वय / लिंग</th>
-                    <th>नमुना दिनांक</th>
+                    <th class="sortable-th" onclick="sortDengueRegister('dateCollection')" title="नमुना दिनांकाने क्रमवारी लावा (Click to sort by Date)" style="cursor:pointer; white-space:nowrap; user-select:none;">
+                      नमुना दिनांक <span id="sortIcon_dateCollection" style="font-size:11px; opacity:1;">⬆️</span>
+                    </th>
                     <th style="min-width:140px; text-align:center;">डेंगी अहवाल (Dengue)</th>
                     <th style="min-width:140px; text-align:center;">चिकनगुनिया अहवाल (Chik)</th>
                     <th>लक्षणे / रक्तस्राव</th>
@@ -14488,6 +14505,32 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
   
     // ================= DENGUE & CHIKUNGUNYA CLIENT MODULE =================
     let mDengueData = [];
+    let mDengueSortCol = 'dateCollection';
+    let mDengueSortDir = 'asc'; // 'asc' = sample taken earlier on top, older at bottom
+
+    function sortDengueRegister(col) {
+      if (mDengueSortCol === col) {
+        mDengueSortDir = (mDengueSortDir === 'asc') ? 'desc' : 'asc';
+      } else {
+        mDengueSortCol = col;
+        mDengueSortDir = 'asc';
+      }
+      filterDengueTable();
+    }
+
+    function updateDengueSortIcons() {
+      ['patientName', 'village', 'dateCollection'].forEach(col => {
+        const iconEl = document.getElementById('sortIcon_' + col);
+        if (!iconEl) return;
+        if (mDengueSortCol === col) {
+          iconEl.textContent = mDengueSortDir === 'asc' ? '⬆️' : '⬇️';
+          iconEl.style.opacity = '1';
+        } else {
+          iconEl.textContent = '↕️';
+          iconEl.style.opacity = '0.35';
+        }
+      });
+    }
 
     function switchDengueSubtab(subtab) {
       document.querySelectorAll('#dengueTab .subtab-btn').forEach(b => b.classList.remove('active'));
@@ -15097,6 +15140,33 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
 
       const countEl = document.getElementById('dgRegisterCount');
       if (countEl) countEl.textContent = filtered.length;
+
+      // Sort filtered register list according to active column & direction
+      filtered.sort((a, b) => {
+        let valA, valB;
+        if (mDengueSortCol === 'dateCollection') {
+          const parseDate = (d) => {
+            if (!d) return 0;
+            const str = String(d).trim();
+            if (str.includes('-')) {
+              const parts = str.split('-');
+              if (parts[0].length === 4) return new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00`).getTime() || 0; // YYYY-MM-DD
+              if (parts[2]?.length === 4) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`).getTime() || 0; // DD-MM-YYYY
+            }
+            return new Date(str).getTime() || 0;
+          };
+          valA = parseDate(a.dateCollection);
+          valB = parseDate(b.dateCollection);
+        } else {
+          valA = String(a[mDengueSortCol] || '').toLowerCase().trim();
+          valB = String(b[mDengueSortCol] || '').toLowerCase().trim();
+        }
+        if (valA < valB) return mDengueSortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return mDengueSortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      updateDengueSortIcons();
 
       renderDengueTable(filtered);
     }
