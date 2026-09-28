@@ -73,6 +73,51 @@
         "updatedAt": { "type": "string", "description": "Timestamp" }
       },
       "required": ["name"]
+    },
+    "SubcenterMaster": {
+      "title": "Subcenter Master",
+      "description": "Subcenter healthcare center details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Subcenter ID" },
+        "name": { "type": "string", "description": "Subcenter Name" },
+        "headquarter": { "type": "string", "description": "Headquarter Village" },
+        "contactPerson": { "type": "string", "description": "Contact Person" },
+        "population": { "type": "number", "description": "Total Population" },
+        "houses": { "type": "number", "description": "Total Households" },
+        "contactPhone": { "type": "string", "description": "Contact Phone" },
+        "updatedAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["id", "name"]
+    },
+    "EmployeeMaster": {
+      "title": "Employee Master",
+      "description": "Healthcare worker staff register",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Employee ID" },
+        "upkendra": { "type": "string", "description": "Subcenter Name" },
+        "employeeName": { "type": "string", "description": "Employee Name" },
+        "designation": { "type": "string", "description": "Designation" },
+        "bsCode": { "type": "string", "description": "BS Code" },
+        "mobile": { "type": "string", "description": "Mobile Number" },
+        "updatedAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["id", "employeeName"]
+    },
+    "VillagesMaster": {
+      "title": "Villages Master",
+      "description": "Village level demographic master",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Village ID" },
+        "subcenter": { "type": "string", "description": "Subcenter Name" },
+        "villageName": { "type": "string", "description": "Village Name" },
+        "population": { "type": "number", "description": "Village Population" },
+        "households": { "type": "number", "description": "Village Households" },
+        "updatedAt": { "type": "string", "description": "Timestamp" }
+      },
+      "required": ["id", "villageName"]
     }
   },
   "firestore": {
@@ -91,6 +136,18 @@
     "/monthMaster/{monthId}": {
       "schema": "MonthMaster",
       "description": "Collection of monthly performance indicators"
+    },
+    "/subcenterMaster/{scId}": {
+      "schema": "SubcenterMaster",
+      "description": "Collection of subcenter healthcare centers"
+    },
+    "/employeeMaster/{empId}": {
+      "schema": "EmployeeMaster",
+      "description": "Collection of healthcare employees and workers"
+    },
+    "/villagesMaster/{vilId}": {
+      "schema": "VillagesMaster",
+      "description": "Collection of village demographic data"
     }
   }
 }

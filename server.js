@@ -82,6 +82,7 @@ import {
   recalculateAllMonthProgressives,
   saveDbToDisk,
   loadDbFromDisk,
+  backfillBsDataEmployeeNames,
   dengueChikungunyaEntries,
   saveDengueEntry,
   deleteDengueEntry,
@@ -116,6 +117,10 @@ import {
   deleteDengueEntryFromFirestore,
   syncBsDataEntryToFirestore,
   syncBatchBsDataToFirestore,
+  syncSubcenterMasterToFirestore,
+  syncEmployeeMasterToFirestore,
+  syncVillagesMasterToFirestore,
+  transferAllDataToFirestore,
   fetchAllDataFromFirestore
 } from './services/firebaseStore.js';
 
@@ -633,25 +638,74 @@ app.post('/api/rpc', async (req, res) => {
       }
 
       case 'getLastParayntValue': {
-        const [upkendra, employeeName, commonDate] = args;
-        const inputYear = (commonDate && !isNaN(new Date(commonDate).getTime()))
-          ? new Date(commonDate).getFullYear()
-          : new Date().getFullYear();
-        let maxParaynt = 0;
+        const [upkendra, employeeName, commonDate, providedBsCode] = args;
+        
+        if (typeof backfillBsDataEmployeeNames === 'function') {
+          backfillBsDataEmployeeNames();
+        }
+
+        const normalizeStr = (s) => String(s || '')
+          .replace(/^(श्री\.|श्रीमती\.|सौ\.|डॉ\.|श्री|श्रीमती|सौ|डॉ)\s*/i, '')
+          .replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '')
+          .toLowerCase()
+          .trim();
+
+        const inputEmpNorm = normalizeStr(employeeName);
+        const inputBsCode = providedBsCode ? String(providedBsCode).trim().toUpperCase() : '';
+
+        // Find employee record in employeeMaster
+        const empRec = employeeMaster.find(e => 
+          (inputBsCode && e.bsCode && String(e.bsCode).trim().toUpperCase() === inputBsCode) ||
+          (e.employeeName && String(e.employeeName).trim() === String(employeeName).trim()) ||
+          (e.employeeName && normalizeStr(e.employeeName) === inputEmpNorm)
+        );
+
+        const targetBsCode = empRec && empRec.bsCode ? String(empRec.bsCode).trim().toUpperCase() : inputBsCode;
+        const targetEmpName = empRec ? empRec.employeeName : String(employeeName || '').trim();
+
+        let inputYear = null;
+        if (commonDate) {
+          const d = new Date(commonDate);
+          if (!isNaN(d.getTime())) inputYear = d.getFullYear();
+        }
+        if (!inputYear) inputYear = new Date().getFullYear();
+
+        let maxParayntForYear = 0;
+        let maxParayntOverall = 0;
+
         for (let i = 0; i < bsDataEntry.length; i++) {
           const row = bsDataEntry[i];
-          const rowDate = new Date(row[1]);
-          if (isNaN(rowDate.getTime())) continue;
-          if (
-            rowDate.getFullYear() === inputYear &&
-            String(row[2]).trim() === String(upkendra).trim() &&
-            String(row[3]).trim() === String(employeeName).trim()
-          ) {
-            const val = parseInt(row[8]) || 0;
-            if (val > maxParaynt) maxParaynt = val;
+          if (!Array.isArray(row)) continue;
+
+          const rowEmpName = String(row[3] || '').trim();
+          const rowBsCode = String(row[5] || '').trim().toUpperCase();
+          const parayntVal = parseInt(row[8]) || 0;
+
+          const matchesEmp = (
+            (targetBsCode && rowBsCode && rowBsCode === targetBsCode) ||
+            (rowEmpName && targetEmpName && (rowEmpName === targetEmpName || normalizeStr(rowEmpName) === inputEmpNorm))
+          );
+
+          if (!matchesEmp) continue;
+
+          if (parayntVal > maxParayntOverall) {
+            maxParayntOverall = parayntVal;
+          }
+
+          let rowYear = null;
+          if (row[1]) {
+            const rd = new Date(row[1]);
+            if (!isNaN(rd.getTime())) rowYear = rd.getFullYear();
+          }
+
+          if (rowYear === inputYear) {
+            if (parayntVal > maxParayntForYear) {
+              maxParayntForYear = parayntVal;
+            }
           }
         }
-        result = maxParaynt;
+
+        result = maxParayntForYear > 0 ? maxParayntForYear : maxParayntOverall;
         break;
       }
 
@@ -668,19 +722,37 @@ app.post('/api/rpc', async (req, res) => {
         const newVillageDetailsForSync = [];
 
         formDataArray.forEach(entry => {
+          let empName = entry.employeeName || '';
+          let bsCode = entry.bsCode || '';
+          let upkendra = entry.upkendra || '';
+          let designation = entry.designation || '';
+
+          // Auto-fill from employeeMaster if any field is missing
+          const empMatch = employeeMaster.find(e => 
+            (bsCode && e.bsCode && String(e.bsCode).trim().toUpperCase() === String(bsCode).trim().toUpperCase()) ||
+            (empName && e.employeeName && String(e.employeeName).trim() === String(empName).trim())
+          );
+
+          if (empMatch) {
+            if (!empName) empName = empMatch.employeeName;
+            if (!bsCode) bsCode = empMatch.bsCode || '';
+            if (!upkendra) upkendra = empMatch.upkendra || '';
+            if (!designation) designation = empMatch.designation || '';
+          }
+
           const dateObj = entry.bsSendDate ? new Date(entry.bsSendDate) : new Date();
           const yyyymmdd = `${dateObj.getFullYear()}${String(dateObj.getMonth() + 1).padStart(2, '0')}${String(dateObj.getDate()).padStart(2, '0')}`;
           const rowId = bsDataEntry.length + 1;
-          const uniqueId = `BS_${yyyymmdd}_${entry.bsCode || '0'}_${rowId}`;
+          const uniqueId = `BS_${yyyymmdd}_${bsCode || '0'}_${rowId}`;
           const total = (parseInt(entry.paraynt) || 0) - (parseInt(entry.pasun) || 0) + 1;
 
           bsDataEntry.push([
             uniqueId,
             dateObj,
-            entry.upkendra || '',
-            entry.employeeName || '',
-            entry.designation || '',
-            entry.bsCode || '',
+            upkendra,
+            empName,
+            designation,
+            bsCode,
             entry.bundleNumber || '',
             parseInt(entry.pasun) || 0,
             parseInt(entry.paraynt) || 0,
@@ -690,10 +762,10 @@ app.post('/api/rpc', async (req, res) => {
           newEntriesForSync.push({
             id: uniqueId,
             date: dateObj.toISOString().split('T')[0],
-            upkendra: entry.upkendra || '',
-            employeeName: entry.employeeName || '',
-            designation: entry.designation || '',
-            bsCode: entry.bsCode || '',
+            upkendra: upkendra,
+            employeeName: empName,
+            designation: designation,
+            bsCode: bsCode,
             bundleNumber: entry.bundleNumber || '',
             pasun: parseInt(entry.pasun) || 0,
             paraynt: parseInt(entry.paraynt) || 0,
@@ -705,23 +777,23 @@ app.post('/api/rpc', async (req, res) => {
             vDetails.forEach(v => {
               villageDetails.push([
                 uniqueId,
-                entry.employeeName || '',
+                empName,
                 dateObj,
                 v.villageName || '',
                 parseInt(v.sampleCount) || 0,
                 parseInt(v.maleCount) || 0,
                 parseInt(v.femaleCount) || 0,
-                entry.upkendra || ''
+                upkendra
               ]);
               newVillageDetailsForSync.push({
                 uniqueId: uniqueId,
-                employeeName: entry.employeeName || '',
+                employeeName: empName,
                 date: dateObj.toISOString().split('T')[0],
                 villageName: v.villageName || '',
                 sampleCount: parseInt(v.sampleCount) || 0,
                 maleCount: parseInt(v.maleCount) || 0,
                 femaleCount: parseInt(v.femaleCount) || 0,
-                upkendra: entry.upkendra || ''
+                upkendra: upkendra
               });
             });
           }
@@ -1681,6 +1753,22 @@ app.post('/api/rpc', async (req, res) => {
       }
 
       // ================= MASTER DATA & TRANSFER FACILITY RPC =================
+      case 'transferAllDataToFirestore':
+      case 'syncDataToFirestore':
+      case 'transferAllToFirestore': {
+        const transferRes = await transferAllDataToFirestore({
+          bsDataEntry,
+          subcenterMaster,
+          employeeMaster,
+          villagesMaster,
+          villageDetails,
+          dengueChikungunyaEntries,
+          monthMaster
+        });
+        result = transferRes;
+        break;
+      }
+
       case 'getSubcenterMaster': {
         result = subcenterMaster;
         break;
@@ -1689,6 +1777,9 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveSubcenter': {
         const [scData] = args;
         result = saveSubcenter(scData);
+        if (result.success && result.subcenter) {
+          syncSubcenterMasterToFirestore(result.subcenter).catch(err => console.error(err));
+        }
         break;
       }
 
@@ -1706,6 +1797,9 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveVillage': {
         const [vilData] = args;
         result = saveVillage(vilData);
+        if (result.success && result.village) {
+          syncVillagesMasterToFirestore(result.village).catch(err => console.error(err));
+        }
         break;
       }
 
@@ -1723,6 +1817,9 @@ app.post('/api/rpc', async (req, res) => {
       case 'saveEmployee': {
         const [empData] = args;
         result = saveEmployee(empData);
+        if (result.success && result.employee) {
+          syncEmployeeMasterToFirestore(result.employee).catch(err => console.error(err));
+        }
         break;
       }
 

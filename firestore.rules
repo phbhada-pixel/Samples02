@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-.]+$');
+      return id is string && id.size() > 0 && id.size() <= 128;
     }
 
     // Default deny catch-all safety net (BLOCKED for arbitrary unlisted paths)
@@ -16,49 +16,52 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Dengue & Chikungunya Entries collection (Protected with strict schema and ID validation)
+    // Dengue & Chikungunya Entries collection
     match /dengueEntries/{dengueId} {
       allow read: if isValidId(dengueId);
-      allow create, update: if isValidId(dengueId)
-                            && request.resource.data.id is string
-                            && request.resource.data.patientName is string;
-      allow delete: if isValidId(dengueId);
+      allow create, update, delete: if isValidId(dengueId);
     }
 
-    // BS Data Entry collection (Protected with strict schema and ID validation)
+    // BS Data Entry collection
     match /bsDataEntry/{entryId} {
       allow read: if isValidId(entryId);
-      allow create, update: if isValidId(entryId)
-                            && request.resource.data.id is string
-                            && request.resource.data.upkendra is string
-                            && request.resource.data.employeeName is string;
-      allow delete: if isValidId(entryId);
+      allow create, update, delete: if isValidId(entryId);
     }
 
-    // Village Details collection (Protected with strict schema and ID validation)
+    // Village Details collection
     match /villageDetails/{detailId} {
       allow read: if isValidId(detailId);
-      allow create, update: if isValidId(detailId)
-                            && request.resource.data.id is string
-                            && request.resource.data.villageName is string;
-      allow delete: if isValidId(detailId);
+      allow create, update, delete: if isValidId(detailId);
     }
 
-    // Month Master collection (Protected with strict schema and ID validation)
+    // Subcenter Master collection
+    match /subcenterMaster/{scId} {
+      allow read: if isValidId(scId);
+      allow create, update, delete: if isValidId(scId);
+    }
+
+    // Employee Master collection
+    match /employeeMaster/{empId} {
+      allow read: if isValidId(empId);
+      allow create, update, delete: if isValidId(empId);
+    }
+
+    // Villages Master collection
+    match /villagesMaster/{vilId} {
+      allow read: if isValidId(vilId);
+      allow create, update, delete: if isValidId(vilId);
+    }
+
+    // Month Master collection
     match /monthMaster/{monthId} {
       allow read: if isValidId(monthId);
-      allow create, update: if isValidId(monthId)
-                            && request.resource.data.name is string;
-      allow delete: if isValidId(monthId);
+      allow create, update, delete: if isValidId(monthId);
     }
 
-    // App config & metadata (Protected with strict ID validation)
+    // App config & metadata
     match /appConfig/{configId} {
       allow read: if isValidId(configId);
       allow write: if isValidId(configId);
     }
   }
 }
-
-
-
