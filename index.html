@@ -2965,34 +2965,136 @@
 
           case 'importDengueOldDataCsv': {
             const [csvText, replace] = args;
-            if (!csvText) return { result: { success: false, message: 'CSV मजकूर रिकामा आहे.' } };
+            if (!csvText || !csvText.trim()) return { result: { success: false, message: 'CSV मजकूर रिकामा आहे.' } };
+            
+            function toAsciiDigits(str) {
+              if (!str) return '';
+              const devanagari = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+              return String(str).replace(/[०-९]/g, d => devanagari.indexOf(d));
+            }
+
             const lines = csvText.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+            if (lines.length === 0) return { result: { success: false, message: 'डेटा ओळी आढळल्या नाहीत.' } };
+
+            let delimiter = ',';
+            const tabCount = (lines[0].match(/\t/g) || []).length;
+            const semiCount = (lines[0].match(/;/g) || []).length;
+            const commaCount = (lines[0].match(/,/g) || []).length;
+            if (tabCount > commaCount && tabCount >= semiCount) delimiter = '\t';
+            else if (semiCount > commaCount) delimiter = ';';
+
+            const rows = lines.map(line => {
+              let inQuotes = false;
+              let token = "";
+              const cols = [];
+              for (let j = 0; j < line.length; j++) {
+                const c = line[j];
+                if (c === '"') inQuotes = !inQuotes;
+                else if (c === delimiter && !inQuotes) {
+                  cols.push(toAsciiDigits(token.replace(/^"|"$/g, '').trim()));
+                  token = "";
+                } else {
+                  token += c;
+                }
+              }
+              cols.push(toAsciiDigits(token.replace(/^"|"$/g, '').trim()));
+              return cols;
+            });
+
+            let bestHeaderRowIdx = 0;
+            let maxMatches = 0;
+            const keyWords = ['नाव', 'name', 'patient', 'वय', 'age', 'लिंग', 'sex', 'गाव', 'village', 'नोंदणी', 'reg', 'दिनांक', 'date', 'डेंगी', 'dengue', 'चिकनगुनिया', 'chikungunya', 'निकाल', 'result', 'अ.क्र', 'id', 'sr'];
+            for (let r = 0; r < Math.min(rows.length, 8); r++) {
+              const rowText = rows[r].map(c => String(c || '').toLowerCase()).join(' ');
+              let matches = 0;
+              keyWords.forEach(kw => { if (rowText.includes(kw)) matches++; });
+              if (matches > maxMatches) { maxMatches = matches; bestHeaderRowIdx = r; }
+            }
+            if (bestHeaderRowIdx === 0 && rows.length > 1 && rows[0].length === 1 && rows[1].length > 1) {
+              bestHeaderRowIdx = 1;
+            }
+
+            const header = rows[bestHeaderRowIdx].map(c => String(c || '').toLowerCase());
+            let nameIdx = header.findIndex(c => c.includes('नाव') || c.includes('patient') || c.includes('name') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('रोगी'));
+            const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd') || c.includes('cr') || c.includes('ipd'));
+            const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village') || c.includes('पत्ता'));
+            const ageIdx = header.findIndex(c => c.includes('वय') || c.includes('age'));
+            const sexIdx = header.findIndex(c => c.includes('लिंग') || c.includes('sex') || c.includes('gender'));
+            const dateIdx = header.findIndex(c => c.includes('नमुना दिनांक') || c.includes('collection') || c.includes('date') || c.includes('तारीख') || c.includes('दिनांक'));
+            const dResIdx = header.findIndex(c => c.includes('डेंगी') || c.includes('dengue'));
+            const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया') || c.includes('chik'));
+
+            if (nameIdx === -1 && header.length >= 1) {
+              nameIdx = (header[0].includes('reg') || header[0].includes('id') || header[0].includes('क्र')) ? 1 : 0;
+            }
+
             if (replace) clientDengueEntries.length = 0;
             let count = 0;
-            for (let i = 1; i < lines.length; i++) {
-              const parts = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
-              if (!parts[1] && !parts[0]) continue;
-              const pName = (parts[1] || parts[0]).toUpperCase();
-              const dColl = parts[7] ? parts[7].split(/[-/]/).reverse().join('-') : new Date().toISOString().slice(0, 10);
+            const nowIso = new Date().toISOString();
+
+            for (let i = bestHeaderRowIdx + 1; i < rows.length; i++) {
+              const parts = rows[i];
+              if (!parts || parts.length === 0) continue;
+              const pName = (nameIdx !== -1 && parts[nameIdx] ? parts[nameIdx] : (parts[0] || '')).replace(/^"|"$/g, '').trim().toUpperCase();
+              if (!pName || pName === '-' || pName === 'NAME' || pName.includes('नाव')) continue;
+
+              const rawDate = dateIdx !== -1 && parts[dateIdx] ? parts[dateIdx].replace(/^"|"$/g, '').trim() : '';
+              let dColl = nowIso.slice(0, 10);
+              const dmY = rawDate.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+              if (dmY) {
+                const day = dmY[1].padStart(2, '0');
+                const month = dmY[2].padStart(2, '0');
+                let year = dmY[3];
+                if (year.length === 2) year = '20' + year;
+                dColl = `${year}-${month}-${day}`;
+              }
+
+              const pReg = regIdx !== -1 && parts[regIdx] ? parts[regIdx].replace(/^"|"$/g, '').trim() : '-';
+              const pVillage = villageIdx !== -1 && parts[villageIdx] ? parts[villageIdx].replace(/^"|"$/g, '').trim() : 'भादा';
+              
+              let pAge = 0;
+              let pSex = 'FEMALE';
+              if (ageIdx !== -1 && parts[ageIdx]) {
+                const rawA = parts[ageIdx].replace(/^"|"$/g, '').trim();
+                const mA = rawA.match(/\d+/);
+                if (mA) pAge = parseInt(mA[0]) || 0;
+                if (rawA.toUpperCase().includes('/M') || rawA.toUpperCase().includes('MALE') || rawA.includes('पुरुष')) pSex = 'MALE';
+                else if (rawA.toUpperCase().includes('/F') || rawA.toUpperCase().includes('FEMALE') || rawA.includes('स्त्री')) pSex = 'FEMALE';
+              }
+              if (sexIdx !== -1 && parts[sexIdx]) {
+                const rawS = parts[sexIdx].replace(/^"|"$/g, '').trim().toUpperCase();
+                if (rawS === 'M' || rawS.startsWith('MALE') || rawS.includes('पुरुष')) pSex = 'MALE';
+                else if (rawS === 'F' || rawS.startsWith('FEM') || rawS.includes('स्त्री')) pSex = 'FEMALE';
+              }
+
+              const dRes = dResIdx !== -1 && parts[dResIdx] ? parts[dResIdx].replace(/^"|"$/g, '').trim() : 'Pending';
+              const cRes = cResIdx !== -1 && parts[cResIdx] ? parts[cResIdx].replace(/^"|"$/g, '').trim() : 'Pending';
+
               const rec = {
-                id: `DENGUE_${dColl.replace(/-/g, '')}_${Math.floor(1000 + Math.random() * 9000)}`,
+                id: `DENGUE_${dColl.replace(/-/g, '')}_${pReg !== '-' ? pReg.replace(/[^a-zA-Z0-9]/g, '_') : Math.floor(1000 + Math.random() * 9000)}`,
                 patientName: pName,
-                patientRegNo: parts[0] || '-',
-                village: parts[2] || 'भादा',
-                age: parseInt(parts[3]) || 0,
-                sex: (parts[4] || '').toUpperCase().includes('M') ? 'MALE' : 'FEMALE',
-                mobile: parts[5] || '-',
+                patientRegNo: pReg,
+                village: pVillage,
+                age: pAge,
+                sex: pSex,
+                mobile: '-',
                 dateCollection: dColl,
-                dengueResult: parts[14] || 'Pending',
-                dengueReportRef: parts[16] || '',
-                dengueReportDate: parts[17] || '',
-                chikungunyaResult: parts[18] || 'Pending',
-                chikungunyaReportRef: parts[20] || '',
-                chikungunyaReportDate: parts[21] || '',
-                testResult: parts[14] || 'Pending',
-                createdAt: new Date().toISOString()
+                dengueResult: dRes,
+                dengueReportRef: '',
+                dengueReportDate: '',
+                chikungunyaResult: cRes,
+                chikungunyaReportRef: '',
+                chikungunyaReportDate: '',
+                testResult: dRes,
+                createdAt: nowIso
               };
-              clientDengueEntries.push(rec);
+
+              const exIdx = clientDengueEntries.findIndex(e => e.id === rec.id || (e.patientName === pName && e.dateCollection === dColl));
+              if (exIdx !== -1) {
+                clientDengueEntries[exIdx] = { ...clientDengueEntries[exIdx], ...rec, id: clientDengueEntries[exIdx].id };
+              } else {
+                clientDengueEntries.push(rec);
+              }
               count++;
             }
             setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
@@ -17113,6 +17215,12 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         return;
       }
 
+      function toAsciiDigits(str) {
+        if (!str) return '';
+        const devanagari = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+        return String(str).replace(/[०-९]/g, d => devanagari.indexOf(d));
+      }
+
       function parseSpreadsheetRows(cnt) {
         if (!cnt || !cnt.trim()) return [];
         const trimmed = cnt.trim();
@@ -17130,7 +17238,7 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
             while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
               let text = cellMatch[1].replace(/<[^>]+>/g, '').trim();
               text = text.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
-              cells.push(text);
+              cells.push(toAsciiDigits(text));
             }
             if (cells.length > 0) rows.push(cells);
           }
@@ -17158,13 +17266,13 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
             const c = line[j];
             if (c === '"') inQuotes = !inQuotes;
             else if (c === delimiter && !inQuotes) {
-              cols.push(token.replace(/^"|"$/g, '').trim());
+              cols.push(toAsciiDigits(token.replace(/^"|"$/g, '').trim()));
               token = "";
             } else {
               token += c;
             }
           }
-          cols.push(token.replace(/^"|"$/g, '').trim());
+          cols.push(toAsciiDigits(token.replace(/^"|"$/g, '').trim()));
           return cols;
         });
       }
@@ -17175,23 +17283,44 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         return;
       }
 
-      const header = rows[0].map(c => c.replace(/^"|"$/g, '').trim().toLowerCase());
+      // Scan rows 0 to 8 to find the best header row
+      let bestHeaderRowIdx = 0;
+      let maxMatches = 0;
+      const keyWords = ['नाव', 'name', 'patient', 'वय', 'age', 'लिंग', 'sex', 'gender', 'गाव', 'village', 'नोंदणी', 'reg', 'दिनांक', 'date', 'डेंगी', 'dengue', 'चिकनगुनिया', 'chikungunya', 'निकाल', 'result', 'अ.क्र', 'id', 'sr'];
+
+      for (let r = 0; r < Math.min(rows.length, 8); r++) {
+        const rowText = rows[r].map(c => String(c || '').replace(/^"|"$/g, '').trim().toLowerCase()).join(' ');
+        let matches = 0;
+        keyWords.forEach(kw => {
+          if (rowText.includes(kw)) matches++;
+        });
+        if (matches > maxMatches) {
+          maxMatches = matches;
+          bestHeaderRowIdx = r;
+        }
+      }
+
+      if (bestHeaderRowIdx === 0 && rows.length > 1 && rows[0].length === 1 && rows[1].length > 1) {
+        bestHeaderRowIdx = 1;
+      }
+
+      const header = rows[bestHeaderRowIdx].map(c => String(c || '').replace(/^"|"$/g, '').trim().toLowerCase());
       let nameIdx = header.findIndex(c => 
         c.includes('नाव') || c.includes('patient name') || c.includes('patient_name') || c.includes('patient') || 
-        c.includes('pname') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('à¤¨à¤¾à¤µ') || c === 'name'
+        c.includes('pname') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('à¤¨à¤¾à¤µ') || c === 'name' || c.includes('रोगी')
       );
-      const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd'));
-      const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village'));
+      const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd') || c.includes('cr') || c.includes('ipd') || c.includes('केस'));
+      const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village') || c.includes('पत्ता') || c.includes('address') || c.includes('उपकेंद्र'));
       const ageIdx = header.findIndex(c => c.includes('वय') || c.includes('age'));
       const sexIdx = header.findIndex(c => c.includes('लिंग') || c.includes('sex') || c.includes('gender'));
-      const dateIdx = header.findIndex(c => c.includes('नमुना दिनांक') || c.includes('collection') || c.includes('date'));
+      const dateIdx = header.findIndex(c => c.includes('नमुना दिनांक') || c.includes('collection') || c.includes('date') || c.includes('तारीख') || c.includes('दिनांक'));
       const dResIdx = header.findIndex(c => c.includes('डेंगी') || c.includes('dengue'));
       const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया') || c.includes('chik'));
 
       // Smart fallback if nameIdx is still -1
       if (nameIdx === -1 && header.length >= 1) {
         if (header.length === 1) nameIdx = 0;
-        else if (header[0].includes('reg') || header[0].includes('no') || header[0].includes('id') || header[0].includes('नोंदणी') || header[0].includes('क्र')) {
+        else if (header[0].includes('reg') || header[0].includes('no') || header[0].includes('id') || header[0].includes('नोंदणी') || header[0].includes('क्र') || header[0].includes('sr')) {
           nameIdx = 1;
         } else {
           nameIdx = 0;
@@ -17203,11 +17332,11 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       let errorCount = 0;
       let previewRowsHtml = '';
 
-      for (let i = 1; i < rows.length; i++) {
+      for (let i = bestHeaderRowIdx + 1; i < rows.length; i++) {
         const cols = rows[i];
         if (!cols || cols.length === 0) continue;
         const pName = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx].replace(/^"|"$/g, '').trim() : (cols[0] ? cols[0].replace(/^"|"$/g, '').trim() : '');
-        if (!pName) {
+        if (!pName || pName === '-' || pName.toLowerCase() === 'name' || pName.includes('नाव') || pName.toLowerCase() === 'patient name') {
           errorCount++;
           continue;
         }
@@ -17215,10 +17344,24 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         validCount++;
         const pReg = regIdx !== -1 && cols[regIdx] ? cols[regIdx].replace(/^"|"$/g, '').trim() : '-';
         const pVillage = villageIdx !== -1 && cols[villageIdx] ? cols[villageIdx].replace(/^"|"$/g, '').trim() : 'भादा';
-        const pAge = ageIdx !== -1 && cols[ageIdx] ? cols[ageIdx].replace(/^"|"$/g, '').trim() : '-';
-        const pSex = sexIdx !== -1 && cols[sexIdx] ? cols[sexIdx].replace(/^"|"$/g, '').trim() : '-';
+        
+        let pAge = '-';
+        let pSex = '-';
+        if (ageIdx !== -1 && cols[ageIdx]) {
+          const rawA = cols[ageIdx].replace(/^"|"$/g, '').trim();
+          const matchA = rawA.match(/\d+/);
+          if (matchA) pAge = matchA[0];
+          if (rawA.toUpperCase().includes('/M') || rawA.toUpperCase().includes('MALE') || rawA.includes('पुरुष')) pSex = 'MALE';
+          else if (rawA.toUpperCase().includes('/F') || rawA.toUpperCase().includes('FEMALE') || rawA.includes('स्त्री')) pSex = 'FEMALE';
+        }
+        if (sexIdx !== -1 && cols[sexIdx]) {
+          const rawS = cols[sexIdx].replace(/^"|"$/g, '').trim().toUpperCase();
+          if (rawS === 'M' || rawS.startsWith('MALE') || rawS.includes('पुरुष')) pSex = 'MALE';
+          else if (rawS === 'F' || rawS.startsWith('FEM') || rawS.includes('स्त्री')) pSex = 'FEMALE';
+        }
+
         const rawDate = dateIdx !== -1 && cols[dateIdx] ? cols[dateIdx].replace(/^"|"$/g, '').trim() : '';
-        if (rawDate.includes('/') || rawDate.match(/^\d{1,2}-\d{1,2}-\d{4}$/)) {
+        if (rawDate.includes('/') || rawDate.match(/^\d{1,2}-\d{1,2}-\d{4}$/) || rawDate.includes('.')) {
           normalizedCount++;
         }
         const dRes = dResIdx !== -1 && cols[dResIdx] ? cols[dResIdx].replace(/^"|"$/g, '').trim() : 'Pending';

@@ -33200,225 +33200,204 @@
   ],
   "employeeMaster": [
     {
-      "id": "EMP_001",
-      "upkendra": "आलमला",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "updatedAt": "2026-09-28T11:38:58.736Z",
-      "employeeName": "श्रीमती पुनम रावसाहेब काळे",
       "mobile": "",
+      "id": "EMP_001",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "upkendra": "आलमला",
       "bsCode": "54F6V3",
       "villageList": [
         "आलमला"
-      ]
+      ],
+      "employeeName": "श्रीमती पुनम रावसाहेब काळे",
+      "updatedAt": "2026-09-28T11:38:58.736Z"
     },
     {
       "id": "EMP_002",
+      "bsCode": "54F6V5",
       "employeeName": "श्रीमती शिल्पा पुनम थोरात",
+      "mobile": "",
       "villageList": [
         "उंबडगा बू"
       ],
-      "mobile": "",
-      "upkendra": "आलमला",
       "updatedAt": "2026-09-28T11:38:58.779Z",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "bsCode": "54F6V5"
+      "upkendra": "आलमला"
     },
     {
-      "updatedAt": "2026-09-28T11:38:58.833Z",
-      "employeeName": "श्रीमती राधा सुरेष पांचळ",
       "mobile": "",
-      "bsCode": "54F6V4",
-      "upkendra": "आलमला",
+      "updatedAt": "2026-09-28T11:38:58.833Z",
       "villageList": [
         "आलमला"
       ],
       "id": "EMP_003",
-      "designation": "आशा स्वयंसेविका (ASHA)"
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती राधा सुरेष पांचळ",
+      "bsCode": "54F6V4",
+      "upkendra": "आलमला"
     },
     {
+      "employeeName": "श्रीमती मनोरमा प्रल्हाद सुवर्णकार",
+      "bsCode": "54F6V2",
+      "id": "EMP_004",
       "upkendra": "आलमला",
+      "updatedAt": "2026-09-28T11:38:58.862Z",
+      "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "villageList": [
         "आलमला"
-      ],
-      "updatedAt": "2026-09-28T11:38:58.862Z",
-      "id": "EMP_004",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "bsCode": "54F6V2",
-      "employeeName": "श्रीमती मनोरमा प्रल्हाद सुवर्णकार",
-      "mobile": ""
-    },
-    {
-      "mobile": "",
-      "updatedAt": "2026-09-28T11:38:58.889Z",
-      "upkendra": "आलमला",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "id": "EMP_005",
-      "bsCode": "54F6V6",
-      "employeeName": "श्रीमती आनिता राजाराम बनसोडे",
-      "villageList": [
-        "उंबडगा खू"
       ]
     },
     {
-      "upkendra": "आलमला",
-      "bsCode": "54F6V1",
-      "id": "EMP_006",
-      "updatedAt": "2026-09-28T11:38:58.928Z",
+      "mobile": "",
+      "employeeName": "श्रीमती आनिता राजाराम बनसोडे",
       "designation": "आशा स्वयंसेविका (ASHA)",
+      "villageList": [
+        "उंबडगा खू"
+      ],
+      "id": "EMP_005",
+      "upkendra": "आलमला",
+      "updatedAt": "2026-09-28T11:38:58.889Z",
+      "bsCode": "54F6V6"
+    },
+    {
+      "upkendra": "आलमला",
+      "updatedAt": "2026-09-28T11:38:58.928Z",
+      "employeeName": "श्रीमती दैवशाला गोविंद शिरसाट",
+      "id": "EMP_006",
       "mobile": "",
       "villageList": [
         "आलमला"
       ],
-      "employeeName": "श्रीमती दैवशाला गोविंद शिरसाट"
+      "bsCode": "54F6V1",
+      "designation": "आशा स्वयंसेविका (ASHA)"
     },
     {
-      "employeeName": "श्रीमती जावंडरे एस.डी.",
-      "villageList": [
-        "आलमला",
-        "आलमला तांडा",
-        "उंबडगा बू",
-        "उंबडगा खू"
-      ],
+      "bsCode": "54F6A",
       "upkendra": "आलमला",
       "updatedAt": "2026-09-28T11:38:58.950Z",
       "id": "EMP_007",
-      "bsCode": "54F6A",
-      "mobile": "",
-      "designation": "आरोग्य सेविका (ANM)"
-    },
-    {
-      "designation": "आरोग्य सेवक (MPW)",
-      "employeeName": "श्री सगर आभिजीत",
-      "id": "EMP_008",
-      "upkendra": "आलमला",
+      "designation": "आरोग्य सेविका (ANM)",
       "villageList": [
         "आलमला",
         "आलमला तांडा",
         "उंबडगा बू",
         "उंबडगा खू"
       ],
-      "updatedAt": "2026-09-28T11:38:58.971Z",
-      "mobile": "",
-      "bsCode": "54S6"
-    },
-    {
-      "updatedAt": "2026-09-28T11:38:58.994Z",
-      "id": "EMP_009",
-      "upkendra": "कोरंगळा",
-      "villageList": [
-        "समदर्गा"
-      ],
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "mobile": "",
-      "bsCode": "54F5V4",
-      "employeeName": "श्रीमती कैसल्या विष्णू ढोक"
-    },
-    {
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "mobile": "",
-      "villageList": [
-        "समदर्गा"
-      ],
-      "upkendra": "कोरंगळा",
-      "id": "EMP_010",
-      "bsCode": "54F5V3",
-      "employeeName": "श्रीमती छाया हेमाद्रीपंत काळे",
-      "updatedAt": "2026-09-28T11:38:59.016Z"
-    },
-    {
-      "bsCode": "54F5V1",
-      "id": "EMP_011",
-      "updatedAt": "2026-09-28T11:38:59.045Z",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "mobile": "",
-      "employeeName": "श्रीमती नजमुन अल्लाबक्श दरोगे",
-      "upkendra": "कोरंगळा",
-      "villageList": [
-        "कोरंगळा"
-      ]
-    },
-    {
-      "bsCode": "54F5V5",
-      "id": "EMP_012",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती दुर्गा वैजीनाथ चांडसुरे",
-      "mobile": "",
-      "upkendra": "कोरंगळा",
-      "updatedAt": "2026-09-28T11:38:59.066Z",
-      "villageList": [
-        "येल्लोरी"
-      ]
-    },
-    {
-      "updatedAt": "2026-09-28T11:38:59.095Z",
-      "id": "EMP_013",
-      "bsCode": "54F5V6",
-      "upkendra": "कोरंगळा",
-      "mobile": "",
-      "villageList": [
-        "येल्लोरी"
-      ],
-      "employeeName": "श्रीमती सविता गोपाळ रिंगनकर",
-      "designation": "आशा स्वयंसेविका (ASHA)"
-    },
-    {
-      "upkendra": "कोरंगळा",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती सुनिता शहाजी घाडगे",
-      "mobile": "",
-      "villageList": [
-        "येल्लोरी वाडी"
-      ],
-      "id": "EMP_014",
-      "updatedAt": "2026-09-28T11:38:59.121Z",
-      "bsCode": "54F5V7"
-    },
-    {
-      "employeeName": "श्रीमती मंगल हिरामन चव्हाण",
-      "villageList": [
-        "औसा तांडा"
-      ],
-      "updatedAt": "2026-09-28T11:38:59.141Z",
-      "mobile": "",
-      "bsCode": "54F5V8",
-      "upkendra": "कोरंगळा",
-      "id": "EMP_015",
-      "designation": "आशा स्वयंसेविका (ASHA)"
-    },
-    {
-      "id": "EMP_016",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती विमल श्रीहरी जंगाले",
-      "upkendra": "कोरंगळा",
-      "villageList": [
-        "कोरंगळा"
-      ],
-      "updatedAt": "2026-09-28T11:38:59.165Z",
-      "mobile": "",
-      "bsCode": "54F5V2"
-    },
-    {
-      "id": "EMP_017",
-      "employeeName": "श्रीमती नागमोडे बी.डी.",
-      "designation": "आरोग्य सेविका (ANM)",
-      "bsCode": "54F5A",
-      "upkendra": "कोरंगळा",
-      "updatedAt": "2026-09-28T11:38:59.192Z",
-      "villageList": [
-        "कोरंगळा",
-        "औसा तांडा",
-        "येल्लोरी वाडी",
-        "येल्लोरी",
-        "समदर्गा"
-      ],
+      "employeeName": "श्रीमती जावंडरे एस.डी.",
       "mobile": ""
     },
     {
-      "bsCode": "54S5",
+      "upkendra": "आलमला",
       "mobile": "",
+      "employeeName": "श्री सगर आभिजीत",
+      "villageList": [
+        "आलमला",
+        "आलमला तांडा",
+        "उंबडगा बू",
+        "उंबडगा खू"
+      ],
+      "bsCode": "54S6",
       "designation": "आरोग्य सेवक (MPW)",
-      "id": "EMP_018",
-      "updatedAt": "2026-09-28T11:38:59.225Z",
+      "updatedAt": "2026-09-28T11:38:58.971Z",
+      "id": "EMP_008"
+    },
+    {
+      "mobile": "",
+      "employeeName": "श्रीमती कैसल्या विष्णू ढोक",
+      "updatedAt": "2026-09-28T11:38:58.994Z",
+      "bsCode": "54F5V4",
+      "upkendra": "कोरंगळा",
+      "villageList": [
+        "समदर्गा"
+      ],
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "id": "EMP_009"
+    },
+    {
+      "updatedAt": "2026-09-28T11:38:59.016Z",
+      "id": "EMP_010",
+      "upkendra": "कोरंगळा",
+      "employeeName": "श्रीमती छाया हेमाद्रीपंत काळे",
+      "mobile": "",
+      "villageList": [
+        "समदर्गा"
+      ],
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "bsCode": "54F5V3"
+    },
+    {
+      "id": "EMP_011",
+      "mobile": "",
+      "employeeName": "श्रीमती नजमुन अल्लाबक्श दरोगे",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "villageList": [
+        "कोरंगळा"
+      ],
+      "upkendra": "कोरंगळा",
+      "updatedAt": "2026-09-28T11:38:59.045Z",
+      "bsCode": "54F5V1"
+    },
+    {
+      "updatedAt": "2026-09-28T11:38:59.066Z",
+      "villageList": [
+        "येल्लोरी"
+      ],
+      "bsCode": "54F5V5",
+      "upkendra": "कोरंगळा",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती दुर्गा वैजीनाथ चांडसुरे",
+      "id": "EMP_012",
+      "mobile": ""
+    },
+    {
+      "updatedAt": "2026-09-28T11:38:59.095Z",
+      "villageList": [
+        "येल्लोरी"
+      ],
+      "upkendra": "कोरंगळा",
+      "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती सविता गोपाळ रिंगनकर",
+      "bsCode": "54F5V6",
+      "id": "EMP_013"
+    },
+    {
+      "updatedAt": "2026-09-28T11:38:59.121Z",
+      "bsCode": "54F5V7",
+      "villageList": [
+        "येल्लोरी वाडी"
+      ],
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती सुनिता शहाजी घाडगे",
+      "id": "EMP_014",
+      "mobile": "",
+      "upkendra": "कोरंगळा"
+    },
+    {
+      "villageList": [
+        "औसा तांडा"
+      ],
+      "employeeName": "श्रीमती मंगल हिरामन चव्हाण",
+      "updatedAt": "2026-09-28T11:38:59.141Z",
+      "id": "EMP_015",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "upkendra": "कोरंगळा",
+      "mobile": "",
+      "bsCode": "54F5V8"
+    },
+    {
+      "employeeName": "श्रीमती विमल श्रीहरी जंगाले",
+      "mobile": "",
+      "updatedAt": "2026-09-28T11:38:59.165Z",
+      "id": "EMP_016",
+      "upkendra": "कोरंगळा",
+      "bsCode": "54F5V2",
+      "villageList": [
+        "कोरंगळा"
+      ],
+      "designation": "आशा स्वयंसेविका (ASHA)"
+    },
+    {
       "villageList": [
         "कोरंगळा",
         "औसा तांडा",
@@ -33426,436 +33405,457 @@
         "येल्लोरी",
         "समदर्गा"
       ],
+      "bsCode": "54F5A",
+      "upkendra": "कोरंगळा",
+      "designation": "आरोग्य सेविका (ANM)",
+      "updatedAt": "2026-09-28T11:38:59.192Z",
+      "mobile": "",
+      "id": "EMP_017",
+      "employeeName": "श्रीमती नागमोडे बी.डी."
+    },
+    {
+      "mobile": "",
+      "id": "EMP_018",
+      "bsCode": "54S5",
+      "designation": "आरोग्य सेवक (MPW)",
+      "villageList": [
+        "कोरंगळा",
+        "औसा तांडा",
+        "येल्लोरी वाडी",
+        "येल्लोरी",
+        "समदर्गा"
+      ],
+      "updatedAt": "2026-09-28T11:38:59.225Z",
       "upkendra": "कोरंगळा",
       "employeeName": "श्री विश्वंभर शिंदे"
     },
     {
-      "id": "EMP_019",
-      "employeeName": "श्रीमती सारीका बब्रुवान गजनेत्री",
+      "bsCode": "54F2V3",
       "villageList": [
         "काळमाथा"
       ],
-      "upkendra": "बोरगाव",
-      "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "updatedAt": "2026-09-28T11:38:59.252Z",
-      "bsCode": "54F2V3",
-      "designation": "आशा स्वयंसेविका (ASHA)"
+      "upkendra": "बोरगाव",
+      "id": "EMP_019",
+      "employeeName": "श्रीमती सारीका बब्रुवान गजनेत्री",
+      "mobile": ""
     },
     {
-      "employeeName": "श्रीमती ललिता बालाजी साळुंके",
+      "upkendra": "बोरगाव",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "updatedAt": "2026-09-28T11:38:59.287Z",
+      "employeeName": "श्रीमती ललिता बालाजी साळुंके",
+      "mobile": "",
       "villageList": [
         "बोरगांव"
       ],
-      "mobile": "",
-      "upkendra": "बोरगाव",
+      "updatedAt": "2026-09-28T11:38:59.287Z",
       "id": "EMP_020",
       "bsCode": "54F2V2"
     },
     {
-      "id": "EMP_021",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती उमा दयानंद डामगीरे",
       "updatedAt": "2026-09-28T11:38:59.313Z",
-      "upkendra": "बोरगाव",
-      "bsCode": "54F2V1",
       "villageList": [
         "बोरगांव"
       ],
-      "mobile": ""
+      "id": "EMP_021",
+      "employeeName": "श्रीमती उमा दयानंद डामगीरे",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "upkendra": "बोरगाव",
+      "mobile": "",
+      "bsCode": "54F2V1"
     },
     {
+      "upkendra": "बोरगाव",
+      "updatedAt": "2026-09-28T11:38:59.337Z",
+      "mobile": "",
       "employeeName": "श्रीमती तस्लीम सय्यद फकीर",
       "villageList": [
         "काळमाथा"
       ],
-      "updatedAt": "2026-09-28T11:38:59.337Z",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "upkendra": "बोरगाव",
       "bsCode": "54F2V3",
-      "mobile": "",
       "id": "EMP_022"
     },
     {
-      "upkendra": "बोरगाव",
-      "mobile": "",
-      "designation": "आशा स्वयंसेविका (ASHA)",
       "bsCode": "54F2V5",
-      "updatedAt": "2026-09-28T11:38:59.360Z",
       "villageList": [
         "कवठा",
         "कवठा तांडा"
       ],
-      "id": "EMP_023",
-      "employeeName": "श्रीमती आर्चना दगडु गोरे"
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "updatedAt": "2026-09-28T11:38:59.360Z",
+      "upkendra": "बोरगाव",
+      "mobile": "",
+      "employeeName": "श्रीमती आर्चना दगडु गोरे",
+      "id": "EMP_023"
     },
     {
-      "designation": "आरोग्य सेविका (ANM)",
+      "employeeName": "श्रीमती वंदना तीर्थोबा कांबळे",
       "bsCode": "54F2",
       "id": "EMP_024",
       "mobile": "",
+      "designation": "आरोग्य सेविका (ANM)",
       "updatedAt": "2026-09-28T11:38:59.389Z",
-      "upkendra": "बोरगाव",
       "villageList": [
         "बोरगांव",
         "कवठा",
         "कवठा तांडा",
         "काळमाथा"
       ],
-      "employeeName": "श्रीमती वंदना तीर्थोबा कांबळे"
+      "upkendra": "बोरगाव"
     },
     {
-      "upkendra": "बोरगाव",
-      "employeeName": "श्री युनुस शेख",
-      "designation": "आरोग्य सेवक (MPW)",
+      "id": "EMP_025",
       "mobile": "",
       "updatedAt": "2026-09-28T11:38:59.408Z",
+      "upkendra": "बोरगाव",
+      "designation": "आरोग्य सेवक (MPW)",
       "bsCode": "54S2",
+      "employeeName": "श्री युनुस शेख",
       "villageList": [
         "बोरगांव",
         "कवठा",
         "कवठा तांडा",
         "काळमाथा"
-      ],
-      "id": "EMP_025"
+      ]
     },
     {
-      "mobile": "",
-      "updatedAt": "2026-09-28T11:38:59.437Z",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती शिवकन्या शंकर कुर्डे",
       "bsCode": "54F1V7",
-      "id": "EMP_026",
+      "employeeName": "श्रीमती शिवकन्या शंकर कुर्डे",
+      "updatedAt": "2026-09-28T11:38:59.437Z",
       "villageList": [
         "हाळदुर्ग"
       ],
-      "upkendra": "भादा"
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "upkendra": "भादा",
+      "id": "EMP_026",
+      "mobile": ""
     },
     {
+      "id": "EMP_027",
+      "mobile": "",
+      "updatedAt": "2026-09-28T11:38:59.461Z",
+      "upkendra": "भादा",
+      "employeeName": "श्रीमती महादेवी सुखदेव वाडकर",
       "villageList": [
         "भादा"
       ],
-      "upkendra": "भादा",
-      "updatedAt": "2026-09-28T11:38:59.461Z",
-      "id": "EMP_027",
-      "employeeName": "श्रीमती महादेवी सुखदेव वाडकर",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "mobile": "",
       "bsCode": "54F1V1"
     },
     {
-      "id": "EMP_028",
-      "villageList": [
-        "भादा"
-      ],
-      "updatedAt": "2026-09-28T11:38:59.486Z",
-      "upkendra": "भादा",
       "designation": "आशा स्वयंसेविका (ASHA)",
       "employeeName": "श्रीमती उषा शिवहरी कुंजीर",
-      "mobile": "",
-      "bsCode": "54F1V5"
-    },
-    {
       "villageList": [
         "भादा"
       ],
+      "bsCode": "54F1V5",
+      "id": "EMP_028",
+      "mobile": "",
+      "upkendra": "भादा",
+      "updatedAt": "2026-09-28T11:38:59.486Z"
+    },
+    {
       "employeeName": "श्रीमती जयश्री नंदकुमार बुरबुरे",
       "id": "EMP_029",
-      "upkendra": "भादा",
       "updatedAt": "2026-09-28T11:38:59.507Z",
       "bsCode": "54F1V2",
+      "villageList": [
+        "भादा"
+      ],
+      "upkendra": "भादा",
       "designation": "आशा स्वयंसेविका (ASHA)",
       "mobile": ""
     },
     {
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "upkendra": "भादा",
-      "mobile": "",
-      "updatedAt": "2026-09-28T11:38:59.530Z",
       "employeeName": "श्रीमती रेखा मोहन ढवळे",
+      "bsCode": "54F1V3",
+      "upkendra": "भादा",
+      "updatedAt": "2026-09-28T11:38:59.530Z",
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "villageList": [
         "भादा"
       ],
-      "bsCode": "54F1V3",
-      "id": "EMP_030"
+      "id": "EMP_030",
+      "mobile": ""
     },
     {
+      "villageList": [
+        "भादा"
+      ],
       "designation": "आशा स्वयंसेविका (ASHA)",
+      "updatedAt": "2026-09-28T11:38:59.557Z",
+      "mobile": "",
+      "id": "EMP_031",
       "employeeName": "श्रीमती सुवर्णमाला जगन्नाथ राउत",
       "upkendra": "भादा",
-      "updatedAt": "2026-09-28T11:38:59.557Z",
-      "id": "EMP_031",
-      "bsCode": "54F1V4",
-      "mobile": "",
-      "villageList": [
-        "भादा"
-      ]
+      "bsCode": "54F1V4"
     },
     {
-      "updatedAt": "2026-09-28T11:38:59.575Z",
+      "mobile": "",
       "employeeName": "श्रीमती रुक्मीन किसन गव्हाणे",
       "bsCode": "54F1V6",
+      "upkendra": "भादा",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "mobile": "",
+      "id": "EMP_032",
       "villageList": [
         "शिंदेवाडी"
       ],
-      "id": "EMP_032",
-      "upkendra": "भादा"
+      "updatedAt": "2026-09-28T11:38:59.575Z"
     },
     {
-      "upkendra": "भादा",
-      "id": "EMP_033",
-      "updatedAt": "2026-09-28T11:38:59.602Z",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती सिंधू बापू तुंदारे",
-      "mobile": "",
-      "bsCode": "54F1V8",
+      "upkendra": "भादा",
       "villageList": [
         "ब-हाणपूर"
-      ]
+      ],
+      "bsCode": "54F1V8",
+      "employeeName": "श्रीमती सिंधू बापू तुंदारे",
+      "id": "EMP_033",
+      "mobile": "",
+      "updatedAt": "2026-09-28T11:38:59.602Z"
     },
     {
-      "designation": "आरोग्य सेविका (ANM)",
-      "mobile": "",
-      "bsCode": "54F1",
       "employeeName": "श्रीमती शिंदे पी एस",
-      "updatedAt": "2026-09-28T11:38:59.629Z",
       "upkendra": "भादा",
-      "id": "EMP_034",
-      "villageList": [
-        "भादा",
-        "ब-हाणपूर",
-        "हाळदुर्ग",
-        "शिंदेवाडी"
-      ]
-    },
-    {
-      "id": "EMP_035",
-      "designation": "आरोग्य सेवक (MPW)",
       "mobile": "",
-      "upkendra": "भादा",
-      "bsCode": "54S1A1",
+      "designation": "आरोग्य सेविका (ANM)",
       "villageList": [
         "भादा",
         "ब-हाणपूर",
         "हाळदुर्ग",
         "शिंदेवाडी"
       ],
-      "employeeName": "श्री रवी लिपारे",
-      "updatedAt": "2026-09-28T11:38:59.666Z"
+      "bsCode": "54F1",
+      "updatedAt": "2026-09-28T11:38:59.629Z",
+      "id": "EMP_034"
     },
     {
-      "id": "EMP_036",
-      "bsCode": "54S1A2",
-      "updatedAt": "2026-09-28T11:38:59.690Z",
-      "mobile": "",
+      "employeeName": "श्री रवी लिपारे",
       "designation": "आरोग्य सेवक (MPW)",
-      "employeeName": "श्री शिरीष रामहरी शिंदे",
-      "upkendra": "भादा",
       "villageList": [
         "भादा",
         "ब-हाणपूर",
         "हाळदुर्ग",
         "शिंदेवाडी"
-      ]
+      ],
+      "mobile": "",
+      "upkendra": "भादा",
+      "updatedAt": "2026-09-28T11:38:59.666Z",
+      "id": "EMP_035",
+      "bsCode": "54S1A1"
     },
     {
+      "bsCode": "54S1A2",
+      "upkendra": "भादा",
+      "updatedAt": "2026-09-28T11:38:59.690Z",
+      "employeeName": "श्री शिरीष रामहरी शिंदे",
+      "villageList": [
+        "भादा",
+        "ब-हाणपूर",
+        "हाळदुर्ग",
+        "शिंदेवाडी"
+      ],
+      "mobile": "",
+      "designation": "आरोग्य सेवक (MPW)",
+      "id": "EMP_036"
+    },
+    {
+      "id": "EMP_037",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "bsCode": "54F3V4",
       "villageList": [
         "आंदोरा"
       ],
-      "upkendra": "भेटा",
-      "employeeName": "श्रीमती पठाण फरीदा अहेमद",
-      "mobile": "",
-      "id": "EMP_037",
-      "designation": "आशा स्वयंसेविका (ASHA)",
       "updatedAt": "2026-09-28T11:38:59.711Z",
-      "bsCode": "54F3V4"
+      "employeeName": "श्रीमती पठाण फरीदा अहेमद",
+      "upkendra": "भेटा",
+      "mobile": ""
     },
     {
-      "designation": "आशा स्वयंसेविका (ASHA)",
+      "mobile": "",
+      "updatedAt": "2026-09-28T11:38:59.736Z",
       "id": "EMP_038",
       "bsCode": "54F3V5",
       "employeeName": "श्रीमती गोसीया गैबी पठाण",
       "villageList": [
         "आंदोरा"
       ],
-      "updatedAt": "2026-09-28T11:38:59.736Z",
-      "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "upkendra": "भेटा"
     },
     {
+      "mobile": "",
       "upkendra": "भेटा",
       "updatedAt": "2026-09-28T11:38:59.765Z",
-      "mobile": "",
-      "bsCode": "54F3V2",
-      "id": "EMP_039",
+      "employeeName": "श्रीमती शालू रंगराव वानवडे",
       "villageList": [
         "भेटा",
         "नाव्होली"
       ],
-      "employeeName": "श्रीमती शालू रंगराव वानवडे",
+      "bsCode": "54F3V2",
+      "id": "EMP_039",
       "designation": "आशा स्वयंसेविका (ASHA)"
     },
     {
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "id": "EMP_040",
-      "bsCode": "54F3V6",
-      "villageList": [
-        "भेटा"
-      ],
-      "mobile": "",
       "updatedAt": "2026-09-28T11:38:59.796Z",
       "upkendra": "भेटा",
-      "employeeName": "श्रीमती पिंपरे चंद्रकला शंकर"
-    },
-    {
+      "id": "EMP_040",
+      "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "villageList": [
         "भेटा"
       ],
-      "upkendra": "भेटा",
-      "updatedAt": "2026-09-28T11:38:59.835Z",
-      "id": "EMP_041",
-      "employeeName": "श्रीमती गंगणे कविता सुरेष",
-      "mobile": "",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "bsCode": "54F3V3"
+      "employeeName": "श्रीमती पिंपरे चंद्रकला शंकर",
+      "bsCode": "54F3V6"
     },
     {
+      "bsCode": "54F3V3",
+      "updatedAt": "2026-09-28T11:38:59.835Z",
+      "id": "EMP_041",
+      "upkendra": "भेटा",
+      "villageList": [
+        "भेटा"
+      ],
       "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती गंगणे कविता सुरेष"
+    },
+    {
+      "updatedAt": "2026-09-28T11:38:59.904Z",
+      "mobile": "",
+      "employeeName": "श्रीमती चंद्रकला राजेंद्र पुरी",
       "villageList": [
         "वडजी"
       ],
-      "bsCode": "54F3V6",
-      "updatedAt": "2026-09-28T11:38:59.904Z",
-      "id": "EMP_042",
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "upkendra": "भेटा",
-      "employeeName": "श्रीमती चंद्रकला राजेंद्र पुरी",
-      "designation": "आशा स्वयंसेविका (ASHA)"
+      "id": "EMP_042",
+      "bsCode": "54F3V6"
     },
     {
-      "mobile": "",
       "villageList": [
         "भेटा",
         "आंदोरा",
         "वडजी",
         "नाव्होली"
       ],
+      "mobile": "",
+      "employeeName": "श्रीमती जाधव आर सी",
+      "designation": "आरोग्य सेविका (ANM)",
+      "updatedAt": "2026-09-28T11:38:59.953Z",
       "bsCode": "54F3",
       "upkendra": "भेटा",
-      "employeeName": "श्रीमती जाधव आर सी",
-      "id": "EMP_043",
-      "updatedAt": "2026-09-28T11:38:59.953Z",
-      "designation": "आरोग्य सेविका (ANM)"
+      "id": "EMP_043"
     },
     {
+      "designation": "आरोग्य सेवक (MPW)",
+      "upkendra": "भेटा",
       "villageList": [
         "भेटा",
         "आंदोरा",
         "वडजी",
         "नाव्होली"
       ],
-      "bsCode": "54S3",
-      "id": "EMP_044",
       "mobile": "",
       "employeeName": "श्री परमेश्वर काळे",
-      "upkendra": "भेटा",
-      "designation": "आरोग्य सेवक (MPW)",
-      "updatedAt": "2026-09-28T11:38:59.994Z"
+      "updatedAt": "2026-09-28T11:38:59.994Z",
+      "bsCode": "54S3",
+      "id": "EMP_044"
     },
     {
       "updatedAt": "2026-09-28T11:39:00.027Z",
+      "upkendra": "लखनगाव",
+      "bsCode": "54F7V3",
+      "id": "EMP_045",
+      "employeeName": "श्रीमती ललिता जनार्धन आडे",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "mobile": "",
       "villageList": [
         "सत्तधरवाडी",
         "कुलकर्णी तांडा"
-      ],
-      "id": "EMP_045",
-      "employeeName": "श्रीमती ललिता जनार्धन आडे",
-      "mobile": "",
-      "bsCode": "54F7V3",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "upkendra": "लखनगाव"
+      ]
     },
     {
-      "villageList": [
-        "सत्तधरवाडी"
-      ],
+      "mobile": "",
       "upkendra": "लखनगाव",
       "id": "EMP_046",
-      "bsCode": "54F7V4",
-      "mobile": "",
-      "employeeName": "श्रीमती मनिषा सिद्धाप्पा कवटे",
       "updatedAt": "2026-09-28T11:39:00.047Z",
-      "designation": "आशा स्वयंसेविका (ASHA)"
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती मनिषा सिद्धाप्पा कवटे",
+      "bsCode": "54F7V4",
+      "villageList": [
+        "सत्तधरवाडी"
+      ]
     },
     {
-      "villageList": [
-        "उटी बु."
-      ],
-      "id": "EMP_047",
-      "mobile": "",
       "employeeName": "श्रीमती माधुरी पोफळे",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "updatedAt": "2026-09-28T11:39:00.066Z",
-      "bsCode": "54F7V7",
-      "upkendra": "लखनगाव"
-    },
-    {
+      "id": "EMP_047",
       "upkendra": "लखनगाव",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "id": "EMP_048",
-      "employeeName": "श्रीमती रिहाना महताब शेख",
-      "updatedAt": "2026-09-28T11:39:00.093Z",
-      "bsCode": "54F7V2",
+      "bsCode": "54F7V7",
+      "updatedAt": "2026-09-28T11:39:00.066Z",
       "villageList": [
         "उटी बु."
       ],
+      "designation": "आशा स्वयंसेविका (ASHA)",
       "mobile": ""
     },
     {
-      "id": "EMP_049",
-      "updatedAt": "2026-09-28T11:39:00.122Z",
+      "bsCode": "54F7V2",
       "upkendra": "लखनगाव",
+      "mobile": "",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "employeeName": "श्रीमती रिहाना महताब शेख",
+      "updatedAt": "2026-09-28T11:39:00.093Z",
+      "villageList": [
+        "उटी बु."
+      ],
+      "id": "EMP_048"
+    },
+    {
+      "upkendra": "लखनगाव",
+      "id": "EMP_049",
+      "mobile": "",
+      "updatedAt": "2026-09-28T11:39:00.122Z",
+      "employeeName": "श्रीमती संगीता प्रेमसिंग राठोड",
+      "bsCode": "54F7V5",
       "villageList": [
         "सोनपट्टी तांडा"
       ],
-      "bsCode": "54F7V5",
-      "employeeName": "श्रीमती संगीता प्रेमसिंग राठोड",
-      "mobile": "",
       "designation": "आशा स्वयंसेविका (ASHA)"
     },
     {
-      "employeeName": "श्रीमती माया लिंबाजी वाघमारे",
-      "updatedAt": "2026-09-28T11:39:00.139Z",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "id": "EMP_050",
-      "upkendra": "लखनगाव",
-      "mobile": "",
       "villageList": [
         "लखनगांव"
       ],
-      "bsCode": "54F7V1"
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "updatedAt": "2026-09-28T11:39:00.139Z",
+      "id": "EMP_050",
+      "bsCode": "54F7V1",
+      "employeeName": "श्रीमती माया लिंबाजी वाघमारे",
+      "mobile": "",
+      "upkendra": "लखनगाव"
     },
     {
+      "villageList": [
+        "लखनगांव"
+      ],
       "id": "EMP_051",
       "designation": "आशा स्वयंसेविका (ASHA)",
-      "upkendra": "लखनगाव",
-      "mobile": "",
-      "bsCode": "54F7V6",
-      "villageList": [
-        "लखनगांव"
-      ],
       "updatedAt": "2026-09-28T11:39:00.169Z",
-      "employeeName": "श्रीमती ज्योती परशुराम इटकर"
+      "bsCode": "54F7V6",
+      "upkendra": "लखनगाव",
+      "employeeName": "श्रीमती ज्योती परशुराम इटकर",
+      "mobile": ""
     },
     {
-      "bsCode": "54F7",
-      "updatedAt": "2026-09-28T11:39:00.202Z",
-      "mobile": "",
-      "designation": "आरोग्य सेविका (ANM)",
-      "upkendra": "लखनगाव",
       "id": "EMP_052",
+      "mobile": "",
+      "upkendra": "लखनगाव",
+      "designation": "आरोग्य सेविका (ANM)",
+      "employeeName": "श्रीमती जगताप ए टी",
+      "bsCode": "54F7",
       "villageList": [
         "लखनगांव",
         "सोनपट्टी तांडा",
@@ -33863,42 +33863,26 @@
         "सत्तधरवाडी",
         "कुलकर्णी तांडा"
       ],
-      "employeeName": "श्रीमती जगताप ए टी"
+      "updatedAt": "2026-09-28T11:39:00.202Z"
     },
     {
-      "upkendra": "लखनगाव",
-      "mobile": "",
       "employeeName": "श्री वनराज जाधव",
-      "designation": "आरोग्य सेवक (MPW)",
       "bsCode": "54S7",
+      "villageList": [
+        "लखनगांव",
+        "सोनपट्टी तांडा",
+        "उटी बु.",
+        "सत्तधरवाडी",
+        "कुलकर्णी तांडा"
+      ],
+      "id": "EMP_053",
       "updatedAt": "2026-09-28T11:39:00.224Z",
-      "villageList": [
-        "लखनगांव",
-        "सोनपट्टी तांडा",
-        "उटी बु.",
-        "सत्तधरवाडी",
-        "कुलकर्णी तांडा"
-      ],
-      "id": "EMP_053"
-    },
-    {
       "designation": "आरोग्य सेवक (MPW)",
-      "mobile": "",
-      "bsCode": "54S7A1",
-      "updatedAt": "2026-09-28T11:39:00.256Z",
       "upkendra": "लखनगाव",
-      "id": "EMP_053A",
-      "villageList": [
-        "लखनगांव",
-        "सोनपट्टी तांडा",
-        "उटी बु.",
-        "सत्तधरवाडी",
-        "कुलकर्णी तांडा"
-      ],
-      "employeeName": "श्री उजळंबे राजेंद्र सुभाष"
+      "mobile": ""
     },
     {
-      "updatedAt": "2026-09-28T11:39:00.295Z",
+      "mobile": "",
       "villageList": [
         "लखनगांव",
         "सोनपट्टी तांडा",
@@ -33906,207 +33890,220 @@
         "सत्तधरवाडी",
         "कुलकर्णी तांडा"
       ],
+      "updatedAt": "2026-09-28T11:39:00.256Z",
+      "designation": "आरोग्य सेवक (MPW)",
+      "employeeName": "श्री उजळंबे राजेंद्र सुभाष",
+      "bsCode": "54S7A1",
+      "id": "EMP_053A",
+      "upkendra": "लखनगाव"
+    },
+    {
       "upkendra": "लखनगाव",
       "employeeName": "श्री रवी लिपारे",
-      "mobile": "",
-      "id": "EMP_053B",
       "designation": "आरोग्य सेवक (MPW)",
-      "bsCode": "54S7"
+      "bsCode": "54S7",
+      "villageList": [
+        "लखनगांव",
+        "सोनपट्टी तांडा",
+        "उटी बु.",
+        "सत्तधरवाडी",
+        "कुलकर्णी तांडा"
+      ],
+      "updatedAt": "2026-09-28T11:39:00.295Z",
+      "mobile": "",
+      "id": "EMP_053B"
     },
     {
+      "bsCode": "54F4V2",
+      "id": "EMP_054",
+      "updatedAt": "2026-09-28T11:39:00.327Z",
+      "mobile": "",
       "employeeName": "श्रीमती रईसा आब्दूल तांबोळी",
       "villageList": [
         "शिवली"
       ],
-      "mobile": "",
-      "updatedAt": "2026-09-28T11:39:00.327Z",
-      "id": "EMP_054",
-      "bsCode": "54F4V2",
-      "upkendra": "शिवली",
-      "designation": "आशा स्वयंसेविका (ASHA)"
-    },
-    {
-      "upkendra": "शिवली",
-      "villageList": [
-        "शिवली"
-      ],
-      "mobile": "",
-      "id": "EMP_055",
-      "bsCode": "54F4V4",
-      "employeeName": "श्रीमती उर्मीला मधुकर नागरसोगे",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "updatedAt": "2026-09-28T11:39:00.350Z"
-    },
-    {
-      "bsCode": "54F4V3",
-      "id": "EMP_056",
-      "updatedAt": "2026-09-28T11:39:00.377Z",
-      "villageList": [
-        "शिवली"
-      ],
-      "employeeName": "श्रीमती तारामती चंद्रकांत फुटाणे",
-      "mobile": "",
       "designation": "आशा स्वयंसेविका (ASHA)",
       "upkendra": "शिवली"
     },
     {
-      "updatedAt": "2026-09-28T11:39:00.393Z",
-      "id": "EMP_057",
-      "bsCode": "54F4V5",
       "mobile": "",
+      "updatedAt": "2026-09-28T11:39:00.350Z",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "villageList": [
+        "शिवली"
+      ],
+      "id": "EMP_055",
       "upkendra": "शिवली",
+      "bsCode": "54F4V4",
+      "employeeName": "श्रीमती उर्मीला मधुकर नागरसोगे"
+    },
+    {
+      "mobile": "",
+      "employeeName": "श्रीमती तारामती चंद्रकांत फुटाणे",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "bsCode": "54F4V3",
+      "villageList": [
+        "शिवली"
+      ],
+      "id": "EMP_056",
+      "updatedAt": "2026-09-28T11:39:00.377Z",
+      "upkendra": "शिवली"
+    },
+    {
       "villageList": [
         "वरवडा"
       ],
+      "updatedAt": "2026-09-28T11:39:00.393Z",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "bsCode": "54F4V5",
+      "upkendra": "शिवली",
       "employeeName": "श्रीमती जयश्री हरिश्चंद्र जाधव",
+      "mobile": "",
+      "id": "EMP_057"
+    },
+    {
+      "updatedAt": "2026-09-28T11:39:00.411Z",
+      "mobile": "",
+      "employeeName": "श्रीमती पल्लवी किशोर कदम",
+      "villageList": [
+        "वरवडा"
+      ],
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "upkendra": "शिवली",
+      "id": "EMP_058",
+      "bsCode": "54F4V7"
+    },
+    {
+      "id": "EMP_059",
+      "bsCode": "54F4V6",
+      "upkendra": "शिवली",
+      "designation": "आशा स्वयंसेविका (ASHA)",
+      "updatedAt": "2026-09-28T11:39:00.439Z",
+      "mobile": "",
+      "villageList": [
+        "जायफळ"
+      ],
+      "employeeName": "श्रीमती माया बाबुराव माने"
+    },
+    {
+      "upkendra": "शिवली",
+      "updatedAt": "2026-09-28T11:39:00.464Z",
+      "mobile": "",
+      "employeeName": "श्रीमती आशा राजाराम पावले",
+      "bsCode": "54F4V1",
+      "id": "EMP_060",
+      "villageList": [
+        "शिवली"
+      ],
       "designation": "आशा स्वयंसेविका (ASHA)"
     },
     {
       "villageList": [
-        "वरवडा"
-      ],
-      "updatedAt": "2026-09-28T11:39:00.411Z",
-      "upkendra": "शिवली",
-      "employeeName": "श्रीमती पल्लवी किशोर कदम",
-      "mobile": "",
-      "bsCode": "54F4V7",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "id": "EMP_058"
-    },
-    {
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "employeeName": "श्रीमती माया बाबुराव माने",
-      "upkendra": "शिवली",
-      "mobile": "",
-      "id": "EMP_059",
-      "villageList": [
-        "जायफळ"
-      ],
-      "bsCode": "54F4V6",
-      "updatedAt": "2026-09-28T11:39:00.439Z"
-    },
-    {
-      "employeeName": "श्रीमती आशा राजाराम पावले",
-      "id": "EMP_060",
-      "designation": "आशा स्वयंसेविका (ASHA)",
-      "bsCode": "54F4V1",
-      "updatedAt": "2026-09-28T11:39:00.464Z",
-      "villageList": [
-        "शिवली"
-      ],
-      "upkendra": "शिवली",
-      "mobile": ""
-    },
-    {
-      "villageList": [
         "शिवली",
         "वरवडा",
         "जायफळ"
       ],
-      "updatedAt": "2026-09-28T11:39:00.500Z",
-      "upkendra": "शिवली",
-      "employeeName": "श्रीमती पंचशीला गोरख भांगे",
+      "bsCode": "54F4",
       "designation": "आरोग्य सेविका (ANM)",
+      "upkendra": "शिवली",
+      "updatedAt": "2026-09-28T11:39:00.500Z",
       "id": "EMP_061",
       "mobile": "",
-      "bsCode": "54F4"
+      "employeeName": "श्रीमती पंचशीला गोरख भांगे"
     },
     {
+      "upkendra": "शिवली",
+      "mobile": "",
+      "employeeName": "श्री अनिल एकनाथ भराडे",
+      "updatedAt": "2026-09-28T11:39:00.533Z",
+      "bsCode": "54S4",
+      "designation": "आरोग्य सेवक (MPW)",
+      "id": "EMP_062",
       "villageList": [
         "शिवली",
         "वरवडा",
         "जायफळ"
-      ],
-      "upkendra": "शिवली",
-      "id": "EMP_062",
-      "bsCode": "54S4",
-      "updatedAt": "2026-09-28T11:39:00.533Z",
-      "designation": "आरोग्य सेवक (MPW)",
-      "employeeName": "श्री अनिल एकनाथ भराडे",
-      "mobile": ""
+      ]
     },
     {
-      "designation": "वैद्यकीय अधिकारी (OPD)",
-      "upkendra": "प्रा.आ.केंद्र",
-      "id": "EMP_063",
       "mobile": "",
+      "id": "EMP_063",
+      "bsCode": "54P",
+      "upkendra": "प्रा.आ.केंद्र",
+      "designation": "वैद्यकीय अधिकारी (OPD)",
+      "employeeName": "बाह्य रुग्ण विभाग",
+      "updatedAt": "2026-09-28T11:39:00.564Z",
       "villageList": [
         "Phc भादा"
-      ],
-      "employeeName": "बाह्य रुग्ण विभाग",
-      "bsCode": "54P",
-      "updatedAt": "2026-09-28T11:39:00.564Z"
+      ]
     }
   ],
   "subcenterMaster": [
     {
-      "headquarter": "आलमला",
-      "updatedAt": "2026-09-28T11:38:58.429Z",
-      "houses": 1040,
       "contactPhone": "",
-      "id": "SC_ALMALA",
       "name": "आलमला",
       "contactPerson": "श्रीमती जावंडरे एस.डी. (ANM) / श्री सगर आभिजीत (MPW)",
+      "updatedAt": "2026-09-28T11:38:58.429Z",
+      "id": "SC_ALMALA",
+      "houses": 1040,
+      "headquarter": "आलमला",
+      "population": 5200,
       "villages": [
         "आलमला",
         "उंबडगा बू",
         "उंबडगा खू",
         "आलमला तांडा"
-      ],
-      "population": 5200
+      ]
     },
     {
-      "headquarter": "भादा",
+      "updatedAt": "2026-09-28T11:38:58.579Z",
+      "population": 7500,
+      "name": "भादा",
+      "houses": 1500,
       "villages": [
         "हाळदुर्ग",
         "भादा",
         "शिंदेवाडी",
         "ब-हाणपूर"
       ],
-      "contactPerson": "श्रीमती शिंदे पी एस (ANM) / श्री रवी लिपारे, श्री शिरीष शिंदे (MPW)",
-      "houses": 1500,
-      "population": 7500,
-      "id": "SC_BHADA",
-      "updatedAt": "2026-09-28T11:38:58.579Z",
       "contactPhone": "",
-      "name": "भादा"
+      "contactPerson": "श्रीमती शिंदे पी एस (ANM) / श्री रवी लिपारे, श्री शिरीष शिंदे (MPW)",
+      "headquarter": "भादा",
+      "id": "SC_BHADA"
     },
     {
-      "headquarter": "भेटा",
+      "updatedAt": "2026-09-28T11:38:58.611Z",
+      "population": 5100,
+      "name": "भेटा",
       "villages": [
         "आंदोरा",
         "भेटा",
         "नाव्होली",
         "वडजी"
       ],
-      "contactPerson": "श्रीमती जाधव आर सी (ANM) / श्री परमेश्वर काळे (MPW)",
-      "population": 5100,
       "houses": 1020,
-      "id": "SC_BHETA",
-      "updatedAt": "2026-09-28T11:38:58.611Z",
       "contactPhone": "",
-      "name": "भेटा"
+      "headquarter": "भेटा",
+      "contactPerson": "श्रीमती जाधव आर सी (ANM) / श्री परमेश्वर काळे (MPW)",
+      "id": "SC_BHETA"
     },
     {
-      "population": 4900,
-      "name": "बोरगाव",
-      "houses": 980,
-      "id": "SC_BORGAON",
       "villages": [
         "काळमाथा",
         "बोरगांव",
         "कवठा",
         "कवठा तांडा"
       ],
-      "updatedAt": "2026-09-28T11:38:58.513Z",
       "headquarter": "बोरगांव",
+      "houses": 980,
       "contactPerson": "श्रीमती वंदना तीर्थोबा कांबळे (ANM) / श्री युनुस शेख (MPW)",
-      "contactPhone": ""
+      "updatedAt": "2026-09-28T11:38:58.513Z",
+      "contactPhone": "",
+      "id": "SC_BORGAON",
+      "population": 4900,
+      "name": "बोरगाव"
     },
     {
-      "population": 6400,
-      "name": "कोरंगळा",
-      "houses": 1280,
       "villages": [
         "समदर्गा",
         "कोरंगळा",
@@ -34114,63 +34111,66 @@
         "येल्लोरी वाडी",
         "औसा तांडा"
       ],
-      "id": "SC_KORANGALA",
-      "updatedAt": "2026-09-28T11:38:58.481Z",
       "headquarter": "कोरंगळा",
+      "houses": 1280,
       "contactPerson": "श्रीमती नागमोडे बी.डी. (ANM) / श्री विश्वंभर शिंदे (MPW)",
-      "contactPhone": ""
+      "updatedAt": "2026-09-28T11:38:58.481Z",
+      "contactPhone": "",
+      "id": "SC_KORANGALA",
+      "name": "कोरंगळा",
+      "population": 6400
     },
     {
+      "contactPerson": "श्रीमती जगताप ए टी (ANM) / श्री वनराज जाधव, श्री उजळंबे राजेंद्र सुभाष, श्री रवी लिपारे (MPW)",
+      "name": "लखनगाव",
+      "updatedAt": "2026-09-28T11:38:58.635Z",
+      "id": "SC_LAKHANGAON",
+      "contactPhone": "",
+      "population": 5800,
+      "houses": 1160,
+      "headquarter": "लखनगांव",
       "villages": [
         "सत्तधरवाडी",
         "कुलकर्णी तांडा",
         "उटी बु.",
         "सोनपट्टी तांडा",
         "लखनगांव"
-      ],
-      "contactPerson": "श्रीमती जगताप ए टी (ANM) / श्री वनराज जाधव, श्री उजळंबे राजेंद्र सुभाष, श्री रवी लिपारे (MPW)",
-      "updatedAt": "2026-09-28T11:38:58.635Z",
-      "headquarter": "लखनगांव",
-      "population": 5800,
-      "name": "लखनगाव",
-      "id": "SC_LAKHANGAON",
-      "contactPhone": "",
-      "houses": 1160
+      ]
     },
     {
-      "villages": [
-        "Phc भादा"
-      ],
-      "contactPhone": "",
-      "updatedAt": "2026-09-28T11:38:58.703Z",
-      "id": "SC_PHC_OPD",
       "population": 39700,
+      "id": "SC_PHC_OPD",
       "name": "प्रा.आ.केंद्र",
+      "updatedAt": "2026-09-28T11:38:58.703Z",
+      "contactPhone": "",
       "houses": 7940,
       "contactPerson": "वैद्यकीय अधिकारी (OPD)",
-      "headquarter": "प्राथमिक आरोग्य केंद्र भादा"
+      "headquarter": "प्राथमिक आरोग्य केंद्र भादा",
+      "villages": [
+        "Phc भादा"
+      ]
     },
     {
-      "contactPhone": "",
+      "contactPerson": "श्रीमती पंचशीला गोरख भांगे (ANM) / श्री अनिल एकनाथ भराडे (MPW)",
       "headquarter": "शिवली",
-      "id": "SC_SHIVLI",
       "name": "शिवली",
       "villages": [
         "शिवली",
         "वरवडा",
         "जायफळ"
       ],
-      "houses": 960,
-      "contactPerson": "श्रीमती पंचशीला गोरख भांगे (ANM) / श्री अनिल एकनाथ भराडे (MPW)",
+      "contactPhone": "",
       "population": 4800,
-      "updatedAt": "2026-09-28T11:38:58.667Z"
+      "houses": 960,
+      "updatedAt": "2026-09-28T11:38:58.667Z",
+      "id": "SC_SHIVLI"
     }
   ],
   "villagesMaster": [
     {
+      "updatedAt": "2026-09-28T11:39:00.593Z",
       "subcenter": "आलमला",
-      "households": 0,
-      "id": "VIL_01",
+      "villageName": "आलमला",
       "assignedEmployees": [
         "श्रीमती पुनम रावसाहेब काळे (ASHA)",
         "श्रीमती राधा सुरेष पांचळ (ASHA)",
@@ -34179,83 +34179,83 @@
         "श्रीमती जावंडरे एस.डी. (ANM)",
         "श्री सगर आभिजीत (MPW)"
       ],
-      "population": 3706,
-      "villageName": "आलमला",
-      "updatedAt": "2026-09-28T11:39:00.593Z"
+      "id": "VIL_01",
+      "households": 0,
+      "population": 3706
     },
     {
-      "subcenter": "आलमला",
+      "population": 1009,
       "households": 0,
+      "subcenter": "आलमला",
       "villageName": "उंबडगा बू",
+      "updatedAt": "2026-09-28T11:39:00.687Z",
       "assignedEmployees": [
         "श्रीमती शिल्पा पुनम थोरात (ASHA)",
         "श्रीमती जावंडरे एस.डी. (ANM)",
         "श्री सगर आभिजीत (MPW)"
       ],
-      "population": 1009,
-      "id": "VIL_02",
-      "updatedAt": "2026-09-28T11:39:00.687Z"
+      "id": "VIL_02"
     },
     {
+      "updatedAt": "2026-09-28T11:39:00.729Z",
+      "villageName": "उंबडगा खू",
+      "households": 0,
+      "population": 997,
       "assignedEmployees": [
         "श्रीमती आनिता राजाराम बनसोडे (ASHA)",
         "श्रीमती जावंडरे एस.डी. (ANM)",
         "श्री सगर आभिजीत (MPW)"
       ],
       "subcenter": "आलमला",
-      "population": 997,
-      "id": "VIL_03",
-      "villageName": "उंबडगा खू",
-      "households": 0,
-      "updatedAt": "2026-09-28T11:39:00.729Z"
+      "id": "VIL_03"
     },
     {
-      "id": "VIL_04",
       "updatedAt": "2026-09-28T11:39:00.762Z",
-      "households": 0,
-      "villageName": "आलमला तांडा",
-      "population": 207,
+      "id": "VIL_04",
+      "subcenter": "आलमला",
       "assignedEmployees": [
         "श्रीमती जावंडरे एस.डी. (ANM)",
         "श्री सगर आभिजीत (MPW)"
       ],
-      "subcenter": "आलमला"
+      "households": 0,
+      "population": 207,
+      "villageName": "आलमला तांडा"
     },
     {
+      "villageName": "समदर्गा",
+      "id": "VIL_05",
       "households": 0,
+      "population": 1219,
       "assignedEmployees": [
         "श्रीमती कैसल्या विष्णू ढोक (ASHA)",
         "श्रीमती छाया हेमाद्रीपंत काळे (ASHA)",
         "श्रीमती नागमोडे बी.डी. (ANM)",
         "श्री विश्वंभर शिंदे (MPW)"
       ],
-      "id": "VIL_05",
-      "villageName": "समदर्गा",
       "subcenter": "कोरंगळा",
-      "updatedAt": "2026-09-28T11:39:00.964Z",
-      "population": 1219
+      "updatedAt": "2026-09-28T11:39:00.964Z"
     },
     {
+      "households": 0,
       "population": 1812,
+      "id": "VIL_06",
       "villageName": "कोरंगळा",
+      "updatedAt": "2026-09-28T11:39:01.003Z",
+      "subcenter": "कोरंगळा",
       "assignedEmployees": [
         "श्रीमती नजमुन अल्लाबक्श दरोगे (ASHA)",
         "श्रीमती विमल श्रीहरी जंगाले (ASHA)",
         "श्रीमती नागमोडे बी.डी. (ANM)",
         "श्री विश्वंभर शिंदे (MPW)"
-      ],
-      "id": "VIL_06",
-      "updatedAt": "2026-09-28T11:39:01.003Z",
-      "subcenter": "कोरंगळा",
-      "households": 0
+      ]
     },
     {
+      "subcenter": "कोरंगळा",
       "updatedAt": "2026-09-28T11:39:01.036Z",
+      "id": "VIL_07",
+      "households": 0,
       "population": 1402,
       "villageName": "येल्लोरी",
-      "id": "VIL_07",
-      "subcenter": "कोरंगळा",
-      "households": 0,
       "assignedEmployees": [
         "श्रीमती दुर्गा वैजीनाथ चांडसुरे (ASHA)",
         "श्रीमती सविता गोपाळ रिंगनकर (ASHA)",
@@ -34264,105 +34264,103 @@
       ]
     },
     {
-      "population": 664,
-      "subcenter": "कोरंगळा",
+      "id": "VIL_08",
+      "villageName": "येल्लोरी वाडी",
+      "updatedAt": "2026-09-28T11:39:01.071Z",
       "assignedEmployees": [
         "श्रीमती सुनिता शहाजी घाडगे (ASHA)",
         "श्रीमती नागमोडे बी.डी. (ANM)",
         "श्री विश्वंभर शिंदे (MPW)"
       ],
+      "subcenter": "कोरंगळा",
       "households": 0,
-      "villageName": "येल्लोरी वाडी",
-      "updatedAt": "2026-09-28T11:39:01.071Z",
-      "id": "VIL_08"
+      "population": 664
     },
     {
-      "population": 65,
-      "updatedAt": "2026-09-28T11:39:01.095Z",
+      "id": "VIL_09",
       "subcenter": "कोरंगळा",
-      "villageName": "औसा तांडा",
       "assignedEmployees": [
         "श्रीमती मंगल हिरामन चव्हाण (ASHA)",
         "श्रीमती नागमोडे बी.डी. (ANM)",
         "श्री विश्वंभर शिंदे (MPW)"
       ],
-      "id": "VIL_09",
-      "households": 0
+      "villageName": "औसा तांडा",
+      "households": 0,
+      "population": 65,
+      "updatedAt": "2026-09-28T11:39:01.095Z"
     },
     {
-      "updatedAt": "2026-09-28T11:39:01.114Z",
+      "villageName": "काळमाथा",
+      "subcenter": "बोरगाव",
+      "id": "VIL_10",
       "households": 0,
+      "population": 1811,
+      "updatedAt": "2026-09-28T11:39:01.114Z",
       "assignedEmployees": [
         "श्रीमती सारीका बब्रुवान गजनेत्री (ASHA)",
         "श्रीमती तस्लीम सय्यद फकीर (ASHA)",
         "श्रीमती वंदना तीर्थोबा कांबळे (ANM)",
         "श्री युनुस शेख (MPW)"
-      ],
-      "subcenter": "बोरगाव",
-      "population": 1811,
-      "id": "VIL_10",
-      "villageName": "काळमाथा"
+      ]
     },
     {
-      "id": "VIL_11",
-      "villageName": "बोरगांव",
-      "subcenter": "बोरगाव",
-      "population": 227,
-      "households": 0,
       "assignedEmployees": [
         "श्रीमती ललिता बालाजी साळुंके (ASHA)",
         "श्रीमती उमा दयानंद डामगीरे (ASHA)",
         "श्रीमती वंदना तीर्थोबा कांबळे (ANM)",
         "श्री युनुस शेख (MPW)"
       ],
-      "updatedAt": "2026-09-28T11:39:01.139Z"
-    },
-    {
-      "villageName": "कवठा",
-      "assignedEmployees": [
-        "श्रीमती आर्चना दगडु गोरे (ASHA)",
-        "श्रीमती वंदना तीर्थोबा कांबळे (ANM)",
-        "श्री युनुस शेख (MPW)"
-      ],
+      "villageName": "बोरगांव",
+      "updatedAt": "2026-09-28T11:39:01.139Z",
+      "id": "VIL_11",
+      "subcenter": "बोरगाव",
       "households": 0,
-      "subcenter": "बोरगाव",
-      "updatedAt": "2026-09-28T11:39:01.169Z",
-      "id": "VIL_12",
-      "population": 969
+      "population": 227
     },
     {
-      "subcenter": "बोरगाव",
-      "population": 1225,
-      "villageName": "कवठा तांडा",
+      "id": "VIL_12",
       "assignedEmployees": [
         "श्रीमती आर्चना दगडु गोरे (ASHA)",
         "श्रीमती वंदना तीर्थोबा कांबळे (ANM)",
         "श्री युनुस शेख (MPW)"
       ],
-      "updatedAt": "2026-09-28T11:39:01.194Z",
-      "id": "VIL_13",
-      "households": 0
+      "subcenter": "बोरगाव",
+      "villageName": "कवठा",
+      "households": 0,
+      "population": 969,
+      "updatedAt": "2026-09-28T11:39:01.169Z"
     },
     {
+      "villageName": "कवठा तांडा",
+      "population": 1225,
+      "households": 0,
+      "assignedEmployees": [
+        "श्रीमती आर्चना दगडु गोरे (ASHA)",
+        "श्रीमती वंदना तीर्थोबा कांबळे (ANM)",
+        "श्री युनुस शेख (MPW)"
+      ],
+      "subcenter": "बोरगाव",
+      "id": "VIL_13",
+      "updatedAt": "2026-09-28T11:39:01.194Z"
+    },
+    {
+      "subcenter": "भादा",
+      "updatedAt": "2026-09-28T11:39:01.216Z",
+      "id": "VIL_14",
+      "population": 370,
+      "households": 0,
       "assignedEmployees": [
         "श्रीमती शिवकन्या शंकर कुर्डे (ASHA)",
         "श्रीमती शिंदे पी एस (ANM)",
         "श्री रवी लिपारे (MPW)",
         "श्री शिरीष रामहरी शिंदे (MPW)"
       ],
-      "households": 0,
-      "subcenter": "भादा",
-      "population": 370,
-      "villageName": "हाळदुर्ग",
-      "updatedAt": "2026-09-28T11:39:01.216Z",
-      "id": "VIL_14"
+      "villageName": "हाळदुर्ग"
     },
     {
-      "population": 5420,
-      "id": "VIL_15",
       "updatedAt": "2026-09-28T11:39:01.249Z",
-      "subcenter": "भादा",
       "villageName": "भादा",
+      "subcenter": "भादा",
       "assignedEmployees": [
         "श्रीमती महादेवी सुखदेव वाडकर (ASHA)",
         "श्रीमती उषा शिवहरी कुंजीर (ASHA)",
@@ -34373,24 +34371,25 @@
         "श्री रवी लिपारे (MPW)",
         "श्री शिरीष रामहरी शिंदे (MPW)"
       ],
-      "households": 0
+      "population": 5420,
+      "households": 0,
+      "id": "VIL_15"
     },
     {
+      "population": 315,
       "households": 0,
-      "villageName": "शिंदेवाडी",
-      "updatedAt": "2026-09-28T11:39:01.310Z",
       "id": "VIL_16",
       "subcenter": "भादा",
-      "population": 315,
       "assignedEmployees": [
         "श्रीमती रुक्मीन किसन गव्हाणे (ASHA)",
         "श्रीमती शिंदे पी एस (ANM)",
         "श्री रवी लिपारे (MPW)",
         "श्री शिरीष रामहरी शिंदे (MPW)"
-      ]
+      ],
+      "updatedAt": "2026-09-28T11:39:01.310Z",
+      "villageName": "शिंदेवाडी"
     },
     {
-      "households": 0,
       "subcenter": "भादा",
       "assignedEmployees": [
         "श्रीमती सिंधू बापू तुंदारे (ASHA)",
@@ -34398,27 +34397,27 @@
         "श्री रवी लिपारे (MPW)",
         "श्री शिरीष रामहरी शिंदे (MPW)"
       ],
+      "updatedAt": "2026-09-28T11:39:01.340Z",
       "villageName": "ब-हाणपूर",
-      "id": "VIL_17",
       "population": 835,
-      "updatedAt": "2026-09-28T11:39:01.340Z"
+      "households": 0,
+      "id": "VIL_17"
     },
     {
       "villageName": "आंदोरा",
+      "households": 0,
+      "population": 2150,
+      "updatedAt": "2026-09-28T11:39:01.360Z",
+      "id": "VIL_18",
       "assignedEmployees": [
         "श्रीमती पठाण फरीदा अहेमद (ASHA)",
         "श्रीमती गोसीया गैबी पठाण (ASHA)",
         "श्रीमती जाधव आर सी (ANM)",
         "श्री परमेश्वर काळे (MPW)"
       ],
-      "subcenter": "भेटा",
-      "households": 0,
-      "id": "VIL_18",
-      "population": 2150,
-      "updatedAt": "2026-09-28T11:39:01.360Z"
+      "subcenter": "भेटा"
     },
     {
-      "id": "VIL_19",
       "assignedEmployees": [
         "श्रीमती शालू रंगराव वानवडे (ASHA)",
         "श्रीमती पिंपरे चंद्रकला शंकर (ASHA)",
@@ -34426,42 +34425,45 @@
         "श्रीमती जाधव आर सी (ANM)",
         "श्री परमेश्वर काळे (MPW)"
       ],
+      "villageName": "भेटा",
+      "id": "VIL_19",
       "subcenter": "भेटा",
       "population": 3395,
       "households": 0,
-      "villageName": "भेटा",
       "updatedAt": "2026-09-28T11:39:01.382Z"
     },
     {
+      "updatedAt": "2026-09-28T11:39:01.404Z",
+      "population": 130,
+      "households": 0,
+      "villageName": "नाव्होली",
       "subcenter": "भेटा",
+      "id": "VIL_20",
       "assignedEmployees": [
         "श्रीमती शालू रंगराव वानवडे (ASHA)",
         "श्रीमती जाधव आर सी (ANM)",
         "श्री परमेश्वर काळे (MPW)"
-      ],
-      "population": 130,
-      "id": "VIL_20",
-      "villageName": "नाव्होली",
-      "households": 0,
-      "updatedAt": "2026-09-28T11:39:01.404Z"
+      ]
     },
     {
+      "id": "VIL_21",
       "assignedEmployees": [
         "श्रीमती चंद्रकला राजेंद्र पुरी (ASHA)",
         "श्रीमती जाधव आर सी (ANM)",
         "श्री परमेश्वर काळे (MPW)"
       ],
-      "subcenter": "भेटा",
+      "villageName": "वडजी",
+      "updatedAt": "2026-09-28T11:39:01.423Z",
       "households": 0,
       "population": 1150,
-      "villageName": "वडजी",
-      "id": "VIL_21",
-      "updatedAt": "2026-09-28T11:39:01.423Z"
+      "subcenter": "भेटा"
     },
     {
+      "households": 0,
+      "population": 1755,
+      "subcenter": "लखनगाव",
       "id": "VIL_22",
       "updatedAt": "2026-09-28T11:39:01.458Z",
-      "households": 0,
       "assignedEmployees": [
         "श्रीमती ललिता जनार्धन आडे (ASHA)",
         "श्रीमती मनिषा सिद्धाप्पा कवटे (ASHA)",
@@ -34470,14 +34472,9 @@
         "श्री उजळंबे राजेंद्र सुभाष (MPW)",
         "श्री रवी लिपारे (MPW)"
       ],
-      "villageName": "सत्तधरवाडी",
-      "subcenter": "लखनगाव",
-      "population": 1755
+      "villageName": "सत्तधरवाडी"
     },
     {
-      "updatedAt": "2026-09-28T11:39:01.478Z",
-      "households": 0,
-      "villageName": "कुलकर्णी तांडा",
       "assignedEmployees": [
         "श्रीमती ललिता जनार्धन आडे (ASHA)",
         "श्रीमती जगताप ए टी (ANM)",
@@ -34485,14 +34482,15 @@
         "श्री उजळंबे राजेंद्र सुभाष (MPW)",
         "श्री रवी लिपारे (MPW)"
       ],
-      "population": 340,
+      "villageName": "कुलकर्णी तांडा",
+      "updatedAt": "2026-09-28T11:39:01.478Z",
+      "subcenter": "लखनगाव",
       "id": "VIL_23",
-      "subcenter": "लखनगाव"
+      "population": 340,
+      "households": 0
     },
     {
-      "villageName": "उटी बु.",
-      "population": 1720,
-      "subcenter": "लखनगाव",
+      "id": "VIL_24",
       "assignedEmployees": [
         "श्रीमती माधुरी पोफळे (ASHA)",
         "श्रीमती रिहाना महताब शेख (ASHA)",
@@ -34501,11 +34499,15 @@
         "श्री उजळंबे राजेंद्र सुभाष (MPW)",
         "श्री रवी लिपारे (MPW)"
       ],
-      "id": "VIL_24",
+      "villageName": "उटी बु.",
       "updatedAt": "2026-09-28T11:39:01.495Z",
+      "subcenter": "लखनगाव",
+      "population": 1720,
       "households": 0
     },
     {
+      "villageName": "सोनपट्टी तांडा",
+      "id": "VIL_25",
       "assignedEmployees": [
         "श्रीमती संगीता प्रेमसिंग राठोड (ASHA)",
         "श्रीमती जगताप ए टी (ANM)",
@@ -34513,20 +34515,17 @@
         "श्री उजळंबे राजेंद्र सुभाष (MPW)",
         "श्री रवी लिपारे (MPW)"
       ],
-      "updatedAt": "2026-09-28T11:39:01.516Z",
-      "villageName": "सोनपट्टी तांडा",
       "population": 412,
+      "households": 0,
       "subcenter": "लखनगाव",
-      "id": "VIL_25",
-      "households": 0
+      "updatedAt": "2026-09-28T11:39:01.516Z"
     },
     {
       "subcenter": "लखनगाव",
-      "id": "VIL_26",
+      "updatedAt": "2026-09-28T11:39:01.536Z",
+      "households": 0,
       "population": 1688,
       "villageName": "लखनगांव",
-      "households": 0,
-      "updatedAt": "2026-09-28T11:39:01.536Z",
       "assignedEmployees": [
         "श्रीमती माया लिंबाजी वाघमारे (ASHA)",
         "श्रीमती ज्योती परशुराम इटकर (ASHA)",
@@ -34534,10 +34533,13 @@
         "श्री वनराज जाधव (MPW)",
         "श्री उजळंबे राजेंद्र सुभाष (MPW)",
         "श्री रवी लिपारे (MPW)"
-      ]
+      ],
+      "id": "VIL_26"
     },
     {
-      "updatedAt": "2026-09-28T11:39:01.553Z",
+      "villageName": "शिवली",
+      "households": 0,
+      "population": 3800,
       "assignedEmployees": [
         "श्रीमती रईसा आब्दूल तांबोळी (ASHA)",
         "श्रीमती उर्मीला मधुकर नागरसोगे (ASHA)",
@@ -34546,49 +34548,47 @@
         "श्रीमती पंचशीला गोरख भांगे (ANM)",
         "श्री अनिल एकनाथ भराडे (MPW)"
       ],
+      "subcenter": "शिवली",
       "id": "VIL_27",
-      "population": 3800,
-      "households": 0,
-      "villageName": "शिवली",
-      "subcenter": "शिवली"
+      "updatedAt": "2026-09-28T11:39:01.553Z"
     },
     {
-      "population": 1497,
       "id": "VIL_28",
-      "updatedAt": "2026-09-28T11:39:01.575Z",
-      "villageName": "वरवडा",
-      "subcenter": "शिवली",
       "assignedEmployees": [
         "श्रीमती जयश्री हरिश्चंद्र जाधव (ASHA)",
         "श्रीमती पल्लवी किशोर कदम (ASHA)",
         "श्रीमती पंचशीला गोरख भांगे (ANM)",
         "श्री अनिल एकनाथ भराडे (MPW)"
       ],
-      "households": 0
+      "households": 0,
+      "population": 1497,
+      "villageName": "वरवडा",
+      "updatedAt": "2026-09-28T11:39:01.575Z",
+      "subcenter": "शिवली"
     },
     {
+      "id": "VIL_29",
+      "population": 1283,
+      "households": 0,
+      "updatedAt": "2026-09-28T11:39:01.595Z",
+      "subcenter": "शिवली",
+      "villageName": "जायफळ",
       "assignedEmployees": [
         "श्रीमती माया बाबुराव माने (ASHA)",
         "श्रीमती पंचशीला गोरख भांगे (ANM)",
         "श्री अनिल एकनाथ भराडे (MPW)"
-      ],
-      "updatedAt": "2026-09-28T11:39:01.595Z",
-      "households": 0,
-      "villageName": "जायफळ",
-      "id": "VIL_29",
-      "population": 1283,
-      "subcenter": "शिवली"
+      ]
     },
     {
-      "updatedAt": "2026-09-28T11:39:01.619Z",
       "households": 0,
-      "villageName": "Phc भादा",
       "population": 0,
-      "subcenter": "प्रा.आ.केंद्र",
-      "id": "VIL_30",
       "assignedEmployees": [
         "बाह्य रुग्ण विभाग (MO)"
-      ]
+      ],
+      "updatedAt": "2026-09-28T11:39:01.619Z",
+      "villageName": "Phc भादा",
+      "id": "VIL_30",
+      "subcenter": "प्रा.आ.केंद्र"
     }
   ],
   "masterData": [
@@ -35243,166 +35243,48 @@
   "pendingSyncQueue": [],
   "dengueChikungunyaEntries": [
     {
-      "clinicalFever": 2,
-      "dateCollection": "2025-09-27",
-      "chikungunyaReportDate": "Thu Oct 16 2025 00:00:00 GMT+0530 (India Standard Time)",
+      "id": "1",
+      "patientName": "चाचणी रुग्ण",
+      "mobile": "-",
       "houseNo": "-",
-      "village": "वरवडा",
-      "chikungunyaReportRef": "VDGMC LATUR",
-      "lastSyncAttempt": "2026-09-28T08:42:10.473Z",
-      "chikungunyaResult": "Negative",
-      "updatedAt": "2026-09-28T11:39:13.753Z",
-      "dengueReportRef": "VDGMC LATUR",
-      "dateOnset": "2025-09-26",
-      "syncStatus": "SYNCED",
-      "syncError": null,
-      "sex": "MALE",
-      "dengueResult": "Negative",
-      "mobile": "7745074581",
-      "dengueReportDate": "Thu Oct 16 2025 00:00:00 GMT+0530 (India Standard Time)",
-      "testResult": "Negative",
-      "clinicalJointPain": 0,
-      "patientRegNo": "OPD 28497",
-      "clinicalHeadache": 2,
-      "patientName": "GOVIND SURESH HIPPARGEKAR",
-      "age": 0,
-      "id": "DENGUE_10Oct2025_OPD 28497",
-      "_docId": "DENGUE_10Oct2025_OPD 28497"
-    },
-    {
-      "village": "वडजी",
-      "chikungunyaResult": "Negative",
-      "houseNo": "-",
-      "patientName": "महानंदा रामदास दूधभात",
-      "dengueReportRef": "VDGMC LATUR",
-      "syncError": null,
-      "id": "DENGUE_20260327_7943",
-      "dateOnset": "2026-03-10",
-      "chikungunyaReportRef": "VDGMC LATUR",
-      "dateCollection": "2026-03-10",
-      "patientRegNo": "-",
-      "clinicalJointPain": 0,
-      "clinicalHeadache": 0,
-      "updatedAt": "2026-09-28T11:39:40.035Z",
-      "sex": "MALE",
-      "lastSyncAttempt": "2026-09-28T08:43:08.579Z",
-      "dengueReportDate": "Mon Apr 06 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "syncStatus": "SYNCED",
-      "age": 0,
-      "clinicalFever": 1,
-      "mobile": "9595104325",
-      "dengueResult": "Negative",
-      "testResult": "Negative",
-      "chikungunyaReportDate": "Mon Apr 06 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "_docId": "DENGUE_20260327_7943"
-    },
-    {
-      "syncStatus": "SYNCED",
-      "patientRegNo": "-",
-      "dateCollection": "2025-11-10",
-      "mobile": "9657350683",
-      "updatedAt": "2026-09-28T11:39:40.053Z",
-      "chikungunyaResult": "Negative",
-      "dengueResult": "Negative",
-      "testResult": "Negative",
-      "dengueReportRef": "VDGMC LATUR",
-      "chikungunyaReportDate": "Mon Dec 01 2025 00:00:00 GMT+0530 (India Standard Time)",
-      "clinicalJointPain": 2,
-      "clinicalHeadache": 2,
-      "id": "DENGUE_25Nov2025_6952",
-      "lastSyncAttempt": "2026-09-28T08:43:06.301Z",
-      "sex": "MALE",
-      "dengueReportDate": "Mon Dec 01 2025 00:00:00 GMT+0530 (India Standard Time)",
-      "age": 0,
-      "syncError": null,
-      "dateOnset": "2025-11-09",
-      "houseNo": "-",
-      "chikungunyaReportRef": "VDGMC LATUR",
-      "patientName": "सखुबाई बिरुदेव घोडके",
-      "village": "काळमाथा",
-      "clinicalFever": 2,
-      "_docId": "DENGUE_25Nov2025_6952"
-    },
-    {
-      "age": 0,
-      "lastSyncAttempt": "2026-09-28T08:43:16.455Z",
-      "updatedAt": "2026-09-28T11:39:39.987Z",
-      "chikungunyaReportRef": "GMC letter",
-      "clinicalHeadache": 0,
-      "clinicalJointPain": 0,
-      "patientName": "MANISHA VIJAY BANSODE",
-      "patientRegNo": "27-33762087",
-      "clinicalFever": 2,
-      "dengueReportDate": "Mon Aug 10 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "dengueResult": "Negative",
-      "sex": "MALE",
-      "chikungunyaReportDate": "Mon Aug 10 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "testResult": "Negative",
-      "chikungunyaResult": "Negative",
-      "dateCollection": "2026-07-12",
-      "id": "DENGUE_27Jul2026_27-33762087",
-      "dengueReportRef": "GMC letter",
-      "village": "भेटा",
-      "mobile": "9822351688",
-      "syncStatus": "SYNCED",
-      "syncError": null,
-      "dateOnset": "2026-07-10",
-      "houseNo": "-",
-      "_docId": "DENGUE_27Jul2026_27-33762087"
-    },
-    {
-      "updatedAt": "2026-09-28T11:39:40.007Z",
-      "dengueReportRef": "VDGMC Dangue IgM Test Report",
-      "testResult": "Equivocal",
-      "patientRegNo": "27-34760951",
-      "dateCollection": "2026-08-26",
-      "id": "DENGUE_9Sep2026_27-34760951",
-      "clinicalJointPain": 0,
-      "sex": "MALE",
-      "chikungunyaReportRef": "GMC/CHICKENGUNIYA/",
-      "age": 0,
-      "syncStatus": "SYNCED",
-      "dengueResult": "Equivocal",
-      "chikungunyaReportDate": "Sun Sep 20 2026 00:00:00 GMT+0530 (India Standard Time)",
       "village": "भादा",
-      "chikungunyaResult": "Equivocal",
-      "houseNo": "-",
-      "dengueReportDate": "Tue Sep 15 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "patientName": "SUSHILA SOMNATH MANE",
-      "lastSyncAttempt": "2026-09-28T08:43:12.676Z",
-      "clinicalHeadache": 0,
-      "clinicalFever": 1,
-      "syncError": null,
-      "dateOnset": "2026-08-24",
-      "mobile": "9356371517",
-      "_docId": "DENGUE_9Sep2026_27-34760951"
-    },
-    {
-      "clinicalHeadache": 0,
-      "dengueReportDate": "Tue Sep 15 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "patientName": "SOMNATH SHIVHARI BANSODE",
-      "id": "DENGUE_9Sep2026_27-34761012",
-      "patientRegNo": "27-34761012",
-      "lastSyncAttempt": "2026-09-28T08:43:19.723Z",
-      "dengueResult": "Negative",
-      "clinicalJointPain": 0,
-      "dateOnset": "2026-08-25",
-      "syncError": null,
-      "clinicalFever": 1,
-      "chikungunyaReportDate": "Sun Sep 20 2026 00:00:00 GMT+0530 (India Standard Time)",
-      "dateCollection": "2026-08-26",
-      "age": 0,
-      "testResult": "Negative",
-      "mobile": "8275258817",
-      "updatedAt": "2026-09-28T11:39:39.953Z",
-      "houseNo": "-",
-      "chikungunyaReportRef": "GMC/CHICKENGUNIYA/",
-      "syncStatus": "SYNCED",
-      "village": "काळमाथा",
-      "chikungunyaResult": "Negative",
-      "dengueReportRef": "VDGMC Dangue IgM Test Report",
+      "taluka": "AUSA",
+      "district": "LATUR",
+      "hospitalAddress": "प्राथमिक आरोग्य केंद्र भादा",
+      "patientRegNo": "TEST-99",
+      "wardNo": "--",
+      "bedNo": "--",
+      "age": 25,
       "sex": "MALE",
-      "_docId": "DENGUE_9Sep2026_27-34761012"
+      "dateOnset": "2025-09-10",
+      "sampleNature": "Serum",
+      "dateCollection": "2025-09-10",
+      "clinicalFever": 1,
+      "clinicalHeadache": 0,
+      "clinicalBodyache": 0,
+      "clinicalJointPain": 0,
+      "clinicalRetroOrbitalPain": 0,
+      "clinicalRash": 0,
+      "haemorrhagic": "No",
+      "doctorName": "Dr. Patil S.S.",
+      "doctorMobile": "9689686901",
+      "outwardNo": "",
+      "dengueResult": "Negative",
+      "dengueTestType": "NS1 Ag & IgM ELISA",
+      "dengueReportRef": "",
+      "dengueReportDate": "",
+      "dengueReportFile": "",
+      "dengueReportFileName": "",
+      "dengueRemarks": "",
+      "chikungunyaResult": "Negative",
+      "chikungunyaTestType": "Chikungunya IgM ELISA",
+      "chikungunyaReportRef": "",
+      "chikungunyaReportDate": "",
+      "chikungunyaReportFile": "",
+      "chikungunyaReportFileName": "",
+      "chikungunyaRemarks": "",
+      "testResult": "Negative",
+      "createdAt": "2026-09-29T04:25:16.111Z"
     }
   ]
 }

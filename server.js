@@ -115,6 +115,7 @@ import {
 
 import {
   syncDengueEntryToFirestore,
+  syncBatchDengueEntriesToFirestore,
   deleteDengueEntryFromFirestore,
   deleteBatchDengueEntriesFromFirestore,
   clearAllDengueEntriesFromFirestore,
@@ -1544,6 +1545,14 @@ app.post('/api/rpc', async (req, res) => {
       case 'importDengueOldDataCsv': {
         const [csvText, replace] = args;
         result = importDengueOldDataCsv(csvText, replace);
+        if (result.success && Array.isArray(result.entries) && result.entries.length > 0) {
+          if (replace) {
+            await clearAllDengueEntriesFromFirestore();
+          }
+          await syncBatchDengueEntriesToFirestore(result.entries);
+          saveDbToDisk();
+          result.message = `एकूण ${result.entries.length} डेंगी व चिकनगुनिया जुन्या रुग्णांच्या नोंदी Firestore व सिस्टीममध्ये यशस्वीरित्या आयात व जतन झाल्या! 💾`;
+        }
         break;
       }
 

@@ -3041,7 +3041,14 @@ export function saveDengueBatchLabReport(batchData) {
 export function importDengueOldDataCsv(csvText, replace = false) {
   try {
     if (!csvText || typeof csvText !== 'string' || !csvText.trim()) {
-      return { success: false, message: "CSV फाईल रिकामा आहे (CSV content is empty)." };
+      return { success: false, message: "CSV किंवा Excel फाईल रिकामा आहे (File/Content is empty)." };
+    }
+
+    // Convert Devanagari numerals (०-९) to standard numerals (0-9)
+    function toAsciiDigits(str) {
+      if (!str) return '';
+      const devanagari = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+      return String(str).replace(/[०-९]/g, d => devanagari.indexOf(d));
     }
 
     function parseSpreadsheetRows(content) {
@@ -3061,7 +3068,7 @@ export function importDengueOldDataCsv(csvText, replace = false) {
           while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
             let text = cellMatch[1].replace(/<[^>]+>/g, '').trim();
             text = text.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
-            cells.push(text);
+            cells.push(toAsciiDigits(text));
           }
           if (cells.length > 0) rows.push(cells);
         }
@@ -3089,20 +3096,20 @@ export function importDengueOldDataCsv(csvText, replace = false) {
           const c = line[j];
           if (c === '"') inQuotes = !inQuotes;
           else if (c === delimiter && !inQuotes) {
-            cols.push(token.replace(/^"|"$/g, '').trim());
+            cols.push(toAsciiDigits(token.replace(/^"|"$/g, '').trim()));
             token = "";
           } else {
             token += c;
           }
         }
-        cols.push(token.replace(/^"|"$/g, '').trim());
+        cols.push(toAsciiDigits(token.replace(/^"|"$/g, '').trim()));
         return cols;
       });
     }
 
     const rows = parseSpreadsheetRows(csvText);
-    if (rows.length < 2) {
-      return { success: false, message: "किमान एक डेटा ओळ (Header + Data row) आवश्यक आहे." };
+    if (!rows || rows.length === 0) {
+      return { success: false, message: "डेटा ओळी वाचता आल्या नाहीत. कृपया फाईल तपासा." };
     }
 
     function cleanVal(v) {
@@ -3113,51 +3120,119 @@ export function importDengueOldDataCsv(csvText, replace = false) {
     function normalizeDate(raw) {
       if (!raw) return "";
       const s = String(raw).trim().replace(/^"|"$/g, '');
-      const dmY = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+      if (!s || s === '-') return "";
+
+      // Excel numeric date (e.g. 45567)
+      if (/^\d{5}$/.test(s)) {
+        const serial = parseInt(s);
+        const utcDays = serial - 25569;
+        const d = new Date(utcDays * 86400 * 1000);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().slice(0, 10);
+        }
+      }
+
+      const dmY = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
       if (dmY) {
         const day = dmY[1].padStart(2, '0');
         const month = dmY[2].padStart(2, '0');
-        const year = dmY[3];
+        let year = dmY[3];
+        if (year.length === 2) year = '20' + year;
         return `${year}-${month}-${day}`;
       }
-      const yMd = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+      const yMd = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
       if (yMd) {
         const year = yMd[1];
         const month = yMd[2].padStart(2, '0');
         const day = yMd[3].padStart(2, '0');
         return `${year}-${month}-${day}`;
       }
+
+      // Check month names (e.g. 10-Oct-2025 or 10 ऑक्टोबर 2025)
+      const monthsMap = {
+        jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+        jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
+        'जानेवारी': '01', 'जाने': '01', 'फेब्रुवारी': '02', 'फेब्रु': '02',
+        'मार्च': '03', 'एप्रिल': '04', 'मे': '05', 'जून': '06',
+        'जुलै': '07', 'ऑगस्ट': '08', 'ऑग': '08', 'सप्टेंबर': '09', 'सप्टें': '09',
+        'ऑक्टोबर': '10', 'ऑक्टो': '10', 'नोव्हेंबर': '11', 'नोव्हें': '11', 'डिसेंबर': '12', 'डिसें': '12'
+      };
+      const textDateMatch = s.match(/^(\d{1,2})[\s\-_/]+([a-zA-Z\u0900-\u097F]{3,12})[\s\-_/]+(\d{2,4})$/);
+      if (textDateMatch) {
+        const day = textDateMatch[1].padStart(2, '0');
+        const mKey = textDateMatch[2].toLowerCase().trim();
+        let year = textDateMatch[3];
+        if (year.length === 2) year = '20' + year;
+        const mShort = mKey.slice(0, 3);
+        const resolvedMonth = monthsMap[mKey] || monthsMap[mShort];
+        if (resolvedMonth) {
+          return `${year}-${resolvedMonth}-${day}`;
+        }
+      }
+
       return s;
     }
 
-    function normalizeSex(raw) {
+    function normalizeSex(raw, fallback = 'FEMALE') {
       const s = String(raw || '').trim().toUpperCase();
-      if (s === 'M' || s.includes('MALE') || s.includes('पुरुष')) return 'MALE';
-      if (s === 'F' || s.includes('FEMALE') || s.includes('स्त्री')) return 'FEMALE';
-      return s || 'FEMALE';
+      if (s === 'M' || s.startsWith('MALE') || s.includes('पुरुष') || s.includes('M')) return 'MALE';
+      if (s === 'F' || s.startsWith('FEM') || s.includes('स्त्री') || s.includes('F')) return 'FEMALE';
+      return fallback;
     }
 
-    const header = rows[0].map(c => cleanVal(c).toLowerCase());
+    function normalizeResult(raw) {
+      if (!raw) return "Pending";
+      const s = String(raw).trim().toLowerCase();
+      if (s.includes('pos') || s.includes('पॉझि') || s.includes('होकार') || s.includes('+') || s.includes('detect') || s.includes('reactive') && !s.includes('non')) return 'Positive';
+      if (s.includes('neg') || s.includes('निगे') || s.includes('नकार') || s.includes('-') || s.includes('non') || s.includes('not')) return 'Negative';
+      if (s.includes('equiv') || s.includes('संशय') || s.includes('border') || s.includes('eq')) return 'Equivocal';
+      if (s.includes('pend') || s.includes('प्रती') || s.includes('अपेक्षित') || s === '-' || !s) return 'Pending';
+      return cleanVal(raw);
+    }
 
-    const idIdx = header.findIndex(c => c.includes('आयडी') || c === 'id' || c.includes('अ.क्र'));
+    // Identify header row (scan rows 0 to 8 to find the row with best keyword matches)
+    let bestHeaderRowIdx = 0;
+    let maxMatches = 0;
+    const keyWords = ['नाव', 'name', 'patient', 'वय', 'age', 'लिंग', 'sex', 'gender', 'गाव', 'village', 'नोंदणी', 'reg', 'दिनांक', 'date', 'डेंगी', 'dengue', 'चिकनगुनिया', 'chikungunya', 'निकाल', 'result', 'अ.क्र', 'id', 'sr'];
+
+    for (let r = 0; r < Math.min(rows.length, 8); r++) {
+      const rowText = rows[r].map(c => cleanVal(c).toLowerCase()).join(' ');
+      let matches = 0;
+      keyWords.forEach(kw => {
+        if (rowText.includes(kw)) matches++;
+      });
+      if (matches > maxMatches) {
+        maxMatches = matches;
+        bestHeaderRowIdx = r;
+      }
+    }
+
+    // Fallback: if row 0 has only 1 cell and row 1 has multiple cells, row 1 is header
+    if (bestHeaderRowIdx === 0 && rows.length > 1 && rows[0].length === 1 && rows[1].length > 1) {
+      bestHeaderRowIdx = 1;
+    }
+
+    const header = rows[bestHeaderRowIdx].map(c => cleanVal(c).toLowerCase());
+
+    const idIdx = header.findIndex(c => c.includes('आयडी') || c === 'id' || c.includes('अ.क्र') || c.includes('sr') || c === 'sr no' || c === 'sr.no');
     let nameIdx = header.findIndex(c => 
       c.includes('नाव') || c.includes('patient name') || c.includes('patient_name') || c.includes('patient') || 
-      c.includes('pname') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('à¤¨à¤¾à¤µ') || c === 'name'
+      c.includes('pname') || c.includes('रुग्ण') || c.includes('fullname') || c.includes('à¤¨à¤¾à¤µ') || c === 'name' || c.includes('रोगी')
     );
-    const mobileIdx = header.findIndex(c => c.includes('मोबाईल') || c.includes('mobile') || c.includes('phone') || c.includes('contact'));
-    const houseIdx = header.findIndex(c => c.includes('घर') || c.includes('house'));
-    const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village'));
+    const mobileIdx = header.findIndex(c => c.includes('मोबाईल') || c.includes('mobile') || c.includes('phone') || c.includes('contact') || c.includes('संपर्क'));
+    const houseIdx = header.findIndex(c => c.includes('घर') || c.includes('house') || c.includes('ह.नं'));
+    const villageIdx = header.findIndex(c => c.includes('गाव') || c.includes('village') || c.includes('पत्ता') || c.includes('address') || c.includes('उपकेंद्र') || c.includes('subcenter'));
     const talukaIdx = header.findIndex(c => c.includes('तालुका') || c.includes('taluka'));
     const distIdx = header.findIndex(c => c.includes('जिल्हा') || c.includes('district'));
-    const hospIdx = header.findIndex(c => c.includes('रुग्णालय') || c.includes('hospital'));
-    const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd'));
+    const hospIdx = header.findIndex(c => c.includes('रुग्णालय') || c.includes('hospital') || c.includes('संस्था'));
+    const regIdx = header.findIndex(c => c.includes('नोंदणी') || c.includes('reg') || c.includes('opd') || c.includes('cr') || c.includes('ipd') || c.includes('केस'));
     const wardIdx = header.findIndex(c => c.includes('वार्ड') || c.includes('ward'));
     const bedIdx = header.findIndex(c => c.includes('बेड') || c.includes('bed'));
     const ageIdx = header.findIndex(c => c.includes('वय') || c.includes('age'));
     const sexIdx = header.findIndex(c => c.includes('लिंग') || c.includes('sex') || c.includes('gender'));
-    const onsetIdx = header.findIndex(c => c.includes('लक्षणे सुरू') || c.includes('onset'));
-    const natureIdx = header.findIndex(c => c.includes('नमुना प्रकार') || c.includes('nature'));
-    const collDateIdx = header.findIndex(c => c.includes('नमुना घेतल्याचा') || c.includes('नमुना दिनांक') || c.includes('collection') || c.includes('date'));
+    const onsetIdx = header.findIndex(c => c.includes('लक्षणे सुरू') || c.includes('onset') || c.includes('लक्षणे'));
+    const natureIdx = header.findIndex(c => c.includes('नमुना प्रकार') || c.includes('nature') || c.includes('sample type'));
+    const collDateIdx = header.findIndex(c => c.includes('नमुना घेतल्याचा') || c.includes('नमुना दिनांक') || c.includes('collection') || c.includes('date') || c.includes('तारीख') || c.includes('दिनांक'));
     const feverIdx = header.findIndex(c => c.includes('ताप') || c.includes('fever'));
     const headacheIdx = header.findIndex(c => c.includes('डोके') || c.includes('headache'));
     const bodyacheIdx = header.findIndex(c => c.includes('अंग') || c.includes('bodyache'));
@@ -3165,22 +3240,22 @@ export function importDengueOldDataCsv(csvText, replace = false) {
     const retroIdx = header.findIndex(c => c.includes('डोळे') || c.includes('retro'));
     const rashIdx = header.findIndex(c => c.includes('पुरळ') || c.includes('rash'));
     const haemIdx = header.findIndex(c => c.includes('रक्तस्राव') || c.includes('haem'));
-    const docNameIdx = header.findIndex(c => c.includes('डॉक्टर नाव') || c.includes('doctor name'));
+    const docNameIdx = header.findIndex(c => c.includes('डॉक्टर नाव') || c.includes('doctor name') || c.includes('वैद्यकीय अधिकारी'));
     const docMobIdx = header.findIndex(c => c.includes('डॉक्टर मोबाईल') || c.includes('doctor mobile'));
-    const dResIdx = header.findIndex(c => c.includes('डेंगी निष्कर्ष') || c.includes('डेंगी निकाल') || c.includes('dengue result') || c.includes('dengue_result'));
+    const dResIdx = header.findIndex(c => c.includes('डेंगी निष्कर्ष') || c.includes('डेंगी निकाल') || c.includes('dengue result') || c.includes('dengue_result') || c.includes('dengue') || c.includes('डेंगी'));
     const dTestIdx = header.findIndex(c => c.includes('डेंगी चाचणी') || c.includes('dengue test'));
-    const dRefIdx = header.findIndex(c => c.includes('डेंगी लॅब संदर्भ') || c.includes('डेंगी संदर्भ') || c.includes('dengue report ref'));
-    const dDateIdx = header.findIndex(c => c.includes('डेंगी अहवाल दिनांक') || c.includes('dengue report date'));
-    const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया निष्कर्ष') || c.includes('चिकनगुनिया निकाल') || c.includes('chikungunya result') || c.includes('chik_result'));
+    const dRefIdx = header.findIndex(c => c.includes('डेंगी लॅब संदर्भ') || c.includes('डेंगी संदर्भ') || c.includes('dengue report ref') || c.includes('dengue ref'));
+    const dDateIdx = header.findIndex(c => c.includes('डेंगी अहवाल दिनांक') || c.includes('dengue report date') || c.includes('dengue date'));
+    const cResIdx = header.findIndex(c => c.includes('चिकनगुनिया निष्कर्ष') || c.includes('चिकनगुनिया निकाल') || c.includes('chikungunya result') || c.includes('chik_result') || c.includes('chikungunya') || c.includes('चिकनगुनिया'));
     const cTestIdx = header.findIndex(c => c.includes('चिकनगुनिया चाचणी') || c.includes('chikungunya test'));
     const cRefIdx = header.findIndex(c => c.includes('चिकनगुनिया लॅब संदर्भ') || c.includes('चिकनगुनिया संदर्भ') || c.includes('chikungunya report ref'));
     const cDateIdx = header.findIndex(c => c.includes('चिकनगुनिया अहवाल दिनांक') || c.includes('chikungunya report date'));
-    const testResIdx = header.findIndex(c => c.includes('एकूण स्थिती') || c.includes('चाचणी अहवाल') || c.includes('overall status') || c.includes('test result'));
+    const testResIdx = header.findIndex(c => c.includes('एकूण स्थिती') || c.includes('चाचणी अहवाल') || c.includes('overall status') || c.includes('test result') || c.includes('निष्कर्ष') || c.includes('निकाल'));
 
     // Smart fallback if nameIdx is still -1
     if (nameIdx === -1 && header.length >= 1) {
       if (header.length === 1) nameIdx = 0;
-      else if (header[0].includes('reg') || header[0].includes('no') || header[0].includes('id') || header[0].includes('नोंदणी') || header[0].includes('क्र')) {
+      else if (header[0].includes('reg') || header[0].includes('no') || header[0].includes('id') || header[0].includes('नोंदणी') || header[0].includes('क्र') || header[0].includes('sr')) {
         nameIdx = 1;
       } else {
         nameIdx = 0;
@@ -3192,13 +3267,14 @@ export function importDengueOldDataCsv(csvText, replace = false) {
     }
 
     let addedCount = 0;
+    const importedEntriesList = [];
     const nowIso = new Date().toISOString();
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = bestHeaderRowIdx + 1; i < rows.length; i++) {
       const cols = rows[i];
       if (!cols || cols.length === 0) continue;
       const rawName = nameIdx !== -1 && cols[nameIdx] ? cleanVal(cols[nameIdx]) : (cols[0] ? cleanVal(cols[0]) : "");
-      if (!rawName) continue;
+      if (!rawName || rawName === '-' || rawName.toLowerCase() === 'name' || rawName.includes('नाव') || rawName.toLowerCase() === 'patient name') continue;
 
       const pName = rawName.toUpperCase();
       const rawCollDate = collDateIdx !== -1 && cols[collDateIdx] ? cleanVal(cols[collDateIdx]) : "";
@@ -3206,10 +3282,29 @@ export function importDengueOldDataCsv(csvText, replace = false) {
       const regNo = regIdx !== -1 && cols[regIdx] ? cleanVal(cols[regIdx]) : "-";
 
       const existingId = idIdx !== -1 && cols[idIdx] ? cleanVal(cols[idIdx]) : "";
-      const id = existingId || `DENGUE_${dateCollection.replace(/-/g, "")}_${regNo !== '-' ? regNo : Math.floor(1000 + Math.random() * 9000)}`;
+      const id = existingId || `DENGUE_${dateCollection.replace(/-/g, "")}_${regNo !== '-' ? regNo.replace(/[^a-zA-Z0-9]/g, '_') : Math.floor(1000 + Math.random() * 9000)}`;
 
-      const dRes = dResIdx !== -1 && cols[dResIdx] ? cleanVal(cols[dResIdx]) : (testResIdx !== -1 && cols[testResIdx] ? cleanVal(cols[testResIdx]) : "Pending");
-      const cRes = cResIdx !== -1 && cols[cResIdx] ? cleanVal(cols[cResIdx]) : "Pending";
+      const rawDRes = dResIdx !== -1 && cols[dResIdx] ? cleanVal(cols[dResIdx]) : (testResIdx !== -1 && cols[testResIdx] ? cleanVal(cols[testResIdx]) : "Pending");
+      const rawCRes = cResIdx !== -1 && cols[cResIdx] ? cleanVal(cols[cResIdx]) : "Pending";
+      const dRes = normalizeResult(rawDRes);
+      const cRes = normalizeResult(rawCRes);
+
+      // Handle combined age/sex like "25/F" or "40/M"
+      let ageVal = 0;
+      let sexVal = "FEMALE";
+      if (ageIdx !== -1 && cols[ageIdx]) {
+        const rawAgeStr = cleanVal(cols[ageIdx]);
+        const numMatch = rawAgeStr.match(/\d+/);
+        if (numMatch) ageVal = parseInt(numMatch[0]) || 0;
+        if (rawAgeStr.toUpperCase().includes('/M') || rawAgeStr.toUpperCase().includes('MALE') || rawAgeStr.includes('पुरुष')) {
+          sexVal = "MALE";
+        } else if (rawAgeStr.toUpperCase().includes('/F') || rawAgeStr.toUpperCase().includes('FEMALE') || rawAgeStr.includes('स्त्री')) {
+          sexVal = "FEMALE";
+        }
+      }
+      if (sexIdx !== -1 && cols[sexIdx]) {
+        sexVal = normalizeSex(cols[sexIdx], sexVal);
+      }
 
       const rec = {
         id,
@@ -3223,8 +3318,8 @@ export function importDengueOldDataCsv(csvText, replace = false) {
         patientRegNo: regNo,
         wardNo: wardIdx !== -1 && cols[wardIdx] ? cleanVal(cols[wardIdx]) : "--",
         bedNo: bedIdx !== -1 && cols[bedIdx] ? cleanVal(cols[bedIdx]) : "--",
-        age: ageIdx !== -1 && cols[ageIdx] ? (parseInt(cleanVal(cols[ageIdx])) || 0) : 0,
-        sex: sexIdx !== -1 && cols[sexIdx] ? normalizeSex(cols[sexIdx]) : "FEMALE",
+        age: ageVal,
+        sex: sexVal,
         dateOnset: onsetIdx !== -1 && cols[onsetIdx] ? normalizeDate(cols[onsetIdx]) : dateCollection,
         sampleNature: natureIdx !== -1 && cols[natureIdx] ? cleanVal(cols[natureIdx]) : "Serum",
         dateCollection,
@@ -3259,16 +3354,26 @@ export function importDengueOldDataCsv(csvText, replace = false) {
       const exIdx = dengueChikungunyaEntries.findIndex(e => e.id === id || (e.patientName === pName && e.dateCollection === dateCollection));
       if (exIdx !== -1) {
         dengueChikungunyaEntries[exIdx] = { ...dengueChikungunyaEntries[exIdx], ...rec, id: dengueChikungunyaEntries[exIdx].id };
+        importedEntriesList.push(dengueChikungunyaEntries[exIdx]);
       } else {
         dengueChikungunyaEntries.push(rec);
+        importedEntriesList.push(rec);
       }
       addedCount++;
+    }
+
+    if (addedCount === 0) {
+      return {
+        success: false,
+        message: "फाईलमध्ये वैध रुग्णांचे नाव किंवा डेटा आढळला नाही. कृपया फाईलचे स्वरूप तपासा."
+      };
     }
 
     saveDbToDisk();
     return {
       success: true,
       count: addedCount,
+      entries: importedEntriesList,
       message: `एकूण ${addedCount} डेंगी व चिकनगुनिया जुन्या रुग्णांच्या नोंदी यशस्वीरित्या आयात व जतन करण्यात आल्या!`
     };
   } catch (err) {

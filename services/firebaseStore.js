@@ -1,11 +1,39 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, doc, setDoc, getDocs, getDoc, deleteDoc } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  setDoc, 
+  getDocsFromServer, 
+  getDocFromServer, 
+  deleteDoc,
+  setLogLevel
+} from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json' with { type: 'json' };
+
+// Suppress internal BloomFilter SDK warnings
+try {
+  setLogLevel('error');
+} catch (e) {
+  // Ignore
+}
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 console.log('[FirebaseStore] Initialized Cloud Firestore database:', firebaseConfig.firestoreDatabaseId);
+
+// Validate Connection to Firestore on startup (as mandated by Skill)
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(firestoreDb, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.warn('[FirebaseStore] Connection test note: client is offline or initializing.');
+    }
+  }
+}
+testConnection();
 
 function toSafeDocId(str, prefix = 'DOC') {
   if (!str) return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -49,25 +77,47 @@ export async function syncDengueEntryToFirestore(entry) {
   if (!entry || !entry.id) return { success: false, error: 'Invalid entry' };
   try {
     const rawId = String(entry.id).trim();
-    // If the ID is already a clean document ID without forward slashes, use it directly
-    const docId = rawId.includes('/') ? toSafeDocId(rawId, 'DENGUE') : rawId;
+    const docId = toSafeDocId(rawId, 'DENGUE');
     const ref = doc(firestoreDb, 'dengueEntries', docId);
-    const payload = {
-      ...entry,
-      id: docId,
-      updatedAt: new Date().toISOString()
-    };
+    
+    // Sanitize payload to prevent undefined fields from throwing Firestore errors
+    const payload = {};
+    for (const [k, v] of Object.entries(entry)) {
+      if (v !== undefined && k !== '_docId') {
+        payload[k] = v;
+      }
+    }
+    payload.id = docId;
+    payload.updatedAt = new Date().toISOString();
+
     await setDoc(ref, payload, { merge: true });
-    return { success: true };
+    return { success: true, docId };
   } catch (err) {
     console.error('[FirebaseStore] Error writing Dengue entry to Firestore:', err.message);
     return { success: false, error: err.message };
   }
 }
 
+export async function syncBatchDengueEntriesToFirestore(entriesArray) {
+  if (!Array.isArray(entriesArray) || entriesArray.length === 0) return { success: true, count: 0 };
+  try {
+    let count = 0;
+    for (const d of entriesArray) {
+      if (!d) continue;
+      const res = await syncDengueEntryToFirestore(d);
+      if (res.success) count++;
+    }
+    console.log(`[FirebaseStore] Synced batch of ${count} Dengue entries to Firestore.`);
+    return { success: true, count };
+  } catch (err) {
+    console.error('[FirebaseStore] Error syncing batch Dengue entries:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function getDengueEntriesFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'dengueEntries'));
     const entries = [];
     snap.forEach(docSnap => {
       const d = docSnap.data();
@@ -111,7 +161,7 @@ export async function deleteDengueEntryFromFirestore(id) {
     }
 
     // 2. Comprehensive scan to ensure no matching document remains in Firestore
-    const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'dengueEntries'));
     let deletedCount = 0;
     for (const docSnap of snap.docs) {
       const d = docSnap.data();
@@ -206,7 +256,7 @@ export async function deleteBatchDengueEntriesFromFirestore(idsArray) {
 
 export async function clearAllDengueEntriesFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'dengueEntries'));
     let deletedCount = 0;
     for (const docSnap of snap.docs) {
       await deleteDoc(doc(firestoreDb, 'dengueEntries', docSnap.id));
@@ -266,7 +316,7 @@ export async function syncBatchBsDataToFirestore(entriesArray) {
 
 export async function getBsDataEntriesFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'bsDataEntry'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'bsDataEntry'));
     const entries = [];
     snap.forEach(docSnap => {
       const d = docSnap.data();
@@ -333,7 +383,7 @@ export async function syncVillageDetailToFirestore(v) {
 
 export async function getVillageDetailsFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'villageDetails'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'villageDetails'));
     const details = [];
     snap.forEach(docSnap => {
       const d = docSnap.data();
@@ -408,7 +458,7 @@ export async function syncBatchSubcentersToFirestore(subcentersArray) {
 
 export async function getSubcentersFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'subcenterMaster'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'subcenterMaster'));
     const list = [];
     snap.forEach(docSnap => list.push(docSnap.data()));
     return { success: true, data: list };
@@ -457,7 +507,7 @@ export async function syncBatchEmployeesToFirestore(employeesArray) {
 
 export async function getEmployeesFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'employeeMaster'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'employeeMaster'));
     const list = [];
     snap.forEach(docSnap => list.push(docSnap.data()));
     return { success: true, data: list };
@@ -505,7 +555,7 @@ export async function syncBatchVillagesToFirestore(villagesArray) {
 
 export async function getVillagesFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'villagesMaster'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'villagesMaster'));
     const list = [];
     snap.forEach(docSnap => list.push(docSnap.data()));
     return { success: true, data: list };
@@ -575,7 +625,7 @@ export async function syncBatchMonthMasterToFirestore(monthMasterArray) {
 
 export async function getMonthMasterFromFirestore() {
   try {
-    const snap = await getDocs(collection(firestoreDb, 'monthMaster'));
+    const snap = await getDocsFromServer(collection(firestoreDb, 'monthMaster'));
     const list = [];
     snap.forEach(docSnap => list.push(docSnap.data()));
     return { success: true, data: list };
@@ -604,7 +654,7 @@ export async function getAppConfigFromFirestore(configId) {
   try {
     const docId = toSafeDocId(configId, 'CFG');
     const ref = doc(firestoreDb, 'appConfig', docId);
-    const snap = await getDoc(ref);
+    const snap = await getDocFromServer(ref);
     if (snap.exists()) {
       return { success: true, data: snap.data() };
     }
