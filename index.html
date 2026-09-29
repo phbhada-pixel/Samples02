@@ -5637,17 +5637,22 @@
 
       <div id="dataEntry" class="tab-pane">
         
-        <!-- Subtabs for Data Entry: Daily Blood Smears vs Monthly OPD vs Home Visits -->
-        <div class="table-subtabs" style="margin-bottom:14px; gap:8px;">
-          <button id="subtabBtnDaily" class="subtab-btn active" onclick="switchDataEntrySubtab('daily')">
-            🩸 १. दैनिक रक्त नमुने नोंदणी (Daily Smears)
-          </button>
-          <button id="subtabBtnMonthly" class="subtab-btn" onclick="switchDataEntrySubtab('monthly')">
-            🏥 २. मासिक ओपीडी नोंदणी (Monthly OPD)
-          </button>
-          <button id="subtabBtnHomeVisit" class="subtab-btn" style="color:#22543d; font-weight:700; background:#f0fff4; border:1px solid #c6f6d5; border-radius:6px 6px 0 0;" onclick="switchDataEntrySubtab('homevisit')">
-            🚶‍♂️ ३. गृहभेटी डेटा एन्ट्री (Home Visit Entry - MPW & ANM)
-          </button>
+        <!-- Persistent Top Fast Navigator for Data Entry Types -->
+        <div id="dataEntryTypeNavigator" style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:10px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 2px 6px rgba(0,0,0,0.06); position:sticky; top:0; z-index:90; backdrop-filter:blur(8px);">
+          <div style="font-size:13.5px; color:#166534; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span style="font-size:16px;">💡</span> <b>डेटा एन्ट्री प्रकार निवडा:</b>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="navBtnDaily" onclick="switchDataEntrySubtab('daily')" style="background:#00796b; color:#ffffff; border:2px solid #004d40; border-radius:6px; padding:7px 14px; font-size:12.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(0,121,107,0.35); transform:scale(1.02); transition:all 0.2s ease;">
+              🩸 दैनिक रक्त नमुने नोंदणी
+            </button>
+            <button type="button" id="navBtnMonthly" onclick="switchDataEntrySubtab('monthly')" style="background:#ebf8ff; color:#2b6cb0; border:1.5px solid #90cdf4; border-radius:6px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:none; transition:all 0.2s ease;">
+              🏥 मासिक ओपीडी नोंदणी
+            </button>
+            <button type="button" id="navBtnHomeVisit" onclick="switchDataEntrySubtab('homevisit')" style="background:#f0fff4; color:#22543d; border:1.5px solid #9ae6b4; border-radius:6px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:none; transition:all 0.2s ease;">
+              🚶‍♂️ गृहभेटी डेटा एन्ट्री (Home Visits)
+            </button>
+          </div>
         </div>
 
         <!-- 3-Step Data Matching Guide Card -->
@@ -5691,30 +5696,6 @@
 
         <!-- Subpane 1: Daily Smear Entry -->
         <div id="subpaneDailySmears">
-          <!-- Fast Navigator to OPD & Home Visits -->
-          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div style="font-size:12.5px; color:#166534; font-weight:600;">
-              💡 <b>मासिक ओपीडी किंवा गृहभेटी भरायच्या आहेत का?</b>
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button type="button" onclick="switchDataEntrySubtab('monthly')" style="background:#3182ce; color:white; border:none; border-radius:4px; padding:4px 10px; font-size:11.5px; font-weight:700; cursor:pointer;">
-                🏥 मासिक ओपीडी नोंदणी
-              </button>
-              <button type="button" onclick="switchDataEntrySubtab('homevisit')" style="background:#276749; color:white; border:none; border-radius:4px; padding:4px 10px; font-size:11.5px; font-weight:700; cursor:pointer;">
-                🚶‍♂️ गृहभेटी डेटा एन्ट्री (Home Visits)
-              </button>
-            </div>
-          </div>
-          <div class="ext-link-banner">
-            <div>
-              <h4 style="margin:0; color:#2b6cb0; font-size:16px;">📝 Index Report Entry</h4>
-              <p style="margin:5px 0 0 0; font-size:13px; color:#4a5568;">इंडेक्स रिपोर्ट डेटा भरण्यासाठी खालील लिंकवर क्लिक करून फॉर्म उघडा.</p>
-            </div>
-            <a href="https://script.google.com/macros/s/AKfycbzx9eLKm6P2gQu2ub-vR_NdJaWAf3CKfweoThJd4polcFq2s03YIcZQqcdlhA-oqmxL/exec" target="_blank" class="ext-btn">
-              फॉर्म उघडा ↗️
-            </a>
-          </div>
-
           <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;">नवीन रक्त नमुने नोंदणी</h3>
           <div class="form-group"><label>निवडा तारीख</label><input type="date" id="commonDate" onchange="handleDateChange()"></div>
           <div id="loader" style="text-align:center; color:var(--primary); font-weight:bold; margin:20px 0;">माहिती लोड होत आहे... ⏳</div>
@@ -5746,6 +5727,9 @@
 
             <!-- Quick Subtab Switcher for OPD vs Home Visit -->
             <div class="table-subtabs" style="margin-top:12px; margin-bottom:0; gap:8px;">
+              <button id="subtabBtnMonthlyDaily" class="subtab-btn" style="color:#00796b; font-weight:700;" onclick="switchDataEntrySubtab('daily')">
+                🩸 दैनिक रक्त नमुने नोंदणी
+              </button>
               <button id="subtabBtnMonthlyOpd" class="subtab-btn active" style="color:#2b6cb0; font-weight:700;" onclick="switchMonthlySubtab('opd')">
                 🏥 १. नवीन ओपीडी नोंदणी (New OPD Entry)
               </button>
@@ -11945,8 +11929,63 @@
       const btnDaily = document.getElementById('subtabBtnDaily');
       const btnMonthly = document.getElementById('subtabBtnMonthly');
       const btnHomeVisit = document.getElementById('subtabBtnHomeVisit');
+      const navDaily = document.getElementById('navBtnDaily');
+      const navMonthly = document.getElementById('navBtnMonthly');
+      const navHomeVisit = document.getElementById('navBtnHomeVisit');
       const paneDaily = document.getElementById('subpaneDailySmears');
       const paneMonthly = document.getElementById('subpaneMonthlyIndicators');
+
+      if (navDaily) {
+        if (subtab === 'daily' || !subtab) {
+          navDaily.style.background = '#00796b';
+          navDaily.style.color = '#ffffff';
+          navDaily.style.border = '2px solid #004d40';
+          navDaily.style.boxShadow = '0 3px 8px rgba(0, 121, 107, 0.35)';
+          navDaily.style.fontWeight = '800';
+          navDaily.style.transform = 'scale(1.02)';
+        } else {
+          navDaily.style.background = '#e6fffa';
+          navDaily.style.color = '#00796b';
+          navDaily.style.border = '1.5px solid #81e6d9';
+          navDaily.style.boxShadow = 'none';
+          navDaily.style.fontWeight = '700';
+          navDaily.style.transform = 'scale(1)';
+        }
+      }
+      if (navMonthly) {
+        if (subtab === 'monthly' || subtab === 'opd') {
+          navMonthly.style.background = '#3182ce';
+          navMonthly.style.color = '#ffffff';
+          navMonthly.style.border = '2px solid #1a365d';
+          navMonthly.style.boxShadow = '0 3px 8px rgba(49, 130, 206, 0.35)';
+          navMonthly.style.fontWeight = '800';
+          navMonthly.style.transform = 'scale(1.02)';
+        } else {
+          navMonthly.style.background = '#ebf8ff';
+          navMonthly.style.color = '#2b6cb0';
+          navMonthly.style.border = '1.5px solid #90cdf4';
+          navMonthly.style.boxShadow = 'none';
+          navMonthly.style.fontWeight = '700';
+          navMonthly.style.transform = 'scale(1)';
+        }
+      }
+      if (navHomeVisit) {
+        if (subtab === 'homevisit') {
+          navHomeVisit.style.background = '#276749';
+          navHomeVisit.style.color = '#ffffff';
+          navHomeVisit.style.border = '2px solid #1c4532';
+          navHomeVisit.style.boxShadow = '0 3px 8px rgba(39, 103, 73, 0.35)';
+          navHomeVisit.style.fontWeight = '800';
+          navHomeVisit.style.transform = 'scale(1.02)';
+        } else {
+          navHomeVisit.style.background = '#f0fff4';
+          navHomeVisit.style.color = '#22543d';
+          navHomeVisit.style.border = '1.5px solid #9ae6b4';
+          navHomeVisit.style.boxShadow = 'none';
+          navHomeVisit.style.fontWeight = '700';
+          navHomeVisit.style.transform = 'scale(1)';
+        }
+      }
 
       if (subtab === 'homevisit') {
         if (btnDaily) btnDaily.classList.remove('active');
