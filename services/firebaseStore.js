@@ -526,12 +526,20 @@ export async function syncVillagesMasterToFirestore(vil) {
     const idVal = vil.id || `VIL_${vil.villageName || Date.now()}`;
     const docId = toSafeDocId(idVal, 'VIL');
     const ref = doc(firestoreDb, 'villagesMaster', docId);
+    const popCount = parseInt(vil.population) || 0;
+    const housesCount = parseInt(vil.houses != null ? vil.houses : vil.households) || (popCount > 0 ? Math.round(popCount / 5) : 0);
+    const targetCount = parseInt(vil.annualSmearTarget != null ? vil.annualSmearTarget : vil.target) || Math.round(popCount * 0.1);
+    const asha = vil.ashaName || vil.ashaWorker || '';
+
     const payload = {
       id: String(vil.id || docId),
       subcenter: vil.subcenter || '',
       villageName: vil.villageName || '',
-      population: parseInt(vil.population) || 0,
-      households: parseInt(vil.households) || 0,
+      population: popCount,
+      houses: housesCount,
+      households: housesCount,
+      annualSmearTarget: targetCount,
+      ashaName: asha,
       assignedEmployees: Array.isArray(vil.assignedEmployees) ? vil.assignedEmployees : [],
       updatedAt: new Date().toISOString()
     };
@@ -557,7 +565,21 @@ export async function getVillagesFromFirestore() {
   try {
     const snap = await getDocsFromServer(collection(firestoreDb, 'villagesMaster'));
     const list = [];
-    snap.forEach(docSnap => list.push(docSnap.data()));
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      const pop = parseInt(d.population) || 0;
+      const hCount = parseInt(d.houses != null ? d.houses : d.households) || (pop > 0 ? Math.round(pop / 5) : 0);
+      const target = parseInt(d.annualSmearTarget != null ? d.annualSmearTarget : d.target) || Math.round(pop * 0.1);
+      list.push({
+        ...d,
+        id: docSnap.id,
+        population: pop,
+        houses: hCount,
+        households: hCount,
+        annualSmearTarget: target,
+        ashaName: d.ashaName || d.ashaWorker || ''
+      });
+    });
     return { success: true, data: list };
   } catch (err) {
     console.error('[FirebaseStore] Error fetching villages from Firestore:', err.message);

@@ -144,11 +144,68 @@
         if (clientMonthMaster.length > 0) setLocalStore('monthMaster', clientMonthMaster);
       }
 
+      const defaultVillagesMaster = [
+        {"id":"VIL_01","villageName":"आलमला","name":"आलमला","subcenter":"आलमला","upkendra":"आलमला","population":3706,"houses":741,"households":741,"annualSmearTarget":371,"target":371,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_02","villageName":"उंबडगा बू","name":"उंबडगा बू","subcenter":"आलमला","upkendra":"आलमला","population":1009,"houses":202,"households":202,"annualSmearTarget":101,"target":101,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_03","villageName":"उंबडगा खू","name":"उंबडगा खू","subcenter":"आलमला","upkendra":"आलमला","population":997,"houses":199,"households":199,"annualSmearTarget":100,"target":100,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_04","villageName":"आलमला तांडा","name":"आलमला तांडा","subcenter":"आलमला","upkendra":"आलमला","population":207,"houses":41,"households":41,"annualSmearTarget":21,"target":21,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_05","villageName":"समदर्गा","name":"समदर्गा","subcenter":"कोरंगळा","upkendra":"कोरंगळा","population":1219,"houses":244,"households":244,"annualSmearTarget":122,"target":122,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_06","villageName":"कोरंगळा","name":"कोरंगळा","subcenter":"कोरंगळा","upkendra":"कोरंगळा","population":1812,"houses":362,"households":362,"annualSmearTarget":181,"target":181,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_07","villageName":"येल्लोरी","name":"येल्लोरी","subcenter":"कोरंगळा","upkendra":"कोरंगळा","population":1402,"houses":280,"households":280,"annualSmearTarget":140,"target":140,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_08","villageName":"येल्लोरी वाडी","name":"येल्लोरी वाडी","subcenter":"कोरंगळा","upkendra":"कोरंगळा","population":664,"houses":133,"households":133,"annualSmearTarget":66,"target":66,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_09","villageName":"औसा तांडा","name":"औसा तांडा","subcenter":"कोरंगळा","upkendra":"कोरंगळा","population":65,"houses":13,"households":13,"annualSmearTarget":7,"target":7,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_10","villageName":"काळमाथा","name":"काळमाथा","subcenter":"बोरगाव","upkendra":"बोरगाव","population":1811,"houses":362,"households":362,"annualSmearTarget":181,"target":181,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_11","villageName":"बोरगांव","name":"बोरगांव","subcenter":"बोरगाव","upkendra":"बोरगाव","population":227,"houses":45,"households":45,"annualSmearTarget":23,"target":23,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_12","villageName":"कवठा","name":"कवठा","subcenter":"बोरगाव","upkendra":"बोरगाव","population":969,"houses":194,"households":194,"annualSmearTarget":97,"target":97,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_13","villageName":"कवठा तांडा","name":"कवठा तांडा","subcenter":"बोरगाव","upkendra":"बोरगाव","population":1225,"houses":245,"households":245,"annualSmearTarget":123,"target":123,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_14","villageName":"हाळदुर्ग","name":"हाळदुर्ग","subcenter":"भादा","upkendra":"भादा","population":370,"houses":74,"households":74,"annualSmearTarget":37,"target":37,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_15","villageName":"भादा","name":"भादा","subcenter":"भादा","upkendra":"भादा","population":5420,"houses":1120,"households":1120,"annualSmearTarget":542,"target":542,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_16","villageName":"शिंदेवाडी","name":"शिंदेवाडी","subcenter":"भादा","upkendra":"भादा","population":315,"houses":63,"households":63,"annualSmearTarget":32,"target":32,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_17","villageName":"ब-हाणपूर","name":"ब-हाणपूर","subcenter":"भादा","upkendra":"भादा","population":835,"houses":167,"households":167,"annualSmearTarget":84,"target":84,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_18","villageName":"आंदोरा","name":"आंदोरा","subcenter":"भेटा","upkendra":"भेटा","population":2150,"houses":430,"households":430,"annualSmearTarget":215,"target":215,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_19","villageName":"भेटा","name":"भेटा","subcenter":"भेटा","upkendra":"भेटा","population":3395,"houses":679,"households":679,"annualSmearTarget":340,"target":340,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_20","villageName":"नाव्होली","name":"नाव्होली","subcenter":"भेटा","upkendra":"भेटा","population":130,"houses":26,"households":26,"annualSmearTarget":13,"target":13,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_21","villageName":"वडजी","name":"वडजी","subcenter":"भेटा","upkendra":"भेटा","population":1150,"houses":230,"households":230,"annualSmearTarget":115,"target":115,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_22","villageName":"सत्तधरवाडी","name":"सत्तधरवाडी","subcenter":"लखनगाव","upkendra":"लखनगाव","population":1755,"houses":351,"households":351,"annualSmearTarget":176,"target":176,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_23","villageName":"कुलकर्णी तांडा","name":"कुलकर्णी तांडा","subcenter":"लखनगाव","upkendra":"लखनगाव","population":340,"houses":68,"households":68,"annualSmearTarget":34,"target":34,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_24","villageName":"उटी बु.","name":"उटी बु.","subcenter":"लखनगाव","upkendra":"लखनगाव","population":1720,"houses":344,"households":344,"annualSmearTarget":172,"target":172,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_25","villageName":"सोनपट्टी तांडा","name":"सोनपट्टी तांडा","subcenter":"लखनगाव","upkendra":"लखनगाव","population":412,"houses":82,"households":82,"annualSmearTarget":41,"target":41,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_26","villageName":"लखनगांव","name":"लखनगांव","subcenter":"लखनगाव","upkendra":"लखनगाव","population":1688,"houses":338,"households":338,"annualSmearTarget":169,"target":169,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_27","villageName":"शिवली","name":"शिवली","subcenter":"शिवली","upkendra":"शिवली","population":3800,"houses":760,"households":760,"annualSmearTarget":380,"target":380,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_28","villageName":"वरवडा","name":"वरवडा","subcenter":"शिवली","upkendra":"शिवली","population":1497,"houses":299,"households":299,"annualSmearTarget":150,"target":150,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_29","villageName":"जायफळ","name":"जायफळ","subcenter":"शिवली","upkendra":"शिवली","population":1283,"houses":257,"households":257,"annualSmearTarget":128,"target":128,"ashaName":"","ashaWorker":""},
+        {"id":"VIL_30","villageName":"Phc भादा","name":"Phc भादा","subcenter":"प्रा.आ.केंद्र","upkendra":"प्रा.आ.केंद्र","population":0,"houses":250,"households":250,"annualSmearTarget":0,"target":0,"ashaName":"","ashaWorker":""}
+      ];
+
       let clientMasterData = (defaultSnap.masterData && Array.isArray(defaultSnap.masterData)) ? defaultSnap.masterData : (typeof defaultMasterData !== 'undefined' ? defaultMasterData : []);
-      let clientSubcenters = (defaultSnap.subcenterMaster && Array.isArray(defaultSnap.subcenterMaster)) ? defaultSnap.subcenterMaster : [];
-      let clientVillages = (defaultSnap.villagesMaster && Array.isArray(defaultSnap.villagesMaster)) ? defaultSnap.villagesMaster : [];
-      let clientEmployees = (defaultSnap.employeeMaster && Array.isArray(defaultSnap.employeeMaster)) ? defaultSnap.employeeMaster : [];
-      let clientTransfers = (defaultSnap.transferHistory && Array.isArray(defaultSnap.transferHistory)) ? defaultSnap.transferHistory : [];
+      let clientSubcenters = getLocalStore('subcenterMaster', (defaultSnap.subcenterMaster && Array.isArray(defaultSnap.subcenterMaster)) ? defaultSnap.subcenterMaster : []);
+      let rawClientVillages = getLocalStore('villagesMaster', null);
+      if (!rawClientVillages || !Array.isArray(rawClientVillages) || rawClientVillages.length === 0) {
+        rawClientVillages = (defaultSnap.villagesMaster && Array.isArray(defaultSnap.villagesMaster) && defaultSnap.villagesMaster.length > 0)
+          ? defaultSnap.villagesMaster
+          : defaultVillagesMaster;
+      }
+      // Ensure all client villages have house numbers calculated if missing or 0
+      let clientVillages = rawClientVillages.map(v => {
+        const pop = parseInt(v.population) || 0;
+        let h = parseInt(v.houses != null ? v.houses : v.households);
+        if (isNaN(h) || h <= 0) {
+          const matchDefault = defaultVillagesMaster.find(dv => dv.villageName === (v.villageName || v.name) || dv.id === v.id);
+          h = (matchDefault && matchDefault.houses) ? matchDefault.houses : (pop > 0 ? Math.round(pop / 5) : 0);
+        }
+        return {
+          ...v,
+          population: pop,
+          houses: h,
+          households: h,
+          target: parseInt(v.annualSmearTarget != null ? v.annualSmearTarget : v.target) || Math.round(pop * 0.1),
+          annualSmearTarget: parseInt(v.annualSmearTarget != null ? v.annualSmearTarget : v.target) || Math.round(pop * 0.1)
+        };
+      });
+      setLocalStore('villagesMaster', clientVillages);
+
+      let clientEmployees = getLocalStore('employeeMaster', (defaultSnap.employeeMaster && Array.isArray(defaultSnap.employeeMaster)) ? defaultSnap.employeeMaster : []);
+      let clientTransfers = getLocalStore('transferHistory', (defaultSnap.transferHistory && Array.isArray(defaultSnap.transferHistory)) ? defaultSnap.transferHistory : []);
 
       let clientGoogleSheetConfig = getLocalStore('googleSheetConfig', (defaultSnap.googleSheetConfig || {
         spreadsheetId: "1QW9vQ943bT131102008741_b9e7cQ86z7pLzP9gX3e0r",
@@ -3150,7 +3207,72 @@
           }
 
           case 'getVillagesMaster': {
-            return { result: clientVillages.length > 0 ? clientVillages : (defaultSnap.villagesMaster || []) };
+            if (!clientVillages || clientVillages.length === 0) {
+              clientVillages = defaultVillagesMaster.map(dv => ({ ...dv }));
+            }
+            clientVillages.forEach(v => {
+              const pop = parseInt(v.population) || 0;
+              let h = parseInt(v.houses != null ? v.houses : v.households);
+              if (isNaN(h) || h <= 0) {
+                const dv = defaultVillagesMaster.find(d => d.villageName === (v.villageName || v.name) || d.id === v.id);
+                h = (dv && dv.houses) ? dv.houses : (pop > 0 ? Math.round(pop / 5) : 0);
+              }
+              v.houses = h;
+              v.households = h;
+            });
+            setLocalStore('villagesMaster', clientVillages);
+            return { result: clientVillages };
+          }
+
+          case 'saveVillage': {
+            const [vilData] = args;
+            if (!vilData || (!vilData.name && !vilData.villageName)) return { result: { success: false, message: 'गावाचे नाव आवश्यक आहे.' } };
+            const vName = (vilData.name || vilData.villageName).trim();
+            const popCount = parseInt(vilData.population) || 0;
+            let hCount = parseInt(vilData.houses != null ? vilData.houses : vilData.households);
+            if (isNaN(hCount) || hCount <= 0) {
+              hCount = popCount > 0 ? Math.round(popCount / 5) : 0;
+            }
+            let ex = clientVillages.find(v => (vilData.id && String(v.id) === String(vilData.id)) || (v.villageName || v.name) === vName);
+            if (ex) {
+              ex.name = vName;
+              ex.villageName = vName;
+              ex.upkendra = vilData.upkendra || ex.upkendra;
+              ex.subcenter = vilData.upkendra || ex.subcenter;
+              ex.population = popCount;
+              ex.houses = hCount;
+              ex.households = hCount;
+              ex.target = parseInt(vilData.target) || Math.round(popCount * 0.1);
+              ex.annualSmearTarget = ex.target;
+              ex.ashaWorker = vilData.ashaWorker || '';
+              ex.ashaName = vilData.ashaWorker || '';
+            } else {
+              ex = {
+                id: vilData.id || `VIL_${Date.now()}`,
+                name: vName,
+                villageName: vName,
+                upkendra: vilData.upkendra || 'भादा',
+                subcenter: vilData.upkendra || 'भादा',
+                population: popCount,
+                houses: hCount,
+                households: hCount,
+                target: parseInt(vilData.target) || Math.round(popCount * 0.1),
+                annualSmearTarget: parseInt(vilData.target) || Math.round(popCount * 0.1),
+                ashaWorker: vilData.ashaWorker || '',
+                ashaName: vilData.ashaWorker || '',
+                assignedEmployees: []
+              };
+              clientVillages.push(ex);
+            }
+            setLocalStore('villagesMaster', clientVillages);
+            return { result: { success: true, message: `गाव '${vName}' यशस्वीरित्या जतन झाले!`, village: ex } };
+          }
+
+          case 'deleteVillage': {
+            const [vilId] = args;
+            clientVillages = clientVillages.filter(v => v.id !== vilId && v.name !== vilId && v.villageName !== vilId);
+            setLocalStore('villagesMaster', clientVillages);
+            return { result: { success: true, message: 'गाव हटवण्यात आले.' } };
           }
 
           case 'getDrivePhotos': {
@@ -3191,9 +3313,13 @@
             }
 
             const data = await response.json();
+            if (typeof updateWifiStatus === 'function') updateWifiStatus(true);
             return data;
           } catch (err) {
             lastErr = err;
+            if (typeof navigator !== 'undefined' && navigator.onLine === false && typeof updateWifiStatus === 'function') {
+              updateWifiStatus(false);
+            }
             if (isStaticHosting || (err && err.message && err.message.includes('Failed to fetch'))) {
               serverUnavailable = true;
               return await executeClientSideRpc(prop, args);
@@ -3208,6 +3334,36 @@
         serverUnavailable = true;
         return await executeClientSideRpc(prop, args);
       }
+
+      function updateWifiStatus(isOnline) {
+        try {
+          const desktopSvg = document.getElementById('wifiIconSvg');
+          const mobileSvg = document.getElementById('mobileWifiIconSvg');
+          const desktopWrap = document.getElementById('systemOnlineIndicator');
+          const mobileWrap = document.getElementById('mobileSyncStatusChip');
+          const color = isOnline ? '#22c55e' : '#ef4444';
+          const shadow = isOnline ? 'drop-shadow(0 0 5px rgba(34,197,94,0.65))' : 'drop-shadow(0 0 5px rgba(239,68,68,0.65))';
+          const titleText = isOnline ? 'सिस्टीम ऑनलाइन' : 'सिस्टीम ऑफलाइन';
+
+          if (desktopSvg) {
+            desktopSvg.style.stroke = color;
+            desktopSvg.style.filter = shadow;
+          }
+          if (desktopWrap) {
+            desktopWrap.title = titleText;
+          }
+          if (mobileSvg) {
+            mobileSvg.style.stroke = color;
+            mobileSvg.style.filter = shadow;
+          }
+          if (mobileWrap) {
+            mobileWrap.title = titleText;
+          }
+        } catch(e) {}
+      }
+      window.updateWifiStatus = updateWifiStatus;
+      window.addEventListener('online', () => updateWifiStatus(true));
+      window.addEventListener('offline', () => updateWifiStatus(false));
 
       function showNetworkToast(msg) {
         if (typeof document === 'undefined' || !document.body) return;
@@ -3739,20 +3895,61 @@
       min-width: 0;
       min-height: 600px;
       overflow-x: hidden;
+      position: relative;
     }
 
     .tab-pane {
       display: none;
-      animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .tab-pane.active {
       display: block;
+      opacity: 1;
+      transform: translateY(0);
+      animation: tabFadeSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes tabFadeSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Subtle sub-pane / section smooth transition */
+    .subpane-fade,
+    .table-subpane.subpane-fade {
+      animation: subpaneFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes subpaneFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tab-pane,
+      .tab-pane.active,
+      .subpane-fade,
+      .table-subpane.subpane-fade {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+      }
     }
 
     /* ================= KPI STATS CARDS ================= */
@@ -4694,7 +4891,14 @@
         <svg height="12" width="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
         GitHub
       </button>
-      <span class="header-chip" style="font-size:11px; padding:3px 8px;" id="mobileSyncStatusChip">🟢 ऑनलाइन</span>
+      <span id="mobileSyncStatusChip" title="सिस्टीम ऑनलाइन" style="display:inline-flex; align-items:center; justify-content:center; padding:3px 5px; cursor:default;" aria-label="सिस्टीम ऑनलाइन स्थिती">
+        <svg id="mobileWifiIconSvg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:stroke 0.3s ease, filter 0.3s ease; filter:drop-shadow(0 0 5px rgba(34,197,94,0.65));">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+          <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+      </span>
     </div>
   </div>
 
@@ -4783,9 +4987,13 @@
           <span style="font-size:15px;">📲</span>
           <span>APK डाऊनलोड</span>
         </a>
-        <span class="header-chip" id="headerFirestoreChip" style="background:#064e3b; border:1.5px solid #34d399; color:#ecfdf5; font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(0,0,0,0.18);">
-          <span style="color:#fbbf24;">🔥</span>
-          <span>Cloud Firestore सक्रिय</span>
+        <span id="systemOnlineIndicator" title="सिस्टीम ऑनलाइन" style="display:inline-flex; align-items:center; justify-content:center; padding:4px 6px; cursor:default; transition:all 0.3s ease;" aria-label="सिस्टीम ऑनलाइन स्थिती">
+          <svg id="wifiIconSvg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:stroke 0.3s ease, filter 0.3s ease; filter:drop-shadow(0 0 5px rgba(34,197,94,0.65));">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" y1="20" x2="12.01" y2="20"/>
+          </svg>
         </span>
         <button type="button" class="header-chip" id="btnHeaderGithub" onclick="openGithubModal(event)" style="background:#24292e; color:#ffffff; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:6px 12px; transition:transform 0.15s ease;" title="GitHub रिपॉझिटरी व सोर्स कोड">
           <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor" style="display:inline-block;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
@@ -4819,58 +5027,21 @@
     <div class="main-content">
       
       <div id="dashboardTab" class="tab-pane active">
-        <!-- CLOUD FIRESTORE REAL-TIME STATUS BANNER -->
-        <div class="firestore-banner-card" style="background:linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color:#ffffff; border-radius:14px; padding:18px 22px; margin-bottom:22px; box-shadow:0 8px 20px -4px rgba(6, 78, 59, 0.35); border:1px solid #10b981;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-            <div style="display:flex; align-items:center; gap:14px;">
-              <div style="width:52px; height:52px; background:rgba(255,255,255,0.18); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; border:1px solid rgba(255,255,255,0.3); flex-shrink:0;">
-                🔥
-              </div>
-              <div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                  <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff; letter-spacing:0.2px;">
-                    क्लाउड फायरस्टोअर डेटा केंद्र (Cloud Firestore Live Database)
-                  </h3>
-                  <span id="dashFirestoreBadge" style="background:#22c55e; color:#052e16; font-size:11px; font-weight:800; padding:2px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
-                    🟢 रिअल-टाईम सक्रिय
-                  </span>
-                </div>
-                <div style="font-size:13px; color:#d1fae5; margin-top:4px; font-weight:500;">
-                  NVBDCP अंतर्गत सर्व रक्त नमुने, रुग्ण नोंदी आणि मासिक निर्देशांक थेट Cloud Firestore डेटाबेसमध्ये रिअल-टाईम व १००% सुरक्षित जतन होतात.
-                </div>
-                <div style="font-size:11.5px; color:#a7f3d0; margin-top:4px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                  <span>🗄️ <b>प्रकल्प:</b> learned-answer-316612</span>
-                  <span>•</span>
-                  <span>🕒 <b>स्थिती:</b> <span id="dashSyncLastTime" style="font-weight:700; color:#ffffff;">क्लाउड डेटाबेस सक्रिय</span></span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Action Badges -->
-            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <span id="dashFirestoreStatusBadge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.3); display:inline-flex; align-items:center; gap:6px;">
-                🟢 थेट क्लाउड स्टोरेज (Cloud Firestore Active)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        
         <!-- Dashboard Top Navigation Subtabs -->
         <div class="table-subtabs" style="margin-bottom:18px;">
-          <button id="dashSubtabBtnMonthly" class="subtab-btn active" onclick="switchDashboardSubtab('monthlyReport')">
+          <button id="dashSubtabBtnGeneral" class="subtab-btn active" onclick="switchDashboardSubtab('general')">
+            📊 रक्त नमुने विश्लेषण व आलेख (Blood Smear Overview & Graphs)
+          </button>
+          <button id="dashSubtabBtnMonthly" class="subtab-btn" onclick="switchDashboardSubtab('monthlyReport')">
             📑 मासिक अहवाल डॅशबोर्ड (NVBDCP Indicators & Template Report)
           </button>
           <button id="dashSubtabBtnVillageAnalytics" class="subtab-btn" onclick="switchDashboardSubtab('villageAnalytics')">
             📈 गावनिहाय कर्मचारी विश्लेषण (Recharts Analytics)
           </button>
-          <button id="dashSubtabBtnGeneral" class="subtab-btn" onclick="switchDashboardSubtab('general')">
-            📊 रक्त नमुने विश्लेषण व आलेख (Blood Smear Overview & Graphs)
-          </button>
         </div>
 
         <!-- ================= SUBPANE 1: MONTHLY NVBDCP REPORT DASHBOARD ================= -->
-        <div id="subpaneMonthlyReportDashboard">
+        <div id="subpaneMonthlyReportDashboard" style="display:none;">
           
           <!-- Header Banner & Month Selector -->
           <div style="background:linear-gradient(135deg, #f0fff4, #ebf8ff); border:1.5px solid #319795; border-radius:12px; padding:18px 20px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
@@ -5418,7 +5589,7 @@
         </div>
 
         <!-- ================= SUBPANE 2: GENERAL BLOOD SMEAR OVERVIEW & CHARTS ================= -->
-        <div id="subpaneGeneralOverview" style="display:none;">
+        <div id="subpaneGeneralOverview" style="display:block;">
           <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px;">मासिक आढावा (चालू महिना - रक्त नमुने)</h3>
           <div id="dashLoader" style="text-align:center; padding:50px; color:var(--primary); font-weight:bold;">डेटा लोड होत आहे... ⏳</div>
           <div id="dashContent" style="display:none;">
@@ -9188,6 +9359,21 @@
     }
 
     window.onload = () => {
+      if (typeof updateWifiStatus === 'function') {
+        updateWifiStatus(navigator.onLine !== false);
+      }
+      setInterval(() => {
+        if (typeof updateWifiStatus === 'function') {
+          if (navigator.onLine === false) {
+            updateWifiStatus(false);
+          } else {
+            fetch('/api/health', { method: 'GET', cache: 'no-store' })
+              .then(r => updateWifiStatus(r.ok))
+              .catch(() => updateWifiStatus(false));
+          }
+        }
+      }, 20000);
+
       document.getElementById('commonDate').valueAsDate = new Date();
       document.getElementById('dailyReportDate').valueAsDate = new Date(); 
       loadDashboard();
@@ -9198,6 +9384,11 @@
         // Pre-load default month indicators
         loadSelectedMonthIndicators("सप्टेंबर २०२६");
       });
+      // Proactively load master management data so village house counts and KPIs are always initialized
+      setTimeout(() => {
+        loadMasterManagementData(false);
+      }, 100);
+
       google.script.run
         .withSuccessHandler(data => {
           initMasterDataUI(data);
@@ -9207,6 +9398,16 @@
           initMasterDataUI(defaultMasterData);
         })
         .getMasterData();
+
+      // Restore previously open tab if user refreshed the page
+      try {
+        const savedTab = sessionStorage.getItem('phc_active_tab');
+        if (savedTab && savedTab !== 'dashboardTab' && document.getElementById(savedTab)) {
+          setTimeout(() => {
+            switchTab(savedTab);
+          }, 150);
+        }
+      } catch (e) {}
     };
 
     // ================= MOBILE NAVIGATION & TAB CONTROLLER =================
@@ -9252,13 +9453,25 @@
     }
 
     function switchTab(tabId, btn) {
-      // 1. Switch Active Pane
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      try { sessionStorage.setItem('phc_active_tab', tabId); } catch(e) {}
+      // 1. Switch Active Pane with smooth CSS transition
       let targetPane = document.getElementById(tabId);
       if (tabId === 'homeVisitEntry') {
         targetPane = document.getElementById('dataEntry');
       }
-      if (targetPane) targetPane.classList.add('active');
+
+      const allPanes = document.querySelectorAll('.tab-pane');
+      allPanes.forEach(p => {
+        if (p !== targetPane) {
+          p.classList.remove('active');
+        }
+      });
+
+      if (targetPane) {
+        targetPane.classList.remove('active');
+        void targetPane.offsetWidth; // Reflow to cleanly trigger CSS transition/animation
+        targetPane.classList.add('active');
+      }
 
       if (tabId === 'homeVisitEntry') {
         switchDataEntrySubtab('homevisit');
@@ -9370,8 +9583,14 @@
       currentTableSubtab = subtabId;
       document.querySelectorAll('.table-subpane').forEach(p => p.style.display = 'none');
       document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(subtabId).style.display = 'block';
-      btn.classList.add('active');
+      const targetSub = document.getElementById(subtabId);
+      if (targetSub) {
+        targetSub.style.display = 'block';
+        targetSub.classList.remove('subpane-fade');
+        void targetSub.offsetWidth;
+        targetSub.classList.add('subpane-fade');
+      }
+      if (btn) btn.classList.add('active');
       filterCurrentTable();
     }
 
@@ -9722,7 +9941,7 @@
     }
 
     // --- DASHBOARD SUBTABS & MONTHLY REPORT DASHBOARD CONTROLLER ---
-    let currentDashboardSubtab = 'monthlyReport';
+    let currentDashboardSubtab = 'general';
     let currentMrdMonth = 'सप्टेंबर २०२६';
     let mrdPriorCache = { opd: 0, feverCases: 0, bloodSmears: 0, treatedCases: 0, chloroquineSpent: 0 };
     let mrdMonthsLoaded = false;
@@ -9748,15 +9967,30 @@
 
       if (subtab === 'monthlyReport') {
         if (btnMonthly) btnMonthly.classList.add('active');
-        if (paneMonthly) paneMonthly.style.display = 'block';
+        if (paneMonthly) {
+          paneMonthly.style.display = 'block';
+          paneMonthly.classList.remove('subpane-fade');
+          void paneMonthly.offsetWidth;
+          paneMonthly.classList.add('subpane-fade');
+        }
         loadMonthlyReportDashboardData(currentMrdMonth);
       } else if (subtab === 'villageAnalytics') {
         if (btnVillage) btnVillage.classList.add('active');
-        if (paneVillage) paneVillage.style.display = 'block';
+        if (paneVillage) {
+          paneVillage.style.display = 'block';
+          paneVillage.classList.remove('subpane-fade');
+          void paneVillage.offsetWidth;
+          paneVillage.classList.add('subpane-fade');
+        }
         loadVillageAnalyticsData();
       } else {
         if (btnGeneral) btnGeneral.classList.add('active');
-        if (paneGeneral) paneGeneral.style.display = 'block';
+        if (paneGeneral) {
+          paneGeneral.style.display = 'block';
+          paneGeneral.classList.remove('subpane-fade');
+          void paneGeneral.offsetWidth;
+          paneGeneral.classList.add('subpane-fade');
+        }
         if (!dashLoaded) {
           loadDashboardStatsOnly();
         }
@@ -10531,8 +10765,8 @@
     }
 
     function loadDashboard() {
-      // Load both monthly report dashboard and general stats
-      loadMonthlyReportDashboardData(currentMrdMonth);
+      // Default to Blood Smear Overview & Graphs (रक्त नमुने विश्लेषण व आलेख)
+      switchDashboardSubtab('general');
       loadDashboardStatsOnly();
     }
 
@@ -11789,7 +12023,12 @@
         if (descEl) descEl.innerHTML = 'या स्वतंत्र पानावर फक्त <b>आरोग्य सेवक (MPW)</b> व <b>आरोग्य सेविका (ANM)</b> पंधरवडा १ व २ नुसार प्रत्यक्ष गृहभेटींची नोंद करा. (यामध्ये ओपीडी, तापाचे रुग्ण, रक्त नमुने समाविष्ट नाहीत.)';
 
         if (paneOpd) paneOpd.style.display = 'none';
-        if (paneHome) paneHome.style.display = 'block';
+        if (paneHome) {
+          paneHome.style.display = 'block';
+          paneHome.classList.remove('subpane-fade');
+          void paneHome.offsetWidth;
+          paneHome.classList.add('subpane-fade');
+        }
 
         if (opdPreview) opdPreview.style.display = 'none'; // Exclude OPD, fever, blood samples from Home Visit view
         if (homePreview) homePreview.style.display = 'block';
@@ -11812,7 +12051,12 @@
         if (titleEl) titleEl.innerHTML = '📋 नवीन बाह्यरुग्ण (OPD) मासिक अहवाल नोंदणी (New OPD Monthly Indicators)';
         if (descEl) descEl.innerHTML = 'या पानावर फक्त <b>\'१. नवीन बाह्यरुग्ण (New OPD)\'</b> ची मासिक संख्या प्रविष्ट करा. बाकी सर्व घटक (तापाचे रुग्ण, रक्त नमुणे, उपचारीत रुग्ण व क्लोरोक्वीन खर्च) इनॲक्टिव्ह / लॉक आहेत.';
 
-        if (paneOpd) paneOpd.style.display = 'block';
+        if (paneOpd) {
+          paneOpd.style.display = 'block';
+          paneOpd.classList.remove('subpane-fade');
+          void paneOpd.offsetWidth;
+          paneOpd.classList.add('subpane-fade');
+        }
         if (paneHome) paneHome.style.display = 'none';
 
         if (opdPreview) opdPreview.style.display = 'block';
@@ -12427,26 +12671,41 @@
 
       google.script.run
         .withSuccessHandler(res => {
-          const list = Array.isArray(res) ? res : (res && res.data ? res.data : []);
-          mVillagesData = list.map(v => ({
-            id: v.id,
-            name: v.villageName || v.name,
-            villageName: v.villageName || v.name,
-            upkendra: v.subcenter || v.upkendra,
-            subcenter: v.subcenter || v.upkendra,
-            population: Number(v.population) || 0,
-            houses: Number(v.houses) || 0,
-            target: Number(v.annualSmearTarget != null ? v.annualSmearTarget : (v.target || Math.round((v.population || 0) * 0.1))),
-            annualSmearTarget: Number(v.annualSmearTarget != null ? v.annualSmearTarget : (v.target || Math.round((v.population || 0) * 0.1))),
-            ashaWorker: v.ashaName || v.ashaWorker || '',
-            ashaName: v.ashaName || v.ashaWorker || '',
-            staffAssigned: Array.isArray(v.assignedEmployees) ? v.assignedEmployees.join(', ') : (v.staffAssigned || v.assignedEmployees || ''),
-            assignedEmployees: Array.isArray(v.assignedEmployees) ? v.assignedEmployees : []
-          }));
+          const rawList = Array.isArray(res) ? res : (res && res.data && Array.isArray(res.data) ? res.data : []);
+          const list = rawList.length > 0 ? rawList : (clientVillages.length > 0 ? clientVillages : defaultVillagesMaster);
+          mVillagesData = list.map(v => {
+            const pop = Number(v.population) || 0;
+            let h = Number(v.houses != null ? v.houses : v.households);
+            if (isNaN(h) || h <= 0) {
+              const def = defaultVillagesMaster.find(dv => dv.villageName === (v.villageName || v.name) || dv.id === v.id);
+              h = (def && def.houses) ? def.houses : (pop > 0 ? Math.round(pop / 5) : 0);
+            }
+            return {
+              id: v.id || `VIL_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+              name: v.villageName || v.name,
+              villageName: v.villageName || v.name,
+              upkendra: v.subcenter || v.upkendra || 'भादा',
+              subcenter: v.subcenter || v.upkendra || 'भादा',
+              population: pop,
+              houses: h,
+              households: h,
+              target: Number(v.annualSmearTarget != null ? v.annualSmearTarget : (v.target || Math.round(pop * 0.1))),
+              annualSmearTarget: Number(v.annualSmearTarget != null ? v.annualSmearTarget : (v.target || Math.round(pop * 0.1))),
+              ashaWorker: v.ashaName || v.ashaWorker || '',
+              ashaName: v.ashaName || v.ashaWorker || '',
+              staffAssigned: Array.isArray(v.assignedEmployees) ? v.assignedEmployees.join(', ') : (v.staffAssigned || v.assignedEmployees || ''),
+              assignedEmployees: Array.isArray(v.assignedEmployees) ? v.assignedEmployees : []
+            };
+          });
+          setLocalStore('villagesMaster', mVillagesData);
+          clientVillages = [...mVillagesData];
           checkDone();
         })
         .withFailureHandler(err => {
-          console.warn('Error loading villages:', err);
+          console.warn('Error loading villages from server, falling back to store:', err);
+          if (!mVillagesData || mVillagesData.length === 0) {
+            mVillagesData = [...clientVillages];
+          }
           checkDone();
         })
         .getVillagesMaster();
@@ -13490,17 +13749,18 @@
     }
 
     function openEditVillageModal(vilId) {
-      const v = mVillagesData.find(vil => vil.id === vilId);
+      const v = mVillagesData.find(vil => String(vil.id) === String(vilId) || vil.name === vilId || vil.villageName === vilId);
       if (!v) return;
 
       document.getElementById('vilModalTitle').textContent = '✏️ गाव माहिती संपादित करा (Edit Village)';
-      document.getElementById('vilFormId').value = v.id;
-      document.getElementById('vilFormName').value = v.name || '';
-      document.getElementById('vilFormUpkendra').value = v.upkendra || '';
+      document.getElementById('vilFormId').value = v.id || '';
+      document.getElementById('vilFormName').value = v.name || v.villageName || '';
+      document.getElementById('vilFormUpkendra').value = v.upkendra || v.subcenter || '';
       document.getElementById('vilFormPopulation').value = v.population || '';
-      document.getElementById('vilFormHouses').value = v.houses || '';
-      document.getElementById('vilFormTarget').value = v.target || '';
-      document.getElementById('vilFormAsha').value = v.ashaWorker || '';
+      const hVal = (v.houses != null && v.houses !== '') ? v.houses : (v.households != null && v.households !== '' ? v.households : (v.population > 0 ? Math.round(v.population / 5) : ''));
+      document.getElementById('vilFormHouses').value = hVal;
+      document.getElementById('vilFormTarget').value = v.target || v.annualSmearTarget || '';
+      document.getElementById('vilFormAsha').value = v.ashaWorker || v.ashaName || '';
 
       const msg = document.getElementById('vilFormStatusMsg');
       if (msg) msg.style.display = 'none';
@@ -13529,7 +13789,10 @@
       const name = document.getElementById('vilFormName').value.trim();
       const upkendra = document.getElementById('vilFormUpkendra').value;
       const population = parseInt(document.getElementById('vilFormPopulation').value) || 0;
-      const houses = parseInt(document.getElementById('vilFormHouses').value) || 0;
+      let houses = parseInt(document.getElementById('vilFormHouses').value);
+      if (isNaN(houses) || houses <= 0) {
+        houses = population > 0 ? Math.round(population / 5) : 0;
+      }
       const target = parseInt(document.getElementById('vilFormTarget').value) || Math.round(population * 0.1);
       const ashaWorker = document.getElementById('vilFormAsha').value.trim();
 
@@ -13554,12 +13817,84 @@
       const payload = {
         id: id || undefined,
         name: name,
+        villageName: name,
         upkendra: upkendra,
+        subcenter: upkendra,
         population: population,
         houses: houses,
+        households: houses,
         target: target,
-        ashaWorker: ashaWorker
+        annualSmearTarget: target,
+        ashaWorker: ashaWorker,
+        ashaName: ashaWorker
       };
+
+      // 1. Optimistically update local view immediately
+      if (typeof mVillagesData !== 'undefined' && Array.isArray(mVillagesData)) {
+        const localMatch = mVillagesData.find(v => (id && String(v.id) === String(id)) || v.name === name || v.villageName === name);
+        if (localMatch) {
+          localMatch.houses = houses;
+          localMatch.households = houses;
+          localMatch.population = population;
+          localMatch.target = target;
+          localMatch.upkendra = upkendra;
+          localMatch.subcenter = upkendra;
+          localMatch.ashaWorker = ashaWorker;
+          localMatch.ashaName = ashaWorker;
+        } else {
+          mVillagesData.push({
+            id: id || `VIL_${Date.now()}`,
+            name: name,
+            villageName: name,
+            upkendra: upkendra,
+            subcenter: upkendra,
+            population: population,
+            houses: houses,
+            households: houses,
+            target: target,
+            annualSmearTarget: target,
+            ashaWorker: ashaWorker,
+            ashaName: ashaWorker,
+            staffAssigned: '',
+            assignedEmployees: []
+          });
+        }
+        renderMasterVillages();
+        updateMasterKPIs();
+      }
+
+      // 2. Also update clientVillages and persist to localStorage immediately
+      if (typeof clientVillages !== 'undefined' && Array.isArray(clientVillages)) {
+        let cv = clientVillages.find(v => (id && String(v.id) === String(id)) || v.name === name || v.villageName === name);
+        if (cv) {
+          cv.houses = houses;
+          cv.households = houses;
+          cv.population = population;
+          cv.target = target;
+          cv.annualSmearTarget = target;
+          cv.upkendra = upkendra;
+          cv.subcenter = upkendra;
+          cv.ashaWorker = ashaWorker;
+          cv.ashaName = ashaWorker;
+        } else {
+          clientVillages.push({
+            id: id || `VIL_${Date.now()}`,
+            name: name,
+            villageName: name,
+            upkendra: upkendra,
+            subcenter: upkendra,
+            population: population,
+            houses: houses,
+            households: houses,
+            target: target,
+            annualSmearTarget: target,
+            ashaWorker: ashaWorker,
+            ashaName: ashaWorker,
+            assignedEmployees: []
+          });
+        }
+        setLocalStore('villagesMaster', clientVillages);
+      }
 
       google.script.run
         .withSuccessHandler(res => {
@@ -13571,7 +13906,32 @@
             if (msg) {
               msg.style.background = '#f0fff4';
               msg.style.color = '#22543d';
-              msg.textContent = `✅ ${res.message}`;
+              msg.textContent = `✅ ${res.message || 'गाव माहिती व घर संख्या यशस्वीरित्या जतन झाली!'}`;
+            }
+            if (res.village) {
+              const sv = res.village;
+              const h = Number(sv.houses != null ? sv.houses : sv.households) || houses;
+              if (Array.isArray(mVillagesData)) {
+                const targetMatch = mVillagesData.find(v => String(v.id) === String(sv.id) || v.name === sv.villageName);
+                if (targetMatch) {
+                  targetMatch.id = sv.id;
+                  targetMatch.houses = h;
+                  targetMatch.households = h;
+                  targetMatch.population = Number(sv.population) || targetMatch.population;
+                }
+              }
+              if (Array.isArray(clientVillages)) {
+                const targetC = clientVillages.find(v => String(v.id) === String(sv.id) || v.name === sv.villageName);
+                if (targetC) {
+                  targetC.id = sv.id;
+                  targetC.houses = h;
+                  targetC.households = h;
+                  targetC.population = Number(sv.population) || targetC.population;
+                }
+                setLocalStore('villagesMaster', clientVillages);
+              }
+              renderMasterVillages();
+              updateMasterKPIs();
             }
             loadMasterManagementData(true);
             setTimeout(closeAddEditVillageModal, 1000);
@@ -14787,35 +15147,37 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         if (el) el.style.display = 'none';
       });
 
+      function showSubpane(el) {
+        if (!el) return;
+        el.style.display = 'block';
+        el.classList.remove('subpane-fade');
+        void el.offsetWidth;
+        el.classList.add('subpane-fade');
+      }
+
       if (subtab === 'entry') {
         document.getElementById('dengueSubtabBtnEntry')?.classList.add('active');
-        const p = document.getElementById('subpaneDengueEntry');
-        if (p) p.style.display = 'block';
+        showSubpane(document.getElementById('subpaneDengueEntry'));
       } else if (subtab === 'batch') {
         document.getElementById('dengueSubtabBtnBatch')?.classList.add('active');
-        const p = document.getElementById('subpaneDengueBatch');
-        if (p) p.style.display = 'block';
+        showSubpane(document.getElementById('subpaneDengueBatch'));
         populateBatchDateSelector();
         loadBatchDatePatients();
       } else if (subtab === 'upload') {
         document.getElementById('dengueSubtabBtnUpload')?.classList.add('active');
-        const p = document.getElementById('subpaneDengueUpload');
-        if (p) p.style.display = 'block';
+        showSubpane(document.getElementById('subpaneDengueUpload'));
       } else if (subtab === 'register') {
         document.getElementById('dengueSubtabBtnRegister')?.classList.add('active');
-        const p = document.getElementById('subpaneDengueRegister');
-        if (p) p.style.display = 'block';
+        showSubpane(document.getElementById('subpaneDengueRegister'));
         filterDengueTable();
       } else if (subtab === 'letter') {
         document.getElementById('dengueSubtabBtnLetter')?.classList.add('active');
-        const p = document.getElementById('subpaneDengueLetter');
-        if (p) p.style.display = 'block';
+        showSubpane(document.getElementById('subpaneDengueLetter'));
         populateDengueLetterDateSelect();
         renderGmcLetterPreview();
       } else if (subtab === 'sheets') {
         document.getElementById('dengueSubtabBtnSheets')?.classList.add('active');
-        const p = document.getElementById('subpaneDengueSheets');
-        if (p) p.style.display = 'block';
+        showSubpane(document.getElementById('subpaneDengueSheets'));
         populateDengueSheetsSelect();
         renderNivSheetsPreview();
       }

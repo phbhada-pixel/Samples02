@@ -207,7 +207,22 @@ export async function syncAllDataFromFirestore(force = false) {
     // 6. Villages Master
     if (Array.isArray(fsData.villageMasterList) && fsData.villageMasterList.length > 0) {
       villagesMaster.length = 0;
-      fsData.villageMasterList.forEach(v => villagesMaster.push(v));
+      fsData.villageMasterList.forEach(v => {
+        const pop = parseInt(v.population) || 0;
+        let h = parseInt(v.houses != null ? v.houses : v.households);
+        if (isNaN(h) || h <= 0) {
+          h = pop > 0 ? Math.round(pop / 5) : 0;
+        }
+        villagesMaster.push({
+          ...v,
+          population: pop,
+          houses: h,
+          households: h,
+          annualSmearTarget: parseInt(v.annualSmearTarget != null ? v.annualSmearTarget : v.target) || Math.round(pop * 0.1),
+          ashaName: v.ashaName || v.ashaWorker || ''
+        });
+      });
+      saveDbToDisk();
     }
 
     // 7. Month Master (NVBDCP Indicators, OPD, and MPW/ANM Home Visits)
@@ -1994,7 +2009,8 @@ app.post('/api/rpc', async (req, res) => {
         const [vilData] = args;
         result = saveVillage(vilData);
         if (result.success && result.village) {
-          syncVillagesMasterToFirestore(result.village).catch(err => console.error(err));
+          await syncVillagesMasterToFirestore(result.village);
+          saveDbToDisk();
         }
         break;
       }

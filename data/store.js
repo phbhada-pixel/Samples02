@@ -2392,13 +2392,21 @@ export function saveVillage(data) {
   if (data.target != null && data.annualSmearTarget == null) data.annualSmearTarget = data.target;
   if (data.ashaWorker && !data.ashaName) data.ashaName = data.ashaWorker;
 
-  let vil = villagesMaster.find(v => v.id === data.id || (v.villageName === data.villageName && v.subcenter === data.subcenter));
+  const popVal = parseInt(data.population) || 0;
+  let housesVal = parseInt(data.houses != null ? data.houses : data.households);
+  if (isNaN(housesVal) || housesVal <= 0) {
+    housesVal = popVal > 0 ? Math.round(popVal / 5) : 0;
+  }
+  const targetVal = parseInt(data.annualSmearTarget != null ? data.annualSmearTarget : data.target) || Math.round(popVal * 0.1);
+
+  let vil = villagesMaster.find(v => v.id === data.id || (v.villageName === data.villageName && v.subcenter === data.subcenter) || v.villageName === data.villageName);
   if (vil) {
     vil.villageName = data.villageName.trim();
     if (data.subcenter) vil.subcenter = data.subcenter.trim();
-    if (data.population != null) vil.population = parseInt(data.population) || 0;
-    if (data.houses != null) vil.houses = parseInt(data.houses) || 0;
-    if (data.annualSmearTarget != null) vil.annualSmearTarget = parseInt(data.annualSmearTarget) || 0;
+    vil.population = popVal;
+    vil.houses = housesVal;
+    vil.households = housesVal;
+    vil.annualSmearTarget = targetVal;
     if (data.ashaName) vil.ashaName = data.ashaName.trim();
     if (Array.isArray(data.assignedEmployees)) vil.assignedEmployees = [...data.assignedEmployees];
   } else {
@@ -2406,16 +2414,17 @@ export function saveVillage(data) {
       id: data.id || `VIL_${Date.now()}`,
       villageName: data.villageName.trim(),
       subcenter: data.subcenter || "भादा",
-      population: parseInt(data.population) || 0,
-      houses: parseInt(data.houses) || 0,
-      annualSmearTarget: parseInt(data.annualSmearTarget) || Math.round((parseInt(data.population) || 0) * 0.1),
+      population: popVal,
+      houses: housesVal,
+      households: housesVal,
+      annualSmearTarget: targetVal,
       ashaName: data.ashaName || "",
       assignedEmployees: Array.isArray(data.assignedEmployees) ? [...data.assignedEmployees] : []
     };
     villagesMaster.push(vil);
   }
   saveDbToDisk();
-  return { success: true, message: `गाव '${vil.villageName}' यशस्वीरित्या जतन झाले!`, village: vil };
+  return { success: true, message: `गाव '${vil.villageName}' ची माहिती व घर संख्या (${vil.houses}) यशस्वीरित्या जतन झाली!`, village: vil };
 }
 
 // Delete village
@@ -4303,7 +4312,18 @@ export function loadDbFromDisk() {
         }
         if (Array.isArray(parsed.villagesMaster) && parsed.villagesMaster.length > 0) {
           villagesMaster.length = 0;
-          parsed.villagesMaster.forEach(v => villagesMaster.push(v));
+          parsed.villagesMaster.forEach(v => {
+            const pop = parseInt(v.population) || 0;
+            const h = parseInt(v.houses != null ? v.houses : v.households) || (pop > 0 ? Math.round(pop / 5) : 0);
+            villagesMaster.push({
+              ...v,
+              population: pop,
+              houses: h,
+              households: h,
+              annualSmearTarget: parseInt(v.annualSmearTarget != null ? v.annualSmearTarget : v.target) || Math.round(pop * 0.1),
+              ashaName: v.ashaName || v.ashaWorker || ''
+            });
+          });
         }
         if (Array.isArray(parsed.dengueChikungunyaEntries) && parsed.dengueChikungunyaEntries.length > 0) {
           dengueChikungunyaEntries.length = 0;
