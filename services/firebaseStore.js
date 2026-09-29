@@ -9,8 +9,32 @@ console.log('[FirebaseStore] Initialized Cloud Firestore database:', firebaseCon
 
 function toSafeDocId(str, prefix = 'DOC') {
   if (!str) return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-  const clean = String(str).replace(/[^a-zA-Z0-9_\-.]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
-  return clean ? clean.slice(0, 120) : `${prefix}_${Date.now()}`;
+  const trimmed = String(str).trim();
+  const asciiClean = trimmed.replace(/[^a-zA-Z0-9_\-.]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+  if (asciiClean && asciiClean.length >= 2) {
+    return `${prefix}_${asciiClean}`.slice(0, 120);
+  }
+  const hex = Buffer.from(trimmed, 'utf8').toString('hex').slice(0, 48);
+  return `${prefix}_U_${hex}`;
+}
+
+export function getMonthDocId(monthNameOrIdx) {
+  const MARATHI_MONTHS = [
+    "जानेवारी", "फेब्रुवारी", "मार्च", "एप्रिल", "मे", "जून",
+    "जुलै", "ऑगस्ट", "सप्टेंबर", "ऑक्टोबर", "नोव्हेंबर", "डिसेंबर"
+  ];
+  if (typeof monthNameOrIdx === 'number' && monthNameOrIdx >= 0 && monthNameOrIdx < 12) {
+    const mm = String(monthNameOrIdx + 1).padStart(2, '0');
+    return `MONTH_2026_${mm}`;
+  }
+  const str = String(monthNameOrIdx || '');
+  for (let i = 0; i < MARATHI_MONTHS.length; i++) {
+    if (str.includes(MARATHI_MONTHS[i])) {
+      const mm = String(i + 1).padStart(2, '0');
+      return `MONTH_2026_${mm}`;
+    }
+  }
+  return toSafeDocId(str, 'MONTH');
 }
 
 // -------------------------------------------------------------
@@ -373,16 +397,58 @@ export async function getVillagesFromFirestore() {
 // MONTH MASTER (NVBDCP PROGRESSIVES)
 // -------------------------------------------------------------
 export async function syncMonthMasterToFirestore(monthObj) {
-  if (!monthObj || !monthObj.id) return { success: false };
+  if (!monthObj || (!monthObj.id && !monthObj.name)) return { success: false, error: 'Invalid month data' };
   try {
-    const docId = toSafeDocId(monthObj.id, 'MONTH');
+    const docId = getMonthDocId(monthObj.name || monthObj.id);
     const ref = doc(firestoreDb, 'monthMaster', docId);
-    await setDoc(ref, { ...monthObj, updatedAt: new Date().toISOString() }, { merge: true });
+    const payload = {
+      ...monthObj,
+      id: docId,
+      name: monthObj.name,
+      f1Start: monthObj.f1Start instanceof Date ? monthObj.f1Start.toISOString() : (monthObj.f1Start || null),
+      f1End: monthObj.f1End instanceof Date ? monthObj.f1End.toISOString() : (monthObj.f1End || null),
+      f2Start: monthObj.f2Start instanceof Date ? monthObj.f2Start.toISOString() : (monthObj.f2Start || null),
+      f2End: monthObj.f2End instanceof Date ? monthObj.f2End.toISOString() : (monthObj.f2End || null),
+      newOpd: parseInt(monthObj.newOpd) || 0,
+      progNewOpd: parseInt(monthObj.progNewOpd) || 0,
+      mpwFn1: parseInt(monthObj.mpwFn1) || 0,
+      mpwFn2: parseInt(monthObj.mpwFn2) || 0,
+      mpwHomeVisits: parseInt(monthObj.mpwHomeVisits) || 0,
+      progMpwFn1: parseInt(monthObj.progMpwFn1) || 0,
+      progMpwFn2: parseInt(monthObj.progMpwFn2) || 0,
+      progMpwHomeVisits: parseInt(monthObj.progMpwHomeVisits) || 0,
+      anmFn1: parseInt(monthObj.anmFn1) || 0,
+      anmFn2: parseInt(monthObj.anmFn2) || 0,
+      anmHomeVisits: parseInt(monthObj.anmHomeVisits) || 0,
+      progAnmFn1: parseInt(monthObj.progAnmFn1) || 0,
+      progAnmFn2: parseInt(monthObj.progAnmFn2) || 0,
+      progAnmHomeVisits: parseInt(monthObj.progAnmHomeVisits) || 0,
+      bloodSmears: parseInt(monthObj.bloodSmears) || 0,
+      progBloodSmears: parseInt(monthObj.progBloodSmears) || 0,
+      feverCases: parseInt(monthObj.feverCases) || 0,
+      progFeverCases: parseInt(monthObj.progFeverCases) || 0,
+      treatedCases: parseInt(monthObj.treatedCases) || 0,
+      progTreatedCases: parseInt(monthObj.progTreatedCases) || 0,
+      chloroquineSpent: parseInt(monthObj.chloroquineSpent) || 0,
+      progChloroquineSpent: parseInt(monthObj.progChloroquineSpent) || 0,
+      updatedAt: new Date().toISOString()
+    };
+    await setDoc(ref, payload, { merge: true });
     return { success: true };
   } catch (err) {
     console.error('[FirebaseStore] Error syncing monthMaster:', err.message);
     return { success: false, error: err.message };
   }
+}
+
+export async function syncBatchMonthMasterToFirestore(monthMasterArray) {
+  if (!Array.isArray(monthMasterArray) || monthMasterArray.length === 0) return { success: true, count: 0 };
+  let count = 0;
+  for (const m of monthMasterArray) {
+    const res = await syncMonthMasterToFirestore(m);
+    if (res.success) count++;
+  }
+  return { success: true, count };
 }
 
 export async function getMonthMasterFromFirestore() {
@@ -483,6 +549,15 @@ export async function transferAllDataToFirestore(storeData) {
       for (const d of storeData.dengueChikungunyaEntries) {
         const res = await syncDengueEntryToFirestore(d);
         if (res.success) results.dengueCount++;
+      }
+    }
+
+    // 7. Month Master (Monthly OPD, Home Visits, Smears, Progressive Indicators)
+    if (Array.isArray(storeData.monthMaster) && storeData.monthMaster.length > 0) {
+      results.monthMasterCount = 0;
+      for (const m of storeData.monthMaster) {
+        const res = await syncMonthMasterToFirestore(m);
+        if (res.success) results.monthMasterCount++;
       }
     }
 

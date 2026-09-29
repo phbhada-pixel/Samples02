@@ -1556,12 +1556,12 @@ export function generateMonthlyReportWebApp(selectedMonthDisplay) {
               <td>1250</td><td>1579</td><td>2829</td>
             </tr>
             <tr>
-              <td>3</td><td class="text-left">गृहभेटी आरोग्य सेवक</td>
+              <td>3</td><td class="text-left">गृहभेटी आरोग्य सेवक (MPW - आदिवासी व इतर कार्यक्षेत्र)</td>
               <td>${D35}</td><td>${D36}</td><td><b>${D37}</b></td>
               <td>${D38}</td><td>${D39}</td><td><b>${D40}</b></td>
             </tr>
             <tr>
-              <td>4</td><td class="text-left">गृहभेटी आरोग्य सेवीका</td>
+              <td>4</td><td class="text-left">गृहभेटी आरोग्य सेवीका (ANM - आदिवासी व इतर कार्यक्षेत्र)</td>
               <td>${D41}</td><td>${D42}</td><td><b>${D43}</b></td>
               <td>${D44}</td><td>${D45}</td><td><b>${D46}</b></td>
             </tr>

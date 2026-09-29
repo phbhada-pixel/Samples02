@@ -2375,6 +2375,7 @@
             };
           }
 
+          case 'processForm':
           case 'processDataEntry': {
             const [entries] = args;
             if (!Array.isArray(entries) || entries.length === 0) {
@@ -5649,10 +5650,10 @@
               <!-- 2 Cards Grid for MPW & ANM Home Visits -->
               <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:24px;">
                 
-                <!-- 6. आरोग्य सेवक (MPW) गृहभेटी - पहिला व दुसरा पंधरवडा -->
+                <!-- 6. आरोग्य सेवक (MPW) गृहभेटी - पहिला व दुसरा पंधरवडा (आदिवासी व सामान्य कार्यक्षेत्र) -->
                 <div class="indicator-input-card" style="border-top:4px solid #2b6cb0; background:#fcfdff;">
                   <div class="indicator-card-title" style="color:#2c5282; display:flex; justify-content:space-between; align-items:center;">
-                    <span>🚶‍♂️ ६. आरोग्य सेवक (MPW) गृहभेटी</span>
+                    <span>🚶‍♂️ ६. आरोग्य सेवक (MPW) गृहभेटी (आदिवासी / ग्रामीण)</span>
                     <span style="background:#ebf8ff; color:#2b6cb0; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">पंधरवडा १ व २</span>
                   </div>
                   <div class="indicator-card-body">
@@ -5689,7 +5690,7 @@
                 <!-- 7. आरोग्य सेविका (ANM) गृहभेटी - पहिला व दुसरा पंधरवडा -->
                 <div class="indicator-input-card" style="border-top:4px solid #276749; background:#fcfffd;">
                   <div class="indicator-card-title" style="color:#22543d; display:flex; justify-content:space-between; align-items:center;">
-                    <span>👩‍⚕️ ७. आरोग्य सेविका (ANM) गृहभेटी</span>
+                    <span>👩‍⚕️ ७. आरोग्य सेविका (ANM) गृहभेटी (आदिवासी / ग्रामीण)</span>
                     <span style="background:#f0fff4; color:#276749; font-size:10.5px; padding:2px 8px; border-radius:12px; font-weight:700;">पंधरवडा १ व २</span>
                   </div>
                   <div class="indicator-card-body">
@@ -5814,7 +5815,7 @@
                     </thead>
                     <tbody>
                       <tr style="font-size:12.5px;">
-                        <td style="font-weight:700; text-align:left; background:#f7fafc; color:#2c5282;">🚶‍♂️ गृहभेटी आरोग्य सेवक (MPW)</td>
+                        <td style="font-weight:700; text-align:left; background:#f7fafc; color:#2c5282;">🚶‍♂️ गृहभेटी आरोग्य सेवक (MPW - आदिवासी व सामान्य कार्यक्षेत्र)</td>
                         <td id="prevCellMpwFn1" style="font-weight:600; color:#2c5282;">0</td>
                         <td id="prevCellMpwFn2" style="font-weight:600; color:#2c5282;">0</td>
                         <td id="prevCellMpwTot" style="font-weight:bold; background:#ebf8ff; color:#2b6cb0;">0</td>
@@ -5823,7 +5824,7 @@
                         <td id="prevCellProgMpwTot" style="font-weight:bold; background:#f0fff4; color:#22543d;">0</td>
                       </tr>
                       <tr style="font-size:12.5px;">
-                        <td style="font-weight:700; text-align:left; background:#f7fafc; color:#22543d;">👩‍⚕️ गृहभेटी आरोग्य सेविका (ANM)</td>
+                        <td style="font-weight:700; text-align:left; background:#f7fafc; color:#22543d;">👩‍⚕️ गृहभेटी आरोग्य सेविका (ANM - आदिवासी व सामान्य कार्यक्षेत्र)</td>
                         <td id="prevCellAnmFn1" style="font-weight:600; color:#22543d;">0</td>
                         <td id="prevCellAnmFn2" style="font-weight:600; color:#22543d;">0</td>
                         <td id="prevCellAnmTot" style="font-weight:bold; background:#ebf8ff; color:#2b6cb0;">0</td>
@@ -9200,18 +9201,22 @@
       // Scroll smoothly to top on mobile when switching tab
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // 6. Data Loaders
+      // 6. Data Loaders & Real-Time Sync from Firestore
       if (tabId === 'dashboardTab') { 
-        if (!dashLoaded) { 
-          loadDashboard(); 
-        } else {
-          loadMonthlyReportDashboardData(currentMrdMonth);
-        }
+        loadDashboard(); 
+        loadMonthlyReportDashboardData(currentMrdMonth);
       }
       if (tabId === 'masterTab') { loadMasterManagementData(); }
       if (tabId === 'tablesTab') { loadTablesData(); }
-      if (tabId === 'reportTab' && !monthsLoaded) {
+      if (tabId === 'reportTab') {
         loadMonthList();
+        loadMonthlyReportDashboardData(currentMrdMonth);
+      }
+      if (tabId === 'dataEntry') {
+        const iSelect = document.getElementById('indicatorMonthSelect');
+        if (iSelect && iSelect.value) {
+          loadSelectedMonthIndicators(iSelect.value);
+        }
       }
       if (tabId === 'downloadTab' && !downloadsLoaded) { loadDlFolder(null); downloadsLoaded = true; }
       if (tabId === 'photoTab' && !photosLoaded) { loadPhotoFolder(null); photosLoaded = true; }
@@ -11439,15 +11444,107 @@
     function removeEntry(btn) { if(document.getElementById('entriesContainer').children.length > 1) { btn.closest('.entry-section').remove(); } }
     
     function submitForm(btn) {
-      const data = []; let isValid = true;
-      document.querySelectorAll('.entry-section').forEach(s => {
-        const total = parseInt(s.querySelector('.tot-input').value) || 0; let vSum = 0; const vs = [];
-        s.querySelectorAll('.village-entry').forEach(v => { const vt = parseInt(v.querySelector('.v-tot').value) || 0; vSum += vt; vs.push({ villageName: v.querySelector('.v-name').value, sampleCount: vt, maleCount: v.querySelector('.v-male').value, femaleCount: v.querySelector('.v-fem').value }); });
-        if (total !== vSum) isValid = false;
-        const m = masterData.find(d => d.employeeName === s.querySelector('.emp-select').value);
-        data.push({ bsSendDate: document.getElementById('commonDate').value, bundleNumber: s.querySelector('.bundle-input').value, upkendra: s.querySelector('.upkendra-select').value, employeeName: s.querySelector('.emp-select').value, pasun: s.querySelector('.pasun-input').value, paraynt: s.querySelector('.paraynt-input').value, bsCode: m ? m.bsCode : "", designation: m ? m.designation : "", villageDetails: vs });
+      const commonDate = document.getElementById('commonDate')?.value;
+      if (!commonDate) {
+        showToast('⚠️ कृपया नमुना तारीख निवडा.', 'warning');
+        document.getElementById('commonDate')?.focus();
+        return;
+      }
+
+      const sections = document.querySelectorAll('.entry-section');
+      if (sections.length === 0) {
+        showToast('⚠️ किमान एका कर्मचाऱ्याची नोंद आवश्यक आहे.', 'warning');
+        return;
+      }
+
+      const data = [];
+      let validationError = null;
+
+      sections.forEach((s, idx) => {
+        if (validationError) return;
+
+        const upkendra = s.querySelector('.upkendra-select')?.value;
+        const employeeName = s.querySelector('.emp-select')?.value;
+        const pasun = parseInt(s.querySelector('.pasun-input')?.value);
+        const paraynt = parseInt(s.querySelector('.paraynt-input')?.value);
+        const total = parseInt(s.querySelector('.tot-input')?.value) || 0;
+
+        if (!upkendra) {
+          validationError = `कर्मचारी #${idx + 1}: कृपया उपकेंद्र निवडा.`;
+          return;
+        }
+        if (!employeeName) {
+          validationError = `कर्मचारी #${idx + 1}: कृपया कर्मचारी निवडा.`;
+          return;
+        }
+        if (isNaN(pasun) || pasun <= 0) {
+          validationError = `कर्मचारी #${idx + 1} (${employeeName}): 'पासून' क्रमांक वैध धन संख्या असावी.`;
+          return;
+        }
+        if (isNaN(paraynt) || paraynt < pasun) {
+          validationError = `कर्मचारी #${idx + 1} (${employeeName}): 'पर्यंत' क्रमांक 'पासून' (${pasun}) पेक्षा मोठा किंवा समान असावा.`;
+          return;
+        }
+        if (total <= 0) {
+          validationError = `कर्मचारी #${idx + 1} (${employeeName}): एकूण नमुने संख्या ० पेक्षा जास्त असावी.`;
+          return;
+        }
+
+        let vSum = 0;
+        const vs = [];
+        const vEntries = s.querySelectorAll('.village-entry');
+        if (vEntries.length === 0) {
+          validationError = `कर्मचारी #${idx + 1} (${employeeName}): किमान एका गावाची नोंद आवश्यक आहे.`;
+          return;
+        }
+
+        vEntries.forEach(v => {
+          const vName = v.querySelector('.v-name')?.value?.trim();
+          const vt = parseInt(v.querySelector('.v-tot')?.value) || 0;
+          const vm = parseInt(v.querySelector('.v-male')?.value) || 0;
+          const vf = parseInt(v.querySelector('.v-fem')?.value) || 0;
+          if (!vName) {
+            validationError = `कर्मचारी #${idx + 1} (${employeeName}): गावाचे नाव रिकामे असू शकत नाही.`;
+            return;
+          }
+          if (vt <= 0) {
+            validationError = `कर्मचारी #${idx + 1} (${employeeName} - ${vName}): गावाचे नमुने ० पेक्षा जास्त असावेत.`;
+            return;
+          }
+          vSum += vt;
+          vs.push({
+            villageName: vName,
+            sampleCount: vt,
+            maleCount: vm,
+            femaleCount: vf
+          });
+        });
+
+        if (total !== vSum) {
+          validationError = `कर्मचारी #${idx + 1} (${employeeName}): एकूण नमुने (${total}) व गावनिहाय नमुन्यांची बेरीज (${vSum}) जुळत नाही.`;
+          return;
+        }
+
+        const m = masterData.find(d => d.employeeName === employeeName);
+        data.push({
+          bsSendDate: commonDate,
+          bundleNumber: s.querySelector('.bundle-input')?.value || '',
+          upkendra: upkendra,
+          employeeName: employeeName,
+          pasun: pasun,
+          paraynt: paraynt,
+          total: total,
+          bsCode: m ? m.bsCode : "",
+          designation: m ? m.designation : "",
+          villageDetails: vs
+        });
       });
-      if(!isValid) { alert("⚠️ बेरीज जुळत नाही! कृपया फॉर्म आणि गावनिहाय नमुन्यांची संख्या तपासा."); return; }
+
+      if (validationError) {
+        showToast('⚠️ ' + validationError, 'error');
+        alert('⚠️ ' + validationError);
+        return;
+      }
       btn.disabled = true; btn.textContent = "सबमिट होत आहे... ⏳";
 
       function onComplete(res) {
@@ -11530,9 +11627,7 @@
             populateAllMonthDropdowns(appMonthsList);
             iSelect.value = "सप्टेंबर २०२६";
           }
-          if (!currentLoadedIndicators || currentLoadedIndicators.monthName !== iSelect.value) {
-            loadSelectedMonthIndicators(iSelect.value);
-          }
+          loadSelectedMonthIndicators(iSelect.value);
         }
       } else if (subtab === 'monthly' || subtab === 'opd') {
         if (btnDaily) btnDaily.classList.remove('active');
@@ -11549,9 +11644,7 @@
             populateAllMonthDropdowns(appMonthsList);
             iSelect.value = "सप्टेंबर २०२६";
           }
-          if (!currentLoadedIndicators || currentLoadedIndicators.monthName !== iSelect.value) {
-            loadSelectedMonthIndicators(iSelect.value);
-          }
+          loadSelectedMonthIndicators(iSelect.value);
         }
       } else {
         if (btnDaily) btnDaily.classList.add('active');
@@ -11969,7 +12062,21 @@
     function saveMonthlyIndicators(btn) {
       const monthName = document.getElementById('indicatorMonthSelect').value;
       if (!monthName) {
-        alert('कृपया महिना निवडा.');
+        showToast('⚠️ कृपया महिना निवडा.', 'warning');
+        return;
+      }
+
+      const opdInput = document.getElementById('inpNewOpd');
+      const rawOpd = opdInput ? opdInput.value.trim() : '';
+      if (rawOpd === '') {
+        showToast('⚠️ कृपया नवीन बाह्यरुग्ण (New OPD) संख्या प्रविष्ट करा.', 'warning');
+        if (opdInput) opdInput.focus();
+        return;
+      }
+      const opdNum = parseInt(rawOpd);
+      if (isNaN(opdNum) || opdNum < 0) {
+        showToast('⚠️ नवीन बाह्यरुग्ण (OPD) संख्या ० किंवा त्याहून अधिक असावी (ऋण संख्या नको).', 'error');
+        if (opdInput) opdInput.focus();
         return;
       }
 
@@ -11980,12 +12087,20 @@
       const elMpwFn2 = document.getElementById('inpMpwFn2');
       const mMpwFn1 = elMpwFn1 ? (parseInt(elMpwFn1.value) || 0) : 0;
       const mMpwFn2 = elMpwFn2 ? (parseInt(elMpwFn2.value) || 0) : 0;
+      if (mMpwFn1 < 0 || mMpwFn2 < 0) {
+        showToast('⚠️ MPW गृहभेटी संख्या ० किंवा त्याहून अधिक असावी.', 'error');
+        return;
+      }
       const mMpwTot = mMpwFn1 + mMpwFn2;
 
       const elAnmFn1 = document.getElementById('inpAnmFn1');
       const elAnmFn2 = document.getElementById('inpAnmFn2');
       const mAnmFn1 = elAnmFn1 ? (parseInt(elAnmFn1.value) || 0) : 0;
       const mAnmFn2 = elAnmFn2 ? (parseInt(elAnmFn2.value) || 0) : 0;
+      if (mAnmFn1 < 0 || mAnmFn2 < 0) {
+        showToast('⚠️ ANM गृहभेटी संख्या ० किंवा त्याहून अधिक असावी.', 'error');
+        return;
+      }
       const mAnmTot = mAnmFn1 + mAnmFn2;
 
       const payload = {

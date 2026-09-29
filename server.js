@@ -119,12 +119,147 @@ import {
   deleteBatchDengueEntriesFromFirestore,
   syncBsDataEntryToFirestore,
   syncBatchBsDataToFirestore,
+  syncVillageDetailToFirestore,
   syncSubcenterMasterToFirestore,
   syncEmployeeMasterToFirestore,
   syncVillagesMasterToFirestore,
+  syncMonthMasterToFirestore,
+  syncBatchMonthMasterToFirestore,
   transferAllDataToFirestore,
-  fetchAllDataFromFirestore
+  fetchAllDataFromFirestore,
+  deleteBsDataEntryFromFirestore,
+  getMonthDocId
 } from './services/firebaseStore.js';
+
+let lastFsSyncTime = 0;
+const FS_SYNC_CACHE_MS = 1000; // 1-second debounce to avoid redundant concurrent network calls
+
+export async function syncAllDataFromFirestore(force = false) {
+  const now = Date.now();
+  if (!force && (now - lastFsSyncTime < FS_SYNC_CACHE_MS)) {
+    return { success: true, cached: true };
+  }
+  lastFsSyncTime = now;
+
+  try {
+    const fsData = await fetchAllDataFromFirestore();
+    if (!fsData || !fsData.success) {
+      console.warn('[Server] Firestore fetch failed or unready:', fsData?.error);
+      return { success: false, error: fsData?.error };
+    }
+
+    // 1. BS Data Entries (Blood Smear Slides)
+    if (Array.isArray(fsData.bsList) && fsData.bsList.length > 0) {
+      bsDataEntry.length = 0;
+      fsData.bsList.forEach(r => {
+        bsDataEntry.push([
+          r[0],
+          new Date(r[1]),
+          r[2] || '',
+          r[3] || '',
+          r[4] || '',
+          r[5] || '',
+          r[6] || '',
+          parseInt(r[7]) || 0,
+          parseInt(r[8]) || 0,
+          parseInt(r[9]) || 0
+        ]);
+      });
+    }
+
+    // 2. Village Details (Villagewise Breakdown)
+    if (Array.isArray(fsData.villageList) && fsData.villageList.length > 0) {
+      villageDetails.length = 0;
+      fsData.villageList.forEach(r => {
+        villageDetails.push([
+          r[0],
+          r[1] || '',
+          new Date(r[2]),
+          r[3] || '',
+          parseInt(r[4]) || 0,
+          parseInt(r[5]) || 0,
+          parseInt(r[6]) || 0,
+          r[7] || ''
+        ]);
+      });
+    }
+
+    // 3. Dengue / Chikungunya entries
+    if (Array.isArray(fsData.dengueList) && fsData.dengueList.length > 0) {
+      dengueChikungunyaEntries.length = 0;
+      fsData.dengueList.forEach(d => dengueChikungunyaEntries.push(d));
+    }
+
+    // 4. Subcenters Master
+    if (Array.isArray(fsData.subcenterList) && fsData.subcenterList.length > 0) {
+      subcenterMaster.length = 0;
+      fsData.subcenterList.forEach(s => subcenterMaster.push(s));
+    }
+
+    // 5. Employee Master
+    if (Array.isArray(fsData.employeeList) && fsData.employeeList.length > 0) {
+      employeeMaster.length = 0;
+      fsData.employeeList.forEach(e => employeeMaster.push(e));
+    }
+
+    // 6. Villages Master
+    if (Array.isArray(fsData.villageMasterList) && fsData.villageMasterList.length > 0) {
+      villagesMaster.length = 0;
+      fsData.villageMasterList.forEach(v => villagesMaster.push(v));
+    }
+
+    // 7. Month Master (NVBDCP Indicators, OPD, and MPW/ANM Home Visits)
+    const cleanStr = s => String(s || '').trim().toLowerCase();
+    const cleanMonthName = s => String(s || '').replace(/[0-9०-९\s\-_]/g, '').trim().toLowerCase();
+    if (Array.isArray(fsData.monthList) && fsData.monthList.length > 0) {
+      fsData.monthList.forEach(savedM => {
+        const m = monthMaster.find(x => 
+          (savedM.id && getMonthDocId(x.name) === savedM.id) ||
+          (savedM.name && cleanMonthName(x.name) === cleanMonthName(savedM.name)) ||
+          (savedM.name && cleanStr(x.name) === cleanStr(savedM.name))
+        );
+        if (m) {
+          if (savedM.newOpd != null) m.newOpd = parseInt(savedM.newOpd) || 0;
+          if (savedM.progNewOpd != null) m.progNewOpd = parseInt(savedM.progNewOpd) || 0;
+          if (savedM.bloodSmears != null) m.bloodSmears = parseInt(savedM.bloodSmears) || 0;
+          if (savedM.progBloodSmears != null) m.progBloodSmears = parseInt(savedM.progBloodSmears) || 0;
+          if (savedM.feverCases != null) m.feverCases = parseInt(savedM.feverCases) || 0;
+          if (savedM.progFeverCases != null) m.progFeverCases = parseInt(savedM.progFeverCases) || 0;
+          if (savedM.treatedCases != null) m.treatedCases = parseInt(savedM.treatedCases) || 0;
+          if (savedM.progTreatedCases != null) m.progTreatedCases = parseInt(savedM.progTreatedCases) || 0;
+          if (savedM.chloroquineSpent != null) m.chloroquineSpent = parseInt(savedM.chloroquineSpent) || 0;
+          if (savedM.progChloroquineSpent != null) m.progChloroquineSpent = parseInt(savedM.progChloroquineSpent) || 0;
+          if (savedM.mpwFn1 != null) m.mpwFn1 = parseInt(savedM.mpwFn1) || 0;
+          if (savedM.mpwFn2 != null) m.mpwFn2 = parseInt(savedM.mpwFn2) || 0;
+          if (savedM.mpwHomeVisits != null) m.mpwHomeVisits = parseInt(savedM.mpwHomeVisits) || 0;
+          if (savedM.progMpwFn1 != null) m.progMpwFn1 = parseInt(savedM.progMpwFn1) || 0;
+          if (savedM.progMpwFn2 != null) m.progMpwFn2 = parseInt(savedM.progMpwFn2) || 0;
+          if (savedM.progMpwHomeVisits != null) m.progMpwHomeVisits = parseInt(savedM.progMpwHomeVisits) || 0;
+          if (savedM.anmFn1 != null) m.anmFn1 = parseInt(savedM.anmFn1) || 0;
+          if (savedM.anmFn2 != null) m.anmFn2 = parseInt(savedM.anmFn2) || 0;
+          if (savedM.anmHomeVisits != null) m.anmHomeVisits = parseInt(savedM.anmHomeVisits) || 0;
+          if (savedM.progAnmFn1 != null) m.progAnmFn1 = parseInt(savedM.progAnmFn1) || 0;
+          if (savedM.progAnmFn2 != null) m.progAnmFn2 = parseInt(savedM.progAnmFn2) || 0;
+          if (savedM.progAnmHomeVisits != null) m.progAnmHomeVisits = parseInt(savedM.progAnmHomeVisits) || 0;
+        }
+      });
+    } else {
+      // If MonthMaster does not yet exist in Firestore, seed all 12 months with recalculated progressives
+      recalculateAllMonthProgressives();
+      await syncBatchMonthMasterToFirestore(monthMaster);
+      console.log('[Server] Seeded initial 12 months of MonthMaster into Cloud Firestore.');
+    }
+
+    backfillBsDataEmployeeNames();
+    recalculateAllMonthProgressives();
+    saveDbToDisk();
+    console.log(`[Server] Synced and refreshed from Firestore: ${bsDataEntry.length} BS, ${villageDetails.length} villages, ${monthMaster.length} months.`);
+    return { success: true };
+  } catch (err) {
+    console.error('[Server] Error syncing from Firestore:', err);
+    return { success: false, error: err.message };
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -614,7 +749,36 @@ app.post('/api/rpc', async (req, res) => {
 
     let result;
 
+    const READ_OR_REPORT_METHODS = new Set([
+      'getTablesData', 'getAllTablesData',
+      'getMonthlyReportDashboardData', 'getMonthIndicators',
+      'getDengueEntries', 'getDashboardStats',
+      'generateDailyMalariaReportWebApp', 'generateMonthlyReportWebApp',
+      'generateEmployeeRegisterWebApp', 'getDefaulterListForMonth',
+      'generateEmployeeNoticesWebApp', 'generateLowPerformanceReportWebApp',
+      'generateEmployeeVillageMonthlyReportWebApp', 'getEmployeeVillageMonthlyData',
+      'getEmployeeVillageDistributionSummary', 'getSubcenterMaster',
+      'getVillagesMaster', 'getEmployeeMaster', 'getMasterData',
+      'getLatestBundleNumber', 'getLastParayntValue',
+      'syncFromFirestore', 'refreshFirestoreData'
+    ]);
+
+    if (READ_OR_REPORT_METHODS.has(method)) {
+      await syncAllDataFromFirestore(method === 'syncFromFirestore' || method === 'refreshFirestoreData');
+    }
+
     switch (method) {
+      case 'syncFromFirestore':
+      case 'refreshFirestoreData': {
+        const syncRes = await syncAllDataFromFirestore(true);
+        result = {
+          success: syncRes.success,
+          message: syncRes.success
+            ? 'सर्व डेटा Cloud Firestore डेटाबेसमधून थेट यशस्वीरित्या सिंक झाला! 🟢'
+            : 'Firestore सिंक त्रुटी: ' + syncRes.error
+        };
+        break;
+      }
       case 'getMasterData': {
         result = masterData;
         break;
@@ -712,6 +876,7 @@ app.post('/api/rpc', async (req, res) => {
       }
 
       case 'saveBsData':
+      case 'processDataEntry':
       case 'processForm': {
         const [formData] = args;
         const formDataArray = Array.isArray(formData) ? formData : (formData ? [formData] : []);
@@ -812,7 +977,7 @@ app.post('/api/rpc', async (req, res) => {
         if (newVillageDetailsForSync.length > 0) {
           for (const v of newVillageDetailsForSync) {
             await syncVillageDetailToFirestore([
-              v.id, v.employeeName, v.date, v.villageName, v.sampleCount, v.maleCount, v.femaleCount, v.upkendra
+              v.uniqueId || v.id, v.employeeName, v.date, v.villageName, v.sampleCount, v.maleCount, v.femaleCount, v.upkendra
             ]);
           }
         }
@@ -1624,8 +1789,8 @@ app.post('/api/rpc', async (req, res) => {
         recalculateAllMonthProgressives();
         saveDbToDisk();
 
-        // Direct Firestore Sync
-        await syncMonthMasterToFirestore(monthObj);
+        // Direct Firestore Sync: Sync all 12 months with recalculated progressives to Firestore
+        await syncBatchMonthMasterToFirestore(monthMaster);
 
         result = {
           success: true,
@@ -1919,4 +2084,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PHC Bhada Malaria Management System running on http://0.0.0.0:${PORT}`);
+  // Immediately initialize and load all live data from Cloud Firestore
+  syncAllDataFromFirestore(true).catch(err => console.error('[Server] Initial Firestore sync error:', err));
 });

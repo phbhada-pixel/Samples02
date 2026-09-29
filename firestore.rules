@@ -2,66 +2,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128;
     }
 
-    // Default deny catch-all safety net (BLOCKED for arbitrary unlisted paths)
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
     // Dengue & Chikungunya Entries collection
     match /dengueEntries/{dengueId} {
-      allow read: if isValidId(dengueId);
-      allow create, update, delete: if isValidId(dengueId);
+      allow read: if true;
+      allow write: if isValidId(dengueId);
     }
 
     // BS Data Entry collection
     match /bsDataEntry/{entryId} {
-      allow read: if isValidId(entryId);
-      allow create, update, delete: if isValidId(entryId);
+      allow read: if true;
+      allow write: if isValidId(entryId);
     }
 
     // Village Details collection
     match /villageDetails/{detailId} {
-      allow read: if isValidId(detailId);
-      allow create, update, delete: if isValidId(detailId);
+      allow read: if true;
+      allow write: if isValidId(detailId);
     }
 
     // Subcenter Master collection
     match /subcenterMaster/{scId} {
-      allow read: if isValidId(scId);
-      allow create, update, delete: if isValidId(scId);
+      allow read: if true;
+      allow write: if isValidId(scId);
     }
 
     // Employee Master collection
     match /employeeMaster/{empId} {
-      allow read: if isValidId(empId);
-      allow create, update, delete: if isValidId(empId);
+      allow read: if true;
+      allow write: if isValidId(empId);
     }
 
     // Villages Master collection
     match /villagesMaster/{vilId} {
-      allow read: if isValidId(vilId);
-      allow create, update, delete: if isValidId(vilId);
+      allow read: if true;
+      allow write: if isValidId(vilId);
     }
 
     // Month Master collection
     match /monthMaster/{monthId} {
-      allow read: if isValidId(monthId);
-      allow create, update, delete: if isValidId(monthId);
+      allow read: if true;
+      allow write: if isValidId(monthId);
     }
 
     // App config & metadata
     match /appConfig/{configId} {
-      allow read: if isValidId(configId);
-      allow write: if isValidId(configId);
+      allow read, write: if isValidId(configId);
+    }
+
+    // Default deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
