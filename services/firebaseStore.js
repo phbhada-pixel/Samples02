@@ -10,8 +10,13 @@ console.log('[FirebaseStore] Initialized Cloud Firestore database:', firebaseCon
 function toSafeDocId(str, prefix = 'DOC') {
   if (!str) return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const trimmed = String(str).trim();
-  const asciiClean = trimmed.replace(/[^a-zA-Z0-9_\-.]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
-  if (asciiClean && asciiClean.length >= 2) {
+  
+  // If already starts with prefix (e.g. DENGUE_ or BS_), strip it first so prefix isn't duplicated
+  const prefixRegex = new RegExp(`^${prefix}_+`, 'i');
+  let cleanStr = trimmed.replace(prefixRegex, '').replace(/\//g, '_');
+
+  const asciiClean = cleanStr.replace(/[^a-zA-Z0-9_\-.]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+  if (asciiClean && asciiClean.length >= 1) {
     return `${prefix}_${asciiClean}`.slice(0, 120);
   }
   const hex = Buffer.from(trimmed, 'utf8').toString('hex').slice(0, 48);
@@ -43,11 +48,13 @@ export function getMonthDocId(monthNameOrIdx) {
 export async function syncDengueEntryToFirestore(entry) {
   if (!entry || !entry.id) return { success: false, error: 'Invalid entry' };
   try {
-    const docId = toSafeDocId(entry.id, 'DENGUE');
+    const rawId = String(entry.id).trim();
+    // If the ID is already a clean document ID without forward slashes, use it directly
+    const docId = rawId.includes('/') ? toSafeDocId(rawId, 'DENGUE') : rawId;
     const ref = doc(firestoreDb, 'dengueEntries', docId);
     const payload = {
       ...entry,
-      id: String(entry.id),
+      id: docId,
       updatedAt: new Date().toISOString()
     };
     await setDoc(ref, payload, { merge: true });
@@ -63,7 +70,12 @@ export async function getDengueEntriesFromFirestore() {
     const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
     const entries = [];
     snap.forEach(docSnap => {
-      entries.push(docSnap.data());
+      const d = docSnap.data();
+      entries.push({
+        ...d,
+        id: docSnap.id, // Always use the exact Firestore document ID as primary identifier
+        _docId: docSnap.id
+      });
     });
     return { success: true, data: entries };
   } catch (err) {
@@ -75,10 +87,53 @@ export async function getDengueEntriesFromFirestore() {
 export async function deleteDengueEntryFromFirestore(id) {
   if (!id) return { success: false, error: 'Invalid ID' };
   try {
-    const docId = toSafeDocId(id, 'DENGUE');
-    const ref = doc(firestoreDb, 'dengueEntries', docId);
-    await deleteDoc(ref);
-    return { success: true };
+    const rawTrimmed = String(id).trim();
+    const targetClean = rawTrimmed.toLowerCase();
+    const candidateDocIds = new Set();
+    candidateDocIds.add(rawTrimmed);
+    candidateDocIds.add(rawTrimmed.replace(/\//g, '_'));
+    candidateDocIds.add(toSafeDocId(rawTrimmed, 'DENGUE'));
+    
+    if (rawTrimmed.startsWith('DENGUE_')) {
+      candidateDocIds.add(rawTrimmed.replace(/^DENGUE_+/i, ''));
+    } else {
+      candidateDocIds.add(`DENGUE_${rawTrimmed}`);
+    }
+
+    // 1. Direct delete attempts on candidate doc IDs
+    for (const docId of candidateDocIds) {
+      if (!docId) continue;
+      try {
+        await deleteDoc(doc(firestoreDb, 'dengueEntries', docId));
+      } catch (e) {
+        // Continue
+      }
+    }
+
+    // 2. Comprehensive scan to ensure no matching document remains in Firestore
+    const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
+    let deletedCount = 0;
+    for (const docSnap of snap.docs) {
+      const d = docSnap.data();
+      const sId = String(docSnap.id || '').trim().toLowerCase();
+      const dId = String(d.id || '').trim().toLowerCase();
+      const reg = String(d.patientRegNo || '').trim().toLowerCase();
+      const sIdAlpha = sId.replace(/[^a-zA-Z0-9]/g, '');
+      const targetAlpha = targetClean.replace(/[^a-zA-Z0-9]/g, '');
+
+      if (
+        sId === targetClean ||
+        dId === targetClean ||
+        (reg && reg !== '-' && reg === targetClean) ||
+        (targetAlpha && sIdAlpha === targetAlpha)
+      ) {
+        await deleteDoc(doc(firestoreDb, 'dengueEntries', docSnap.id));
+        deletedCount++;
+        console.log(`[FirebaseStore] Deleted dengue document from Firestore: ${docSnap.id}`);
+      }
+    }
+
+    return { success: true, count: deletedCount };
   } catch (err) {
     console.error('[FirebaseStore] Error deleting Dengue entry from Firestore:', err.message);
     return { success: false, error: err.message };
@@ -86,14 +141,81 @@ export async function deleteDengueEntryFromFirestore(id) {
 }
 
 export async function deleteBatchDengueEntriesFromFirestore(idsArray) {
-  if (!Array.isArray(idsArray) || idsArray.length === 0) return { success: true };
+  if (!Array.isArray(idsArray) || idsArray.length === 0) return { success: true, count: 0 };
   try {
-    for (const id of idsArray) {
-      if (id) await deleteDengueEntryFromFirestore(id);
+    const cleanTargets = new Set();
+    const candidateIds = new Set();
+
+    idsArray.forEach(i => {
+      if (!i) return;
+      const str = String(i).trim();
+      const lower = str.toLowerCase();
+      cleanTargets.add(lower);
+      cleanTargets.add(str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
+      candidateIds.add(str);
+      candidateIds.add(str.replace(/\//g, '_'));
+      candidateIds.add(toSafeDocId(str, 'DENGUE'));
+
+      if (str.startsWith('DENGUE_')) {
+        const withoutPrefix = str.replace(/^DENGUE_+/i, '');
+        candidateIds.add(withoutPrefix);
+        cleanTargets.add(withoutPrefix.toLowerCase());
+      } else {
+        candidateIds.add(`DENGUE_${str}`);
+      }
+    });
+
+    // 1. Direct delete attempts on all candidates
+    for (const docId of candidateIds) {
+      if (!docId) continue;
+      try {
+        await deleteDoc(doc(firestoreDb, 'dengueEntries', docId));
+      } catch (e) {
+        // Continue
+      }
     }
-    return { success: true };
+
+    // 2. Comprehensive scan to delete all matching docs from collection
+    const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
+    let deletedCount = 0;
+    for (const docSnap of snap.docs) {
+      const d = docSnap.data();
+      const sId = String(docSnap.id || '').trim().toLowerCase();
+      const dId = String(d.id || '').trim().toLowerCase();
+      const reg = String(d.patientRegNo || '').trim().toLowerCase();
+      const sIdAlpha = sId.replace(/[^a-zA-Z0-9]/g, '');
+
+      if (
+        cleanTargets.has(sId) ||
+        cleanTargets.has(dId) ||
+        (reg && reg !== '-' && cleanTargets.has(reg)) ||
+        cleanTargets.has(sIdAlpha)
+      ) {
+        await deleteDoc(doc(firestoreDb, 'dengueEntries', docSnap.id));
+        deletedCount++;
+        console.log(`[FirebaseStore] Batch deleted dengue document from Firestore: ${docSnap.id}`);
+      }
+    }
+
+    return { success: true, count: deletedCount };
   } catch (err) {
     console.error('[FirebaseStore] Error deleting batch Dengue entries from Firestore:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function clearAllDengueEntriesFromFirestore() {
+  try {
+    const snap = await getDocs(collection(firestoreDb, 'dengueEntries'));
+    let deletedCount = 0;
+    for (const docSnap of snap.docs) {
+      await deleteDoc(doc(firestoreDb, 'dengueEntries', docSnap.id));
+      deletedCount++;
+    }
+    console.log(`[FirebaseStore] Cleared all ${deletedCount} dengue entries from Firestore.`);
+    return { success: true, count: deletedCount };
+  } catch (err) {
+    console.error('[FirebaseStore] Error clearing all dengue entries from Firestore:', err.message);
     return { success: false, error: err.message };
   }
 }

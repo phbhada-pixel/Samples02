@@ -15735,13 +15735,14 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       const rec = mDengueData.find(e => {
         if (!e) return false;
         const eid = String(e.id || '').trim().toLowerCase();
+        const docId = String(e._docId || '').trim().toLowerCase();
         const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
-        return eid === cleanId || (reg && reg === cleanId);
+        return eid === cleanId || docId === cleanId || (reg && reg === cleanId);
       });
       const name = rec ? rec.patientName : 'हा रुग्ण';
-      const targetId = rec ? rec.id : id;
+      const targetId = rec ? (rec.id || rec._docId || id) : id;
 
-      if (!confirm(`खात्री आहे का? ${name} ची डेंगी/चिकनगुनिया नोंद हटवायची आहे?`)) {
+      if (!confirm(`खात्री आहे का? ${name} ची डेंगी/चिकनगुनिया नोंद डेटाबेसमधून कायमस्वरूपी हटवायची आहे?`)) {
         return;
       }
 
@@ -15750,14 +15751,26 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       mDengueData = mDengueData.filter(e => {
         if (!e) return false;
         const eid = String(e.id || '').trim().toLowerCase();
-        return eid !== targetClean;
+        const docId = String(e._docId || '').trim().toLowerCase();
+        const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+        return eid !== targetClean && docId !== targetClean && reg !== targetClean;
       });
+      if (typeof clientDengueEntries !== 'undefined' && Array.isArray(clientDengueEntries)) {
+        clientDengueEntries = clientDengueEntries.filter(e => {
+          if (!e) return false;
+          const eid = String(e.id || '').trim().toLowerCase();
+          const docId = String(e._docId || '').trim().toLowerCase();
+          const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+          return eid !== targetClean && docId !== targetClean && reg !== targetClean;
+        });
+        setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+      }
       filterDengueTable();
 
       google.script.run
         .withSuccessHandler(res => {
           if (res && res.success) {
-            alert(`✅ ${res.message || 'नोंद हटवण्यात आली.'}`);
+            alert(`✅ ${res.message || 'नोंद Firestore मधून सुरक्षित हटवण्यात आली.'}`);
             loadDengueData();
           } else {
             alert('⚠️ अयशस्वी: ' + (res ? (res.message || res.error) : 'नोंद हटवणे शक्य झाले नाही.'));
@@ -15786,14 +15799,12 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
         const found = mDengueData.find(e => {
           if (!e) return false;
           const eid = String(e.id || '').trim().toLowerCase();
+          const docId = String(e._docId || '').trim().toLowerCase();
           const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
-          return eid === cleanVal || (reg && reg === cleanVal);
+          return eid === cleanVal || docId === cleanVal || (reg && reg === cleanVal);
         });
-        if (found && found.id) {
-          if (!targetIds.includes(found.id)) targetIds.push(found.id);
-        } else if (!targetIds.includes(idVal)) {
-          targetIds.push(idVal);
-        }
+        const finalId = found ? (found.id || found._docId || idVal) : idVal;
+        if (!targetIds.includes(finalId)) targetIds.push(finalId);
       });
 
       if (!confirm(`⚠️ खात्री आहे का? निवडलेल्या एकूण ${targetIds.length} रुग्णांच्या डेंगी/चिकनगुनिया नोंदी डेटाबेसमधून कायमस्वरूपी हटवायच्या आहेत?`)) {
@@ -15805,14 +15816,26 @@ BS_VIL_5,श्री सुर्यवंशी एस. आर.,18-02-2026,भ
       mDengueData = mDengueData.filter(e => {
         if (!e || !e.id) return false;
         const eid = String(e.id).trim().toLowerCase();
-        return !cleanTargetIds.includes(eid);
+        const docId = String(e._docId || '').trim().toLowerCase();
+        const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+        return !cleanTargetIds.includes(eid) && !cleanTargetIds.includes(docId) && (!reg || !cleanTargetIds.includes(reg));
       });
+      if (typeof clientDengueEntries !== 'undefined' && Array.isArray(clientDengueEntries)) {
+        clientDengueEntries = clientDengueEntries.filter(e => {
+          if (!e || !e.id) return false;
+          const eid = String(e.id).trim().toLowerCase();
+          const docId = String(e._docId || '').trim().toLowerCase();
+          const reg = (e.patientRegNo && e.patientRegNo !== '-') ? String(e.patientRegNo).trim().toLowerCase() : '';
+          return !cleanTargetIds.includes(eid) && !cleanTargetIds.includes(docId) && (!reg || !cleanTargetIds.includes(reg));
+        });
+        setLocalStore('dengueChikungunyaEntries', clientDengueEntries);
+      }
       filterDengueTable();
 
       google.script.run
         .withSuccessHandler(res => {
           if (res && res.success) {
-            alert(`✅ ${res.message || 'निवडलेल्या नोंदी यशस्वीरित्या हटवण्यात आल्या.'}`);
+            alert(`✅ ${res.message || 'निवडलेल्या नोंदी Firestore मधून यशस्वीरित्या हटवण्यात आल्या.'}`);
             const selectAllCb = document.getElementById('dgSelectAllCb');
             if (selectAllCb) selectAllCb.checked = false;
             loadDengueData();

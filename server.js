@@ -117,6 +117,7 @@ import {
   syncDengueEntryToFirestore,
   deleteDengueEntryFromFirestore,
   deleteBatchDengueEntriesFromFirestore,
+  clearAllDengueEntriesFromFirestore,
   syncBsDataEntryToFirestore,
   syncBatchBsDataToFirestore,
   syncVillageDetailToFirestore,
@@ -185,7 +186,7 @@ export async function syncAllDataFromFirestore(force = false) {
     }
 
     // 3. Dengue / Chikungunya entries
-    if (Array.isArray(fsData.dengueList) && fsData.dengueList.length > 0) {
+    if (Array.isArray(fsData.dengueList)) {
       dengueChikungunyaEntries.length = 0;
       fsData.dengueList.forEach(d => dengueChikungunyaEntries.push(d));
     }
@@ -1548,25 +1549,39 @@ app.post('/api/rpc', async (req, res) => {
 
       case 'clearDengueEntries': {
         result = clearDengueEntries();
+        await clearAllDengueEntriesFromFirestore();
+        saveDbToDisk();
+        result = {
+          success: true,
+          message: 'सर्व डेंगी व चिकनगुनिया चाचणी नोंदी Firestore मधून सुरक्षित हटवण्यात आल्या.'
+        };
         break;
       }
 
       case 'deleteDengueEntry': {
         const [id] = args;
-        result = deleteDengueEntry(id);
-        if (result.success) {
-          await deleteDengueEntryFromFirestore(id);
-        }
+        const fsDelRes = await deleteDengueEntryFromFirestore(id);
+        const memRes = deleteDengueEntry(id);
+        saveDbToDisk();
+        result = {
+          success: true,
+          message: memRes.message || 'नोंद Firestore व प्रणालीमधून यशस्वीरित्या हटवली.'
+        };
         break;
       }
 
       case 'deleteBatchDengueEntries': {
         const [idsArray] = args;
         const ids = Array.isArray(idsArray) ? idsArray : (idsArray ? [idsArray] : []);
-        result = deleteBatchDengueEntries(ids);
-        if (result.success && result.count > 0) {
-          await deleteBatchDengueEntriesFromFirestore(ids);
-        }
+        const fsDelRes = await deleteBatchDengueEntriesFromFirestore(ids);
+        const memRes = deleteBatchDengueEntries(ids);
+        saveDbToDisk();
+        const finalCount = Math.max(memRes.count || 0, fsDelRes.count || 0, ids.length);
+        result = {
+          success: true,
+          count: finalCount,
+          message: `निवडलेल्या एकूण ${finalCount} डेंगी/चिकनगुनिया नोंदी Firestore व प्रणालीमधून कायमस्वरूपी हटवण्यात आल्या 🗑️`
+        };
         break;
       }
 
