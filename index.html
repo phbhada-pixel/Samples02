@@ -9,7 +9,36 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round|Material+Symbols+Outlined" rel="stylesheet">
+  
+  <!-- Bootstrap 5 for Grid, Utilities, Form Controls, Badges & Tables -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN with Custom Healthcare/PHC Palette -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: {
+        preflight: false // Prevents Tailwind preflight from conflicting with Bootstrap and custom styles
+      },
+      theme: {
+        extend: {
+          colors: {
+            phc: {
+              50: '#e6fffa',
+              100: '#b2f5ea',
+              200: '#81e6d9',
+              500: '#00796b',
+              600: '#00695c',
+              700: '#004d40',
+              800: '#00332c'
+            }
+          }
+        }
+      }
+    };
+  </script>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/xlsx.full.min.js"></script>
@@ -4873,17 +4902,988 @@
       gap: 6px;
     }
 
+    /* ================= HYBRID UI SYSTEM: MATERIAL UI (MUI) + BOOTSTRAP 5 + TAILWIND CSS ================= */
+    /* 1. Material UI (MUI) Elevation & Surfaces */
+    .mui-paper, .mui-card {
+      background-color: #ffffff;
+      color: #0f172a;
+      transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms ease;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mui-elevation-1 {
+      box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.06), 0px 4px 6px -1px rgba(0,0,0,0.04);
+    }
+    .mui-elevation-2 {
+      box-shadow: 0px 3px 6px -2px rgba(0,0,0,0.08), 0px 6px 12px -2px rgba(0,0,0,0.06);
+    }
+    .mui-elevation-3 {
+      box-shadow: 0px 8px 16px -4px rgba(0,0,0,0.1), 0px 4px 8px -2px rgba(0,0,0,0.05);
+    }
+    .mui-elevation-4 {
+      box-shadow: 0px 12px 24px -4px rgba(0,0,0,0.12), 0px 8px 16px -4px rgba(0,0,0,0.06);
+    }
+
+    /* 2. Material UI (MUI) Buttons */
+    .mui-btn {
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 13.5px;
+      line-height: 1.5;
+      letter-spacing: 0.015em;
+      min-width: 64px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 120ms ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      vertical-align: middle;
+      text-decoration: none;
+      border: 1px solid transparent;
+      outline: none;
+    }
+
+    .mui-btn:active {
+      transform: scale(0.98);
+    }
+
+    .mui-btn-contained-primary {
+      color: #ffffff;
+      background-color: var(--primary);
+      box-shadow: 0px 3px 1px -2px rgba(0,121,107,0.2), 0px 2px 2px 0px rgba(0,121,107,0.14), 0px 1px 5px 0px rgba(0,121,107,0.12);
+    }
+    .mui-btn-contained-primary:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0px 2px 4px -1px rgba(0,121,107,0.3), 0px 4px 8px 0px rgba(0,121,107,0.2), 0px 1px 10px 0px rgba(0,121,107,0.15);
+    }
+
+    .mui-btn-outlined-primary {
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      background-color: transparent;
+    }
+    .mui-btn-outlined-primary:hover {
+      background-color: var(--primary-light);
+      border-color: var(--primary-dark);
+    }
+
+    .mui-btn-contained-success {
+      color: #ffffff;
+      background-color: #16a34a;
+      box-shadow: 0px 2px 4px rgba(22, 163, 74, 0.25);
+    }
+    .mui-btn-contained-success:hover {
+      background-color: #15803d;
+    }
+
+    .mui-btn-contained-secondary {
+      color: #334155;
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+    }
+    .mui-btn-contained-secondary:hover {
+      background-color: #e2e8f0;
+      color: #0f172a;
+    }
+
+    /* 3. Material UI (MUI) Chips & Badges */
+    .mui-chip {
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      color: #334155;
+      background-color: #f1f5f9;
+      border-radius: 16px;
+      white-space: nowrap;
+      padding: 0 10px;
+      gap: 6px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+      text-decoration: none;
+    }
+
+    .mui-chip-primary {
+      background-color: #e6fffa;
+      color: #004d40;
+      border-color: #81e6d9;
+    }
+    .mui-chip-success {
+      background-color: #f0fdf4;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+    .mui-chip-warning {
+      background-color: #fffbeb;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+    .mui-chip-danger {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+    .mui-chip-info {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border-color: #bfdbfe;
+    }
+
+    /* 4. Material Symbols / MUI Icon Utilities */
+    .mui-icon {
+      font-family: 'Material Symbols Outlined', 'Material Icons Round', sans-serif;
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      vertical-align: middle;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 5. Bootstrap 5 Harmonization & Enhanced Table Styling */
+    .table-modern {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .table-modern thead th {
+      background-color: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 10px 14px;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .table-modern tbody tr {
+      transition: background-color 150ms ease;
+    }
+    .table-modern tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+    .table-modern tbody td {
+      padding: 10px 14px;
+      font-size: 13.5px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+
+    /* 6. Form Control Outlined Material Field */
+    .mui-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .mui-form-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mui-form-control {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #0f172a;
+      background-color: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box;
+    }
+    .mui-form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    /* ================= PROGRAM SELECTION PORTAL STYLES ================= */
+    .program-portal-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 10px 16px 40px 16px;
+    }
+
+    .program-hero-header {
+      background: linear-gradient(135deg, #004d40 0%, #00796b 50%, #0284c7 100%);
+      color: #ffffff;
+      padding: 32px 28px;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0, 77, 64, 0.2);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .program-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    .prog-card {
+      background: #ffffff;
+      border-radius: 18px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .prog-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 35px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.04);
+      border-color: #cbd5e1;
+    }
+
+    .prog-card-header {
+      padding: 22px 22px 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .prog-card-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+      flex-shrink: 0;
+    }
+
+    .prog-card-body {
+      padding: 0 22px 20px 22px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .prog-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0 16px 0;
+    }
+
+    .prog-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+    }
+
+    .prog-card-footer {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .prog-action-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .prog-action-btn:hover {
+      filter: brightness(0.95);
+      transform: scale(1.01);
+    }
+
+    /* THEMES FOR PROGRAM CARDS */
+    .prog-theme-nvbdcp {
+      border-top: 5px solid #00796b !important;
+    }
+    .prog-theme-nvbdcp:hover { border-color: #00796b !important; }
+    .prog-theme-nvbdcp .prog-card-icon { background: linear-gradient(135deg, #004d40, #00796b); color: #fff; }
+    .prog-theme-nvbdcp .prog-tag { background: #e6fffa; color: #004d40; border-color: #81e6d9; }
+    .prog-theme-nvbdcp .prog-action-btn { background: #00796b; color: #ffffff; box-shadow: 0 4px 10px rgba(0, 121, 107, 0.25); }
+
+    .prog-theme-nwbdcp {
+      border-top: 5px solid #0284c7 !important;
+    }
+    .prog-theme-nwbdcp:hover { border-color: #0284c7 !important; }
+    .prog-theme-nwbdcp .prog-card-icon { background: linear-gradient(135deg, #0369a1, #0284c7); color: #fff; }
+    .prog-theme-nwbdcp .prog-tag { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+    .prog-theme-nwbdcp .prog-action-btn { background: #0284c7; color: #ffffff; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25); }
+
+    .prog-theme-ntep {
+      border-top: 5px solid #4f46e5 !important;
+    }
+    .prog-theme-ntep:hover { border-color: #4f46e5 !important; }
+    .prog-theme-ntep .prog-card-icon { background: linear-gradient(135deg, #3730a3, #4f46e5); color: #fff; }
+    .prog-theme-ntep .prog-tag { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+    .prog-theme-ntep .prog-action-btn { background: #4f46e5; color: #ffffff; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25); }
+
+    .prog-theme-nlep {
+      border-top: 5px solid #e11d48 !important;
+    }
+    .prog-theme-nlep:hover { border-color: #e11d48 !important; }
+    .prog-theme-nlep .prog-card-icon { background: linear-gradient(135deg, #9f1239, #e11d48); color: #fff; }
+    .prog-theme-nlep .prog-tag { background: #fff1f2; color: #9f1239; border-color: #fecdd3; }
+    .prog-theme-nlep .prog-action-btn { background: #e11d48; color: #ffffff; box-shadow: 0 4px 10px rgba(225, 29, 72, 0.25); }
+
+    .btn-back-to-programs {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-back-to-programs:hover {
+      background: #0f172a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      color: #ffffff;
+    }
+
   </style>
 </head>
 <body>
 
+  <!-- ========================================================================= -->
+  <!-- 1. ROOT PROGRAM SELECTION SCREEN (MODULAR HEALTH PORTAL)                  -->
+  <!-- ========================================================================= -->
+  <div id="programSelectionScreen" class="program-selection-view" style="display:block; min-height:100vh; background:#f8fafc;">
+    
+    <div class="program-portal-container">
+      
+      <!-- Top Branding Bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:18px 0 14px 0; border-bottom:1.5px solid #e2e8f0; margin-bottom:24px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="width:48px; height:48px; background:linear-gradient(135deg, #004d40, #00796b); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:26px; box-shadow:0 4px 10px rgba(0,77,64,0.25);">
+            🏥
+          </div>
+          <div>
+            <h1 style="margin:0; font-size:20px; font-weight:800; color:#0f172a; line-height:1.25;">
+              प्राथमिक आरोग्य केंद्र, भादा
+            </h1>
+            <p style="margin:2px 0 0 0; font-size:13px; font-weight:600; color:#64748b;">
+              तालुका: औसा, जिल्हा: धाराशीव (महाराष्ट्र शासन - आरोग्य सेवा)
+            </p>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="mui-chip mui-chip-primary">🏛️ ६ उपकेंद्रे | ३७ गावे</span>
+          <span class="mui-chip mui-chip-info">👥 ६५ आरोग्य कर्मचारी</span>
+          <button type="button" onclick="openGithubModal(event)" style="background:#24292e; color:#fff; border:none; border-radius:16px; padding:5px 12px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:5px; cursor:pointer;" title="GitHub रिपॉझिटरी">
+            <svg height="14" width="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            GitHub
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Banner -->
+      <div class="program-hero-header">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div style="max-width:780px;">
+            <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); backdrop-filter:blur(6px); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:12px; border:1px solid rgba(255,255,255,0.3);">
+              ✨ एकात्मिक डिजिटल आरोग्य पोर्टल (Unified PHC Portal)
+            </div>
+            <h2 style="margin:0 0 10px 0; font-size:26px; font-weight:800; line-height:1.3;">
+              आरोग्य कार्यक्रम निवड (Select Health Program)
+            </h2>
+            <p style="margin:0; font-size:14px; line-height:1.6; opacity:0.95;">
+              प्राथमिक आरोग्य केंद्र भादा अंतर्गत राबविल्या जाणाऱ्या विविध राष्ट्रीय आरोग्य नियंत्रण कार्यक्रमांचे डिजिटल डॅशबोर्ड, दैनंदिन नोंदी, सर्वेक्षण व मासिक अहवाल संकलनासाठी खालीलपैकी आवश्यक कार्यक्रम निवडा.
+            </p>
+          </div>
+          <div style="background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.2); border-radius:14px; padding:14px 18px; text-align:right;">
+            <div style="font-size:11.5px; opacity:0.85; text-transform:uppercase; font-weight:700;">पोर्टल व्हर्जन</div>
+            <div style="font-size:18px; font-weight:800; color:#4ade80;">v3.2 Modular</div>
+            <div style="font-size:11.5px; opacity:0.9; margin-top:2px;">४ स्वतंत्र आरोग्य मॉड्यूल्स</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Program Selection Cards Grid -->
+      <div class="program-grid">
+
+        <!-- 1. NVBDCP PROGRAM CARD (ACTIVE PROJECT) -->
+        <div class="prog-card prog-theme-nvbdcp" onclick="selectProgram('nvbdcp')" role="button" tabindex="0" aria-label="NVBDCP राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम उघडा">
+          <div class="prog-card-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="prog-card-icon">
+                🦟
+              </div>
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#00796b; letter-spacing:0.05em; text-transform:uppercase;">कार्यक्रम १</div>
+                <h3 style="margin:0; font-size:22px; font-weight:800; color:#0f172a; line-height:1.2;">NVBDCP</h3>
+              </div>
+            </div>
+            <span class="prog-tag" style="background:#dcfce7; color:#166534; border-color:#86efac; display:inline-flex; align-items:center; gap:4px;">
+              <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#16a34a;"></span>
+              कार्यरत प्रकल्प (Active)
+            </span>
+          </div>
+          <div class="prog-card-body">
+            <div style="font-size:14px; font-weight:700; color:#1e293b; margin-bottom:4px;">
+              राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम
+            </div>
+            <div style="font-size:12px; font-weight:600; color:#64748b; margin-bottom:12px;">
+              National Vector Borne Disease Control Programme
+            </div>
+            <p style="margin:0 0 12px 0; font-size:13px; color:#475569; line-height:1.55;">
+              हिवताप (Malaria), डेंगी (Dengue), चिकनगुनिया व हत्तीरोग नियंत्रण. दैनिक रक्त नमुने नोंदणी, तापाचे रुग्ण, प्रयोगशाळा अहवाल, गृहभेटी व अधिकृत मासिक अहवाल व्यवस्थापन.
+            </p>
+            <div class="prog-tag-list">
+              <span class="prog-tag">🩸 रक्त नमुने (Blood Smears)</span>
+              <span class="prog-tag">🦟 डेंगी व चिकनगुनिया</span>
+              <span class="prog-tag">🚶‍♂️ गृहभेटी ट्रॅकिंग</span>
+              <span class="prog-tag">📑 मासिक अहवाल डॅशबोर्ड</span>
+              <span class="prog-tag">🏛️ ३७ गावे मास्टर डेटा</span>
+            </div>
+            <div class="prog-card-footer">
+              <button type="button" class="prog-action-btn" onclick="event.stopPropagation(); selectProgram('nvbdcp');">
+                <span>प्रकल्प उघडा (Open NVBDCP)</span>
+                <span style="font-size:16px;">➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. NWBDCP PROGRAM CARD (TO BE DEVELOPED) -->
+        <div class="prog-card prog-theme-nwbdcp" onclick="selectProgram('nwbdcp')" role="button" tabindex="0" aria-label="NWBDCP राष्ट्रीय जलजन्य रोग नियंत्रण कार्यक्रम पहा">
+          <div class="prog-card-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="prog-card-icon">
+                💧
+              </div>
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#0284c7; letter-spacing:0.05em; text-transform:uppercase;">कार्यक्रम २</div>
+                <h3 style="margin:0; font-size:22px; font-weight:800; color:#0f172a; line-height:1.2;">NWBDCP</h3>
+              </div>
+            </div>
+            <span class="prog-tag" style="background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; display:inline-flex; align-items:center; gap:4px;">
+              <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#0284c7;"></span>
+              विकास क्षेत्र (To Be Developed)
+            </span>
+          </div>
+          <div class="prog-card-body">
+            <div style="font-size:14px; font-weight:700; color:#1e293b; margin-bottom:4px;">
+              राष्ट्रीय जलजन्य रोग नियंत्रण कार्यक्रम
+            </div>
+            <div style="font-size:12px; font-weight:600; color:#64748b; margin-bottom:12px;">
+              National Water Borne Disease Control Programme
+            </div>
+            <p style="margin:0 0 12px 0; font-size:13px; color:#475569; line-height:1.55;">
+              कॉलरा (Cholera), काविळ/हिपॅटायटिस (Hepatitis), अतिसार/गॅस्ट्रो (Diarrhoea) व टायफॉईड प्रतिबंध. जलस्त्रोत रासायनिक व जैविक तपासणी, OT Test, टीसीएल क्लोरीनेशन व दूषित पाणी नमुने मॉनिटरिंग.
+            </p>
+            <div class="prog-tag-list">
+              <span class="prog-tag">🚰 जलस्त्रोत व OT चाचणी</span>
+              <span class="prog-tag">🧪 टीसीएल क्लोरीनेशन</span>
+              <span class="prog-tag">🤢 अतिसार/गॅस्ट्रो ट्रॅकिंग</span>
+              <span class="prog-tag">🚨 साथीचे रोग अलर्ट</span>
+            </div>
+            <div class="prog-card-footer">
+              <button type="button" class="prog-action-btn" onclick="event.stopPropagation(); selectProgram('nwbdcp');">
+                <span>मॉड्यूल पहा (Open NWBDCP)</span>
+                <span style="font-size:16px;">➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. NTEP PROGRAM CARD (TO BE DEVELOPED) -->
+        <div class="prog-card prog-theme-ntep" onclick="selectProgram('ntep')" role="button" tabindex="0" aria-label="NTEP राष्ट्रीय क्षयरोग निर्मूलन कार्यक्रम पहा">
+          <div class="prog-card-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="prog-card-icon">
+                🫁
+              </div>
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#4f46e5; letter-spacing:0.05em; text-transform:uppercase;">कार्यक्रम ३</div>
+                <h3 style="margin:0; font-size:22px; font-weight:800; color:#0f172a; line-height:1.2;">NTEP</h3>
+              </div>
+            </div>
+            <span class="prog-tag" style="background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; display:inline-flex; align-items:center; gap:4px;">
+              <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#7c3aed;"></span>
+              विकास क्षेत्र (To Be Developed)
+            </span>
+          </div>
+          <div class="prog-card-body">
+            <div style="font-size:14px; font-weight:700; color:#1e293b; margin-bottom:4px;">
+              राष्ट्रीय क्षयरोग निर्मूलन कार्यक्रम
+            </div>
+            <div style="font-size:12px; font-weight:600; color:#64748b; margin-bottom:12px;">
+              National Tuberculosis Elimination Program
+            </div>
+            <p style="margin:0 0 12px 0; font-size:13px; color:#475569; line-height:1.55;">
+              क्षयरोग रुग्ण शोध व नोंदणी (TB Notification), निक्षय (Ni-kshay) पोर्टल समन्वय, थुंकी तपासणी (Sputum Testing / CBNAAT), प्रत्यक्ष देखरेखीखाली उपचार (DOTS), निक्षय पोषण योजना डीबीटी.
+            </p>
+            <div class="prog-tag-list">
+              <span class="prog-tag">🫁 क्षयरोग रुग्ण नोंदणी</span>
+              <span class="prog-tag">🔬 थुंकी व CBNAAT तपासणी</span>
+              <span class="prog-tag">💊 DOTS उपचार ट्रॅकिंग</span>
+              <span class="prog-tag">💰 निक्षय पोषण योजना DBT</span>
+            </div>
+            <div class="prog-card-footer">
+              <button type="button" class="prog-action-btn" onclick="event.stopPropagation(); selectProgram('ntep');">
+                <span>मॉड्यूल पहा (Open NTEP)</span>
+                <span style="font-size:16px;">➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. NLEP PROGRAM CARD (TO BE DEVELOPED) -->
+        <div class="prog-card prog-theme-nlep" onclick="selectProgram('nlep')" role="button" tabindex="0" aria-label="NLEP राष्ट्रीय कुष्ठरोग निर्मूलन कार्यक्रम पहा">
+          <div class="prog-card-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="prog-card-icon">
+                🩺
+              </div>
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#e11d48; letter-spacing:0.05em; text-transform:uppercase;">कार्यक्रम ४</div>
+                <h3 style="margin:0; font-size:22px; font-weight:800; color:#0f172a; line-height:1.2;">NLEP</h3>
+              </div>
+            </div>
+            <span class="prog-tag" style="background:#ffe4e6; color:#9f1239; border-color:#fda4af; display:inline-flex; align-items:center; gap:4px;">
+              <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#e11d48;"></span>
+              विकास क्षेत्र (To Be Developed)
+            </span>
+          </div>
+          <div class="prog-card-body">
+            <div style="font-size:14px; font-weight:700; color:#1e293b; margin-bottom:4px;">
+              राष्ट्रीय कुष्ठरोग निर्मूलन कार्यक्रम
+            </div>
+            <div style="font-size:12px; font-weight:600; color:#64748b; margin-bottom:12px;">
+              National Leprosy Eradication Programme
+            </div>
+            <p style="margin:0 0 12px 0; font-size:13px; color:#475569; line-height:1.55;">
+              कुष्ठरोग शोध मोहीम (LCDC Surveillance), संशयित रुग्ण तपासणी, नवीन रुग्ण शोध दर (ANCDR), बहुविध औषधोपचार (MDT Treatment - PB/MB), विकृती प्रतिबंध व पुनर्वसन (DPMR).
+            </p>
+            <div class="prog-tag-list">
+              <span class="prog-tag">🔍 कुष्ठरोग शोध मोहीम (LCDC)</span>
+              <span class="prog-tag">💊 MDT औषधोपचार (PB/MB)</span>
+              <span class="prog-tag">👥 संपर्क तपासणी</span>
+              <span class="prog-tag">🦽 विकृती प्रतिबंध (DPMR)</span>
+            </div>
+            <div class="prog-card-footer">
+              <button type="button" class="prog-action-btn" onclick="event.stopPropagation(); selectProgram('nlep');">
+                <span>मॉड्यूल पहा (Open NLEP)</span>
+                <span style="font-size:16px;">➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom System Architecture Badge & Footer -->
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">🛡️</span>
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:#1e293b;">
+              मॉड्युलर व सुरक्षित आर्किटेक्चर (Independent Modular Systems)
+            </div>
+            <div style="font-size:12px; color:#64748b;">
+              प्रत्येक कार्यक्रम स्वतंत्र डेटाबेस, नेव्हिगेशन, फॉर्म्स व अहवाल व्यवस्थापनासह वेगळा कार्यरत राहील.
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:#64748b; font-weight:600;">
+          &copy; २०२६ प्राथमिक आरोग्य केंद्र, भादा | सर्व हक्क सुरक्षित.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2. NWBDCP MODULE VIEW (NATIONAL WATER BORNE DISEASE CONTROL PROGRAMME)     -->
+  <!-- ========================================================================= -->
+  <div id="programNWBDCP" class="health-program-view" style="display:none; min-height:100vh; background:#f0f9ff;">
+    
+    <!-- Top Header Bar -->
+    <div style="background:linear-gradient(135deg, #0369a1, #0284c7); color:#fff; padding:16px 20px; box-shadow:0 4px 12px rgba(2,132,199,0.25);">
+      <div style="max-width:1280px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button type="button" class="btn-back-to-programs" onclick="showProgramSelection()" title="मुख्य कार्यक्रम निवड पृष्ठावर परत जा">
+            <span>⬅️</span>
+            <span>कार्यक्रम निवडा (Switch Program)</span>
+          </button>
+          <div>
+            <div style="font-size:12px; font-weight:700; opacity:0.9;">🏥 प्रा.आ. केंद्र, भादा</div>
+            <div style="font-size:18px; font-weight:800;">💧 NWBDCP - राष्ट्रीय जलजन्य रोग नियंत्रण कार्यक्रम</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:12px; font-weight:700;">🟡 विकास क्षेत्र (In Development)</span>
+          <button type="button" onclick="selectProgram('nvbdcp')" style="background:#00796b; color:#fff; border:1px solid rgba(255,255,255,0.3); padding:5px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+            🦟 NVBDCP कडे जा ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main NWBDCP Container -->
+    <div class="program-portal-container" style="padding-top:24px;">
+      
+      <!-- Status Notice -->
+      <div style="background:#ffffff; border-left:5px solid #0284c7; border-radius:12px; padding:20px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:24px;">
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+          <div style="font-size:28px;">🚰</div>
+          <div>
+            <h3 style="margin:0 0 6px 0; font-size:18px; font-weight:800; color:#0369a1;">
+              NWBDCP मॉड्यूल विकास क्षेत्र (Architecture Ready for Independent Development)
+            </h3>
+            <p style="margin:0 0 8px 0; font-size:13.5px; color:#334155; line-height:1.6;">
+              हे मॉड्यूल प्राथमिक आरोग्य केंद्र भादा अंतर्गत येणाऱ्या ३७ गावांमधील <b>पिण्याच्या पाण्याच्या स्त्रोतांची गुणवत्ता तपासणी</b>, <b>ऑर्थोटोलिडीन (OT) टेस्ट</b>, <b>टीसीएल (TCL) ब्लिचिंग पावडर क्लोरीनेशन</b>, आणि <b>अतिसार/कॉलरा/गॅस्ट्रो/काविळ</b> प्रतिबंधासाठी स्वतंत्रपणे विकसित केले जात आहे.
+            </p>
+            <div style="font-size:12.5px; color:#64748b;">
+              ✨ हे स्वतंत्र मॉड्यूल असल्याने यामधील डेटा आणि फॉर्म्सचा NVBDCP प्रकल्पावर कोणताही प्रभाव पडणार नाही.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick KPI Mock Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div class="upload-kpi-card" style="border-top:4px solid #0284c7;">
+          <div class="kpi-num" style="color:#0284c7;">३७</div>
+          <div class="kpi-label">गावातील पाणीपुरवठा योजना</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #065f46;">
+          <div class="kpi-num" style="color:#065f46;">१००%</div>
+          <div class="kpi-label">टीसीएल क्लोरीनेशन उद्दिष्ट</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #d97706;">
+          <div class="kpi-num" style="color:#d97706;">०</div>
+          <div class="kpi-label">सध्याचे संशयित गॅस्ट्रो रुग्ण</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #4f46e5;">
+          <div class="kpi-num" style="color:#4f46e5;">OT Test</div>
+          <div class="kpi-label">दैनंदिन क्लोरीन अवशिष्ट तपासणी</div>
+        </div>
+      </div>
+
+      <!-- Planned Sub-modules Roadmap -->
+      <div style="background:#ffffff; border-radius:14px; border:1px solid #e2e8f0; padding:24px; box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+        <h4 style="margin:0 0 16px 0; font-size:16px; font-weight:800; color:#0f172a;">
+          📋 नियोजित फॉर्म्स व उप-मॉड्यूल्स (Roadmap of NWBDCP Features):
+        </h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+          <div style="border:1px solid #bae6fd; background:#f0f9ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#0369a1; font-size:14px; margin-bottom:6px;">1. जलस्त्रोत व क्लोरीन नोंदणी</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">गावनिहाय विहिरी, बोअरवेल, पाण्याच्या टाक्या व दैनंदिन टीसीएल क्लोरीनेशन नोंदणी फॉर्म.</p>
+          </div>
+          <div style="border:1px solid #bae6fd; background:#f0f9ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#0369a1; font-size:14px; margin-bottom:6px;">2. ऑर्थोटोलिडीन (OT) टेस्ट रजिस्टर</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">आरोग्य सेवक व आशा स्वयंसेविकांमार्फत घरगुती नळ व सार्वजनिक नळांवर OT टेस्ट तपासणी अहवाल.</p>
+          </div>
+          <div style="border:1px solid #bae6fd; background:#f0f9ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#0369a1; font-size:14px; margin-bottom:6px;">3. दूषित पाणी नमुने (Bacteriological Test)</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">जिल्हा सार्वजनिक आरोग्य प्रयोगशाळेत पाठवलेले नमुने व त्यांचे जैविक तपासणी निष्कर्ष.</p>
+          </div>
+          <div style="border:1px solid #bae6fd; background:#f0f9ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#0369a1; font-size:14px; margin-bottom:6px;">4. जलजन्य साथरोग व ओपीडी मॉनिटरिंग</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">अतिसार, कॉलरा, गॅस्ट्रो, काविळ व टायफॉईड रुग्णांची गावनिहाय दैनंदिन व साप्ताहिक नोंद.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <button type="button" class="mui-btn mui-btn-contained-secondary" onclick="showProgramSelection()">
+            ⬅️ कार्यक्रम निवड पृष्ठावर परत जा
+          </button>
+          <button type="button" class="mui-btn mui-btn-contained-primary" onclick="selectProgram('nvbdcp')">
+            🦟 सध्या कार्यरत NVBDCP प्रकल्प उघडा ➔
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 3. NTEP MODULE VIEW (NATIONAL TUBERCULOSIS ELIMINATION PROGRAM)            -->
+  <!-- ========================================================================= -->
+  <div id="programNTEP" class="health-program-view" style="display:none; min-height:100vh; background:#faf5ff;">
+    
+    <!-- Top Header Bar -->
+    <div style="background:linear-gradient(135deg, #3730a3, #4f46e5); color:#fff; padding:16px 20px; box-shadow:0 4px 12px rgba(79,70,229,0.25);">
+      <div style="max-width:1280px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button type="button" class="btn-back-to-programs" onclick="showProgramSelection()" title="मुख्य कार्यक्रम निवड पृष्ठावर परत जा">
+            <span>⬅️</span>
+            <span>कार्यक्रम निवडा (Switch Program)</span>
+          </button>
+          <div>
+            <div style="font-size:12px; font-weight:700; opacity:0.9;">🏥 प्रा.आ. केंद्र, भादा</div>
+            <div style="font-size:18px; font-weight:800;">🫁 NTEP - राष्ट्रीय क्षयरोग निर्मूलन कार्यक्रम</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:12px; font-weight:700;">🟣 विकास क्षेत्र (In Development)</span>
+          <button type="button" onclick="selectProgram('nvbdcp')" style="background:#00796b; color:#fff; border:1px solid rgba(255,255,255,0.3); padding:5px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+            🦟 NVBDCP कडे जा ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main NTEP Container -->
+    <div class="program-portal-container" style="padding-top:24px;">
+      
+      <!-- Status Notice -->
+      <div style="background:#ffffff; border-left:5px solid #4f46e5; border-radius:12px; padding:20px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:24px;">
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+          <div style="font-size:28px;">🫁</div>
+          <div>
+            <h3 style="margin:0 0 6px 0; font-size:18px; font-weight:800; color:#3730a3;">
+              NTEP राष्ट्रीय क्षयरोग निर्मूलन कार्यक्रम (TB Elimination Portal)
+            </h3>
+            <p style="margin:0 0 8px 0; font-size:13.5px; color:#334155; line-height:1.6;">
+              भादा प्राथमिक आरोग्य केंद्र क्षेत्रातील <b>क्षयरोग रुग्ण शोध</b>, <b>थुंकी नमुने प्रयोगशाळा नोंदणी (DMC Sputum Examination)</b>, <b>CBNAAT / Truenat मॉलेक्युलर चाचणी</b>, <b>DOTS थेट देखरेखीखाली उपचार</b>, आणि <b>निक्षय पोषण योजना (DBT ₹500/महिना)</b> व्यवस्थापनासाठी स्वतंत्र मॉड्यूल.
+            </p>
+            <div style="font-size:12.5px; color:#64748b;">
+              ✨ हे स्वतंत्र मॉड्यूल असल्याने यामधील निक्षय आयडी व रुग्णांच्या नोंदी स्वतंत्र डेटाबेसमध्ये सुरक्षित राहतील.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick KPI Mock Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div class="upload-kpi-card" style="border-top:4px solid #4f46e5;">
+          <div class="kpi-num" style="color:#4f46e5;">निक्षय (Nikshay)</div>
+          <div class="kpi-label">पोर्टल इंटिग्रेशन रेडी</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #059669;">
+          <div class="kpi-num" style="color:#059669;">DMC भादा</div>
+          <div class="kpi-label">मायक्रोस्कोपी सेंटर लॅब</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #d97706;">
+          <div class="kpi-num" style="color:#d97706;">DOTS</div>
+          <div class="kpi-label">थेट देखरेखीखाली औषधोपचार</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #7c3aed;">
+          <div class="kpi-num" style="color:#7c3aed;">DBT पोषण</div>
+          <div class="kpi-label">निक्षय पोषण आहार सहाय्य</div>
+        </div>
+      </div>
+
+      <!-- Planned Sub-modules Roadmap -->
+      <div style="background:#ffffff; border-radius:14px; border:1px solid #e2e8f0; padding:24px; box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+        <h4 style="margin:0 0 16px 0; font-size:16px; font-weight:800; color:#0f172a;">
+          📋 नियोजित फॉर्म्स व उप-मॉड्यूल्स (Roadmap of NTEP Features):
+        </h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+          <div style="border:1px solid #ddd6fe; background:#faf5ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#4338ca; font-size:14px; margin-bottom:6px;">1. संशयित क्षयरोग रुग्ण व थुंकी तपासणी</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">२ आठवड्यांपेक्षा जास्त खोकला असणाऱ्या संशयित व्यक्तींची थुंकी नमुना नोंदणी व DMC लॅब निकाल.</p>
+          </div>
+          <div style="border:1px solid #ddd6fe; background:#faf5ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#4338ca; font-size:14px; margin-bottom:6px;">2. निक्षय रुग्ण नोंदणी (TB Notification)</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">पॉझिटिव्ह रुग्णांचा निक्षय आयडी, उपकेंद्रनिहाय वर्गीकरण (Pulmonary / Extra-Pulmonary, New / Relapse).</p>
+          </div>
+          <div style="border:1px solid #ddd6fe; background:#faf5ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#4338ca; font-size:14px; margin-bottom:6px;">3. उपचार कार्ड व औषध वाटप (Treatment Cards)</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">DOTS प्रोव्हायडर, औषधांचे बॉक्स, वजन वाढ व फॉलो-अप थुंकी तपासणी नोंदी.</p>
+          </div>
+          <div style="border:1px solid #ddd6fe; background:#faf5ff; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#4338ca; font-size:14px; margin-bottom:6px;">4. निक्षय पोषण योजना व संपर्क तपासणी</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">रुग्णांच्या बँक खात्याची पडताळणी, DBT हप्ते वितरण स्थिती व घरातील निकट संपर्कातील व्यक्तींची तपासणी.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <button type="button" class="mui-btn mui-btn-contained-secondary" onclick="showProgramSelection()">
+            ⬅️ कार्यक्रम निवड पृष्ठावर परत जा
+          </button>
+          <button type="button" class="mui-btn mui-btn-contained-primary" onclick="selectProgram('nvbdcp')">
+            🦟 सध्या कार्यरत NVBDCP प्रकल्प उघडा ➔
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 4. NLEP MODULE VIEW (NATIONAL LEPROSY ERADICATION PROGRAMME)               -->
+  <!-- ========================================================================= -->
+  <div id="programNLEP" class="health-program-view" style="display:none; min-height:100vh; background:#fff1f2;">
+    
+    <!-- Top Header Bar -->
+    <div style="background:linear-gradient(135deg, #9f1239, #e11d48); color:#fff; padding:16px 20px; box-shadow:0 4px 12px rgba(225,29,72,0.25);">
+      <div style="max-width:1280px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button type="button" class="btn-back-to-programs" onclick="showProgramSelection()" title="मुख्य कार्यक्रम निवड पृष्ठावर परत जा">
+            <span>⬅️</span>
+            <span>कार्यक्रम निवडा (Switch Program)</span>
+          </button>
+          <div>
+            <div style="font-size:12px; font-weight:700; opacity:0.9;">🏥 प्रा.आ. केंद्र, भादा</div>
+            <div style="font-size:18px; font-weight:800;">🩺 NLEP - राष्ट्रीय कुष्ठरोग निर्मूलन कार्यक्रम</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:12px; font-weight:700;">🟠 विकास क्षेत्र (In Development)</span>
+          <button type="button" onclick="selectProgram('nvbdcp')" style="background:#00796b; color:#fff; border:1px solid rgba(255,255,255,0.3); padding:5px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+            🦟 NVBDCP कडे जा ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main NLEP Container -->
+    <div class="program-portal-container" style="padding-top:24px;">
+      
+      <!-- Status Notice -->
+      <div style="background:#ffffff; border-left:5px solid #e11d48; border-radius:12px; padding:20px 24px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:24px;">
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+          <div style="font-size:28px;">🩺</div>
+          <div>
+            <h3 style="margin:0 0 6px 0; font-size:18px; font-weight:800; color:#9f1239;">
+              NLEP राष्ट्रीय कुष्ठरोग निर्मूलन कार्यक्रम (Leprosy Eradication Portal)
+            </h3>
+            <p style="margin:0 0 8px 0; font-size:13.5px; color:#334155; line-height:1.6;">
+              भादा प्राथमिक आरोग्य केंद्र कार्यक्षेत्रात <b>कुष्ठरोग शोध मोहीम (LCDC)</b>, <b>संशयित त्वचा चट्टे तपासणी व स्पर्श ज्ञान चाचणी</b>, <b>बहुविध औषधोपचार (MDT Treatment - PB/MB)</b>, <b>विकृती प्रतिबंध व वैद्यकीय पुनर्वसन (DPMR)</b>, आणि <b>संपर्क तपासणी</b> मॉनिटरिंगसाठी स्वतंत्र विकास क्षेत्र.
+            </p>
+            <div style="font-size:12.5px; color:#64748b;">
+              ✨ हे स्वतंत्र मॉड्यूल असल्याने यामधील कुष्ठरोग सर्व्हेक्षण नोंदी पूर्णपणे विभक्त राहतील.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick KPI Mock Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div class="upload-kpi-card" style="border-top:4px solid #e11d48;">
+          <div class="kpi-num" style="color:#e11d48;">LCDC मोहीम</div>
+          <div class="kpi-label">कुष्ठरोग शोध अभियान ट्रॅकिंग</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #059669;">
+          <div class="kpi-num" style="color:#059669;">PB / MB</div>
+          <div class="kpi-label">MDT मोफत औषधोपचार</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #d97706;">
+          <div class="kpi-num" style="color:#d97706;">DPMR</div>
+          <div class="kpi-label">विकृती प्रतिबंध व पुनर्वसन</div>
+        </div>
+        <div class="upload-kpi-card" style="border-top:4px solid #7c3aed;">
+          <div class="kpi-num" style="color:#7c3aed;">संपर्क तपासणी</div>
+          <div class="kpi-label">कुटुंब व शेजारी तपासणी</div>
+        </div>
+      </div>
+
+      <!-- Planned Sub-modules Roadmap -->
+      <div style="background:#ffffff; border-radius:14px; border:1px solid #e2e8f0; padding:24px; box-shadow:0 4px 12px rgba(0,0,0,0.04);">
+        <h4 style="margin:0 0 16px 0; font-size:16px; font-weight:800; color:#0f172a;">
+          📋 नियोजित फॉर्म्स व उप-मॉड्यूल्स (Roadmap of NLEP Features):
+        </h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+          <div style="border:1px solid #fecdd3; background:#fff1f2; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#9f1239; font-size:14px; margin-bottom:6px;">1. कुष्ठरोग शोध मोहीम व संशयित नोंदी (LCDC)</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">गावनिहाय आशा स्वयंसेविका व आरोग्य सेवकांनी घरोघरी केलेल्या तपासणी नोंदी व संशयित रुग्ण यादी.</p>
+          </div>
+          <div style="border:1px solid #fecdd3; background:#fff1f2; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#9f1239; font-size:14px; margin-bottom:6px;">2. वैद्यकीय निदान व वर्गीकरण (PB / MB Case Register)</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">वैद्यकीय अधिकाऱ्यांमार्फत चट्टे मोजणी, मज्जातंतू तपासणी व PB (Paucibacillary) किंवा MB (Multibacillary) वर्गीकरण.</p>
+          </div>
+          <div style="border:1px solid #fecdd3; background:#fff1f2; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#9f1239; font-size:14px; margin-bottom:6px;">3. MDT औषधोपचार व RFT (Release From Treatment)</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">PB साठी ६ महिने व MB साठी १२ महिने नियमित MDT ब्लिस्टर पॅक वाटप व उपचार पूर्णता प्रमाणपत्र.</p>
+          </div>
+          <div style="border:1px solid #fecdd3; background:#fff1f2; border-radius:10px; padding:16px;">
+            <div style="font-weight:700; color:#9f1239; font-size:14px; margin-bottom:6px;">4. DPMR, MCR पादत्राणे व पुनर्वसन</div>
+            <p style="font-size:12.5px; color:#475569; margin:0;">विकृती ग्रेड-१ व ग्रेड-२ व्यवस्थापन, स्व-काळजी किट व मायक्रोसेल्युलर रबर (MCR) पादत्राणे वाटप.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <button type="button" class="mui-btn mui-btn-contained-secondary" onclick="showProgramSelection()">
+            ⬅️ कार्यक्रम निवड पृष्ठावर परत जा
+          </button>
+          <button type="button" class="mui-btn mui-btn-contained-primary" onclick="selectProgram('nvbdcp')">
+            🦟 सध्या कार्यरत NVBDCP प्रकल्प उघडा ➔
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 5. NVBDCP PROGRAM CONTAINER (EXISTING CURRENT PROJECT - 100% UNTOUCHED)  -->
+  <!-- ========================================================================= -->
+  <div id="programNVBDCP" class="health-program-view" style="display:none;">
+
   <!-- MOBILE TOP APP BAR -->
   <div class="mobile-appbar" id="mobileAppbar">
     <div class="mobile-appbar-left">
+      <button type="button" class="btn-back-to-programs" style="padding:4px 8px; font-size:11px; margin-right:4px;" onclick="showProgramSelection()" title="मुख्य कार्यक्रम निवडीकडे परत जा">
+        <span>⬅️</span>
+      </button>
       <button type="button" class="mobile-menu-btn" onclick="toggleMobileDrawer()" aria-label="मेनू उघडा">☰</button>
       <div>
         <div class="mobile-appbar-title">🏥 प्रा.आ. केंद्र, भादा</div>
-        <div class="mobile-appbar-sub" id="mobileCurrentTabLabel">📊 डॅशबोर्ड</div>
+        <div class="mobile-appbar-sub" id="mobileCurrentTabLabel">📊 डॅशबोर्ड (NVBDCP)</div>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
@@ -4915,6 +5915,7 @@
       <button type="button" class="mobile-drawer-close" onclick="closeMobileDrawer()">✕</button>
     </div>
     <div class="mobile-drawer-nav">
+      <button type="button" class="mobile-drawer-btn" style="background:#edf2f7; color:#2b6cb0; font-weight:800; border-left:4px solid #3182ce; margin-bottom:8px;" onclick="closeMobileDrawer(); showProgramSelection();">⬅️ मुख्य कार्यक्रम निवडा (Select Program)</button>
       <button type="button" class="mobile-drawer-btn active" data-tab="dashboardTab" onclick="handleDrawerNav('dashboardTab')">📊 डॅशबोर्ड</button>
       <button type="button" class="mobile-drawer-btn" data-tab="monthlyReportDash" onclick="handleDrawerNav('monthlyReportDash')">📑 मासिक अहवाल डॅशबोर्ड</button>
       <button type="button" class="mobile-drawer-btn" data-tab="dataEntry" onclick="handleDrawerNav('dataEntry')">📝 डेटा एन्ट्री (Daily & OPD)</button>
@@ -4978,9 +5979,13 @@
     <div class="header-content">
       <div class="header-title-box">
         <div class="header-title">🏥 प्राथमिक आरोग्य केंद्र, भादा</div>
-        <div class="header-sub">राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम मॅनेजमेंट सिस्टीम</div>
+        <div class="header-sub">राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम मॅनेजमेंट सिस्टीम (NVBDCP)</div>
       </div>
       <div class="header-badges">
+        <button type="button" class="btn-back-to-programs" onclick="showProgramSelection()" title="आरोग्य कार्यक्रम निवड पृष्ठावर परत जा">
+          <span>⬅️</span>
+          <span>कार्यक्रम निवडा (Switch Program)</span>
+        </button>
         <span class="header-chip">🏛️ ६ उपकेंद्रे | ३७ गावे</span>
         <span class="header-chip">👥 ६५ कर्मचारी</span>
         <a href="/api/download-apk" target="_blank" download="PHC_Bhada_NVBDCP.apk" class="header-chip" id="btnHeaderApkDownload" style="background:#15803d; border:1.5px solid #4ade80; color:#ffffff; cursor:pointer; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(0,0,0,0.18); text-decoration:none; padding:6px 14px; border-radius:20px; transition:all 0.2s ease;" title="अँड्रॉइड फोनसाठी APK डाऊनलोड करा">
@@ -5010,6 +6015,10 @@
         <span>मुख्य मेनू</span>
         <span style="font-size:11px; background:#edf2f7; color:#4a5568; padding:2px 6px; border-radius:4px;">PHC Bhada</span>
       </div>
+      <button type="button" class="tab-btn" onclick="showProgramSelection()" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#1e293b; font-weight:800; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+        <span>⬅️</span>
+        <span>आरोग्य कार्यक्रम निवड</span>
+      </button>
       <button class="tab-btn active" id="sideBtnDashboard" data-tab="dashboardTab" onclick="switchTab('dashboardTab', this)">📊 डॅशबोर्ड</button>
       <button class="tab-btn" id="sideBtnMonthlyReportDash" data-tab="monthlyReportDash" onclick="openMonthlyReportDashboardDirect(this)">📑 मासिक अहवाल डॅशबोर्ड</button>
       <button class="tab-btn" id="sideBtnDataEntry" data-tab="dataEntry" onclick="switchTab('dataEntry', this)">📝 डेटा एन्ट्री (Daily/OPD)</button>
@@ -7859,6 +8868,8 @@
     </div>
   </div>
 
+  </div> <!-- END #programNVBDCP (100% Isolated NVBDCP Project) -->
+
   <div id="myModal" class="modal">
     <span class="close-btn" onclick="closeModal()">&times;</span>
     <img class="modal-content" id="img01">
@@ -9342,6 +10353,66 @@
         .getMonthListForWebApp();
     }
 
+    // ================= HEALTH PROGRAM SELECTION & MODULAR CONTROLLER =================
+    function selectProgram(programId) {
+      try {
+        sessionStorage.setItem('phc_selected_program', programId);
+      } catch (e) {}
+
+      const progSelection = document.getElementById('programSelectionScreen');
+      const progNVBDCP = document.getElementById('programNVBDCP');
+      const progNWBDCP = document.getElementById('programNWBDCP');
+      const progNTEP = document.getElementById('programNTEP');
+      const progNLEP = document.getElementById('programNLEP');
+
+      if (progSelection) progSelection.style.display = 'none';
+      if (progNVBDCP) progNVBDCP.style.display = 'none';
+      if (progNWBDCP) progNWBDCP.style.display = 'none';
+      if (progNTEP) progNTEP.style.display = 'none';
+      if (progNLEP) progNLEP.style.display = 'none';
+
+      if (programId === 'nvbdcp') {
+        if (progNVBDCP) progNVBDCP.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Initialize or refresh NVBDCP dashboard view
+        if (typeof loadDashboard === 'function') {
+          setTimeout(() => {
+            loadDashboard();
+          }, 50);
+        }
+      } else if (programId === 'nwbdcp') {
+        if (progNWBDCP) progNWBDCP.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (programId === 'ntep') {
+        if (progNTEP) progNTEP.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (programId === 'nlep') {
+        if (progNLEP) progNLEP.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function showProgramSelection() {
+      try {
+        sessionStorage.removeItem('phc_selected_program');
+      } catch (e) {}
+
+      const progSelection = document.getElementById('programSelectionScreen');
+      const progNVBDCP = document.getElementById('programNVBDCP');
+      const progNWBDCP = document.getElementById('programNWBDCP');
+      const progNTEP = document.getElementById('programNTEP');
+      const progNLEP = document.getElementById('programNLEP');
+
+      if (progNVBDCP) progNVBDCP.style.display = 'none';
+      if (progNWBDCP) progNWBDCP.style.display = 'none';
+      if (progNTEP) progNTEP.style.display = 'none';
+      if (progNLEP) progNLEP.style.display = 'none';
+      if (progSelection) {
+        progSelection.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
     window.onload = () => {
       if (typeof updateWifiStatus === 'function') {
         updateWifiStatus(navigator.onLine !== false);
@@ -9383,7 +10454,24 @@
         })
         .getMasterData();
 
-      // Restore previously open tab if user refreshed the page
+      // Program Selection on App Launch:
+      // The very first screen displayed after opening the application is the Program Selection screen.
+      // If user navigated with a specific program parameter or previously selected during active session, open that program.
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlProg = urlParams.get('program');
+        const sessionProg = sessionStorage.getItem('phc_selected_program');
+        const initialProgram = urlProg || sessionProg;
+        if (initialProgram && (initialProgram === 'nvbdcp' || initialProgram === 'nwbdcp' || initialProgram === 'ntep' || initialProgram === 'nlep')) {
+          selectProgram(initialProgram);
+        } else {
+          showProgramSelection();
+        }
+      } catch (e) {
+        showProgramSelection();
+      }
+
+      // Restore previously open tab if user refreshed the page while in NVBDCP
       try {
         const savedTab = sessionStorage.getItem('phc_active_tab');
         if (savedTab && savedTab !== 'dashboardTab' && document.getElementById(savedTab)) {

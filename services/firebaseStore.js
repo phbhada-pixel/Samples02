@@ -9,7 +9,21 @@ import {
   deleteDoc,
   setLogLevel
 } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json' with { type: 'json' };
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const configPath = path.join(__dirname, '../firebase-applet-config.json');
+let firebaseConfig = {};
+try {
+  if (fs.existsSync(configPath)) {
+    firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  }
+} catch (err) {
+  console.warn('[FirebaseStore] Warning loading firebase-applet-config.json:', err.message);
+}
 
 // Suppress internal BloomFilter SDK warnings
 try {
