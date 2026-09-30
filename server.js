@@ -101,6 +101,23 @@ import {
 } from './data/store.js';
 
 import {
+  getNwbdcpReferenceMasterData,
+  getWaterSources,
+  saveWaterSource,
+  toggleWaterSourceStatus,
+  deleteWaterSource,
+  dispatchWaterSamples,
+  getDispatchedSamples,
+  updateLabResults,
+  replaceNwbdcpReportCopy,
+  createRetestForSample,
+  updateRetestResult,
+  getRetestsList,
+  generateNwbdcpReports,
+  importHistoricalWaterSamples
+} from './services/nwbdcpStore.js';
+
+import {
   generateDailyMalariaReportWebApp,
   generateMonthlyReportWebApp,
   generateEmployeeRegisterWebApp,
@@ -288,6 +305,13 @@ app.use(cors());
 app.options('*', cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static NWBDCP uploaded laboratory reports
+const nwbdcpReportsDir = path.join(__dirname, 'public/uploads/nwbdcp_reports');
+if (!fs.existsSync(nwbdcpReportsDir)) {
+  fs.mkdirSync(nwbdcpReportsDir, { recursive: true });
+}
+app.use('/uploads/nwbdcp_reports', express.static(nwbdcpReportsDir));
 
 // Serve xlsx library
 app.use('/js/xlsx.full.min.js', (req, res) => {
@@ -2113,6 +2137,265 @@ app.post('/api/rpc', async (req, res) => {
   } catch (err) {
     console.error(`Error in RPC method:`, err);
     res.status(500).json({ error: err.message || 'Internal Server Error' });
+  }
+});
+
+// =========================================================================
+// NWBDCP WATER QUALITY MANAGEMENT MODULE ENDPOINTS
+// =========================================================================
+
+// 1. Read-Only NVBDCP Master Data Reference
+app.get('/api/nwbdcp/master-data', (req, res) => {
+  try {
+    const data = getNwbdcpReferenceMasterData();
+    res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Water Sources Register Endpoints
+app.get('/api/nwbdcp/water-sources', (req, res) => {
+  try {
+    const sources = getWaterSources(req.query);
+    res.json({ success: true, sources });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/nwbdcp/water-source', (req, res) => {
+  try {
+    const result = saveWaterSource(req.body, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/nwbdcp/water-source/toggle-status', (req, res) => {
+  try {
+    const result = toggleWaterSourceStatus(req.body.id, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/nwbdcp/water-source/:id', (req, res) => {
+  try {
+    const result = deleteWaterSource(req.params.id, req.query.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Sample Dispatch Endpoints
+app.post('/api/nwbdcp/sample-dispatch', (req, res) => {
+  try {
+    const result = dispatchWaterSamples(req.body, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/nwbdcp/dispatched-samples', (req, res) => {
+  try {
+    const samples = getDispatchedSamples(req.query);
+    res.json({ success: true, samples });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Lab Results Update Endpoints
+app.post('/api/nwbdcp/upload-report-copy', (req, res) => {
+  try {
+    const { sampleId, fileData, fileName, fileType, user = "Web User" } = req.body;
+
+    if (!fileData || !fileName) {
+      return res.status(400).json({ success: false, error: '⚠️ कृपया अहवालाची प्रत (फाईल) निवडा.' });
+    }
+
+    // Validate file type
+    const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : '';
+    const allowedExts = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+
+    if (!allowedExts.includes(ext)) {
+      return res.status(400).json({
+        success: false,
+        error: `⚠️ अवैध फाईल प्रकार (.${ext}). फक्त PDF, JPG, JPEG, PNG किंवा WEBP फाईल अपलोड करा.`
+      });
+    }
+
+    // Process base64 string
+    const base64Clean = fileData.replace(/^data:[^;]+;base64,/, '');
+    const fileBuffer = Buffer.from(base64Clean, 'base64');
+
+    if (fileBuffer.length > 15 * 1024 * 1024) {
+      return res.status(400).json({ success: false, error: '⚠️ फाईलचा आकार खूप मोठा आहे (जास्तीत जास्त १५ MB).' });
+    }
+
+    const cleanSampleId = (sampleId || `GENERIC_${Date.now()}`).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const todayYear = new Date().getFullYear();
+    const todayMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    
+    const targetFolder = path.join(__dirname, `public/uploads/nwbdcp_reports/${todayYear}/${todayMonth}/${cleanSampleId}`);
+    if (!fs.existsSync(targetFolder)) {
+      fs.mkdirSync(targetFolder, { recursive: true });
+    }
+
+    const savedFileName = `REP_${cleanSampleId}_${Date.now()}.${ext}`;
+    const filePath = path.join(targetFolder, savedFileName);
+
+    fs.writeFileSync(filePath, fileBuffer);
+
+    const relativeUrl = `/uploads/nwbdcp_reports/${todayYear}/${todayMonth}/${cleanSampleId}/${savedFileName}`;
+    const fileSizeFormatted = `${(fileBuffer.length / 1024).toFixed(1)} KB`;
+
+    return res.json({
+      success: true,
+      message: '✅ प्रयोगशाळा अहवालाची प्रत यशस्वीरित्या अपलोड झाली!',
+      reportCopy: {
+        reportFileName: fileName,
+        reportSavedFileName: savedFileName,
+        reportFileUrl: relativeUrl,
+        reportFileType: ext.toUpperCase(),
+        reportFileSize: fileSizeFormatted,
+        reportUploadedAt: new Date().toISOString(),
+        reportUploadedBy: user
+      }
+    });
+  } catch (err) {
+    console.error('Error uploading NWBDCP report copy:', err);
+    return res.status(500).json({ success: false, error: '⚠️ अहवालाची प्रत अपलोड करण्यात अडचण आली. कृपया पुन्हा प्रयत्न करा.' });
+  }
+});
+
+app.post('/api/nwbdcp/update-lab-results', (req, res) => {
+  try {
+    const result = updateLabResults(req.body, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/nwbdcp/replace-report-copy', (req, res) => {
+  try {
+    const result = replaceNwbdcpReportCopy(req.body, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. Re-Test Endpoints
+app.post('/api/nwbdcp/retest-sample', (req, res) => {
+  try {
+    const result = createRetestForSample(req.body, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/nwbdcp/update-retest-result', (req, res) => {
+  try {
+    const result = updateRetestResult(req.body, req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/nwbdcp/retests', (req, res) => {
+  try {
+    const retests = getRetestsList(req.query);
+    res.json({ success: true, retests });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. Reports Endpoint
+app.get('/api/nwbdcp/reports', (req, res) => {
+  try {
+    const reportData = generateNwbdcpReports(req.query.type || "SUMMARY", req.query);
+    res.json({ success: true, ...reportData });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. Historical Data Import Endpoint
+app.post('/api/nwbdcp/import-historical-samples', (req, res) => {
+  try {
+    const result = importHistoricalWaterSamples(req.body.samples || [], req.body.user || "Web User");
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. Export NWBDCP Water Sources (.xlsx / .csv)
+app.get('/api/export/nwbdcp-water-sources.xlsx', (req, res) => {
+  try {
+    const sources = getWaterSources(req.query);
+    const headers = ["आयडी (ID)", "उपकेंद्र (Subcenter)", "गाव (Village)", "जलस्त्रोताचे नाव (Source Name)", "स्त्रोत प्रकार (Source Type)", "मालकी (Ownership)", "स्थिती (Status)", "पत्ता/ठिकाण (Location)"];
+    const rows = sources.map(s => [
+      s.id || '', s.subcenter || '', s.village || '', s.sourceName || '', s.sourceType || '', s.ownership || '', s.status || '', s.location || ''
+    ]);
+    return sendExportData(req, res, `phc_bhada_nwbdcp_water_sources_${new Date().toISOString().slice(0, 10)}`, headers, rows, 'Water_Sources');
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 9. Export NWBDCP Sample Dispatch & Results (.xlsx / .csv)
+app.get('/api/export/nwbdcp-samples.xlsx', (req, res) => {
+  try {
+    const samples = getDispatchedSamples(req.query);
+    const headers = ["नमुना आयडी (Sample ID)", "पाणी संकलन दिनांक (Collection Date)", "पाठवणी दिनांक (Dispatch Date)", "उपकेंद्र (Subcenter)", "गाव (Village)", "जलस्त्रोताचे नाव (Source Name)", "स्त्रोत प्रकार (Source Type)", "मालकी (Ownership)", "प्रयोगशाळा (Lab Name)", "नमुना निकाल (Result)", "अहवाल दिनांक (Report Date)", "प्रयोगशाळा जा.क्र. (Lab Ref No)", "शेरा (Remarks)"];
+    const rows = samples.map(s => [
+      s.sampleId || '', s.collectionDate || '', s.dispatchDate || '', s.subcenter || '', s.village || '', s.sourceName || '', s.sourceType || '', s.ownership || '', s.labName || '', s.result || '', s.reportReceivedDate || '', s.labRefNo || '', s.remarks || ''
+    ]);
+    return sendExportData(req, res, `phc_bhada_nwbdcp_samples_${new Date().toISOString().slice(0, 10)}`, headers, rows, 'Sample_Dispatch');
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 10. Download Official NWBDCP Historical Import Template (.xlsx / .csv) with Unicode Devanagari Support
+app.get(['/api/export/nwbdcp-template.xlsx', '/api/export/nwbdcp-template.csv'], (req, res) => {
+  try {
+    const headers = [
+      "उपकेंद्र (Subcenter)",
+      "गाव (Village)",
+      "स्त्रोत आयडी (Source ID)",
+      "जलस्त्रोताचे नाव (Source Name)",
+      "स्त्रोत प्रकार (Source Type)",
+      "मालकी (Ownership)",
+      "पाठवणी दिनांक (Dispatch Date)",
+      "नमुना आयडी (Sample ID)",
+      "तपासणी निकाल (Result)",
+      "प्रयोगशाळा नाव (Lab Name)",
+      "अहवाल दिनांक (Report Date)",
+      "शेरा (Remarks)"
+    ];
+
+    const sampleDemoRows = [
+      ["भादा", "भादा", "WS-BHD-TAP-001", "भादा सार्वजनिक पाणीपुरवठा योजना (नळ योजना)", "सार्वजनिक पाणीपुरवठा योजना (नळ योजना)", "शासकीय", "2026-01-15", "NWBDCP-20260115-0001", "पिण्यास योग्य", "जिल्हा सार्वजनिक आरोग्य प्रयोगशाळा, धाराशीव", "2026-01-20", "२०२५-२६ मधील नमुना तपासणी"],
+      ["भादा", "भादा", "WS-BHD-HP-001", "भादा जि.प. शाळा परिसर हातपंप", "हातपंप", "शासकीय", "2026-01-15", "NWBDCP-20260115-0002", "पिण्यास अयोग्य", "जिल्हा सार्वजनिक आरोग्य प्रयोगशाळा, धाराशीव", "2026-01-20", "टीसीएल क्लोरिन वापर सूचना दिली"],
+      ["आलमला", "आलमला", "WS-ALM-WLL-001", "आलमला मुख्य सार्वजनिक विहीर", "विहीर", "शासकीय", "2026-01-18", "NWBDCP-20260118-0001", "अहवाल अप्राप्त", "जिल्हा सार्वजनिक आरोग्य प्रयोगशाळा, धाराशीव", "", "अहवाल प्रतीक्षेत"]
+    ];
+
+    return sendExportData(req, res, `NWBDCP_Historical_Sample_Import_Template`, headers, sampleDemoRows, 'Template');
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
